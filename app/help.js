@@ -1,174 +1,633 @@
-// Ayudas en lenguaje simple para AI Launcher.
-// `simple: true` = aparece en el "modo simple" (lo que conviene conocer primero).
+// Ayudas en lenguaje simple para AI Launcher (es, en, de, fr, ja, pt).
+// Cada texto es un objeto {es,en,de,fr,ja,pt} creado con L(...). `simple: true` = aparece en el "modo simple".
 window.HELP = (() => {
+  const LANGS = ["es", "en", "de", "fr", "ja", "pt"];
+  const L = (...a) => { const o = {}; LANGS.forEach((l, i) => { if (a[i] != null && a[i] !== "") o[l] = a[i]; }); return o; };
+  const lang = () => (window.I18N && window.I18N.lang) || "en";
+  const pick = o => (o == null ? o : (o[lang()] ?? o.en ?? o.es));
+  const O = (simple, text, tip) => ({ simple, text, tip });
 
   // ------------------------------------------------------------------ glosario
-  const glossary = {
-    "Modelo": "El “cerebro” ya entrenado que usa el programa. Un modelo de texto (Ollama) responde preguntas; un modelo de imagen (checkpoint) dibuja.",
-    "Checkpoint": "Archivo grande (2–7 GB) con un modelo de imagen completo. Define el estilo general: realista, anime, pixel art, etc.",
-    "LoRA": "Archivo chico (10–200 MB) que se suma a un checkpoint para enseñarle algo puntual: un personaje, un estilo, un objeto. Kohya_ss sirve para crear LoRAs.",
-    "VRAM": "Memoria de la placa de video. En las Mac con chip Apple es la misma que la RAM: todo lo que abras compite por ella.",
-    "RAM": "Memoria de trabajo de la computadora. Si se llena, todo se pone muy lento.",
-    "Contexto": "Cuánto texto “recuerda” un modelo de chat a la vez (la conversación + documentos). Más contexto = más memoria usada.",
-    "Cuantización": "Versión “comprimida” de un modelo (Q4, Q8…). Ocupa menos memoria a cambio de un poco de calidad. Q4_K_M es un buen equilibrio.",
-    "Parámetros": "Tamaño del modelo (7B = 7 mil millones). Más grande suele ser más inteligente pero más lento y pesado.",
-    "Puerto": "Número que identifica a un programa dentro de tu compu (ej.: 7860). Dos programas no pueden usar el mismo puerto.",
-    "API": "Forma en que otros programas pueden usar éste automáticamente, sin la interfaz.",
-    "Token": "Pedacito de texto (aprox. ¾ de una palabra). La velocidad de un modelo se mide en tokens por segundo.",
-    "SD 1.5 / SDXL / Flux": "Generaciones de modelos de imagen. SD 1.5 es liviano (512px); SDXL da mejor calidad (1024px) y usa más memoria; Flux es más nuevo y muy pesado.",
-  };
+  const glossary = [
+    [L(`Modelo`, `Model`, `Modell`, `Modèle`, `モデル`, `Modelo`),
+     L(`El “cerebro” ya entrenado que usa el programa. Un modelo de texto (Ollama) responde preguntas; un modelo de imagen (checkpoint) dibuja.`,
+       `The already-trained “brain” the program uses. A text model (Ollama) answers questions; an image model (checkpoint) draws.`,
+       `Das bereits trainierte „Gehirn“, das das Programm verwendet. Ein Textmodell (Ollama) beantwortet Fragen; ein Bildmodell (Checkpoint) zeichnet.`,
+       `Le « cerveau » déjà entraîné qu'utilise le programme. Un modèle de texte (Ollama) répond aux questions ; un modèle d'image (checkpoint) dessine.`,
+       `プログラムが使う、学習済みの「頭脳」です。テキストモデル(Ollama)は質問に答え、画像モデル(チェックポイント)は絵を描きます。`,
+       `O “cérebro” já treinado que o programa usa. Um modelo de texto (Ollama) responde perguntas; um modelo de imagem (checkpoint) desenha.`)],
+    [L(`Checkpoint`, `Checkpoint`, `Checkpoint`, `Checkpoint`, `チェックポイント`, `Checkpoint`),
+     L(`Archivo grande (2–7 GB) con un modelo de imagen completo. Define el estilo general: realista, anime, pixel art, etc.`,
+       `A large file (2–7 GB) containing a complete image model. It defines the overall style: realistic, anime, pixel art, etc.`,
+       `Eine große Datei (2–7 GB) mit einem vollständigen Bildmodell. Sie legt den Gesamtstil fest: realistisch, Anime, Pixel-Art usw.`,
+       `Un gros fichier (2 à 7 Go) contenant un modèle d'image complet. Il définit le style général : réaliste, anime, pixel art, etc.`,
+       `完全な画像モデルが入った大きなファイル(2〜7 GB)です。リアル調、アニメ調、ピクセルアートなど、全体のスタイルを決めます。`,
+       `Arquivo grande (2–7 GB) com um modelo de imagem completo. Define o estilo geral: realista, anime, pixel art etc.`)],
+    [L(`LoRA`, `LoRA`, `LoRA`, `LoRA`, `LoRA`, `LoRA`),
+     L(`Archivo chico (10–200 MB) que se suma a un checkpoint para enseñarle algo puntual: un personaje, un estilo, un objeto. Kohya_ss sirve para crear LoRAs.`,
+       `A small file (10–200 MB) that is added to a checkpoint to teach it something specific: a character, a style, an object. Kohya_ss is used to create LoRAs.`,
+       `Eine kleine Datei (10–200 MB), die einem Checkpoint hinzugefügt wird, um ihm etwas Bestimmtes beizubringen: eine Figur, einen Stil, ein Objekt. Mit Kohya_ss erstellt man LoRAs.`,
+       `Un petit fichier (10 à 200 Mo) qui s'ajoute à un checkpoint pour lui apprendre quelque chose de précis : un personnage, un style, un objet. Kohya_ss sert à créer des LoRA.`,
+       `チェックポイントに追加して、特定のキャラクター・スタイル・物体などを覚えさせる小さなファイル(10〜200 MB)です。LoRA の作成には Kohya_ss を使います。`,
+       `Arquivo pequeno (10–200 MB) que se soma a um checkpoint para ensinar algo específico: um personagem, um estilo, um objeto. O Kohya_ss serve para criar LoRAs.`)],
+    [L(`VRAM`, `VRAM`, `VRAM`, `VRAM`, `VRAM`, `VRAM`),
+     L(`Memoria de la placa de video. En las Mac con chip Apple es la misma que la RAM: todo lo que abras compite por ella.`,
+       `Memory of the graphics card. On Macs with an Apple chip it is the same as RAM: everything you open competes for it.`,
+       `Speicher der Grafikkarte. Bei Macs mit Apple-Chip ist es derselbe wie der Arbeitsspeicher (RAM): Alles, was du öffnest, konkurriert darum.`,
+       `Mémoire de la carte graphique. Sur les Mac à puce Apple, c'est la même que la RAM : tout ce que vous ouvrez se la dispute.`,
+       `グラフィックカードのメモリです。Apple チップの Mac では RAM と同じもので、開いているものすべてがこれを奪い合います。`,
+       `Memória da placa de vídeo. Nos Macs com chip Apple é a mesma da RAM: tudo o que você abre disputa por ela.`)],
+    [L(`RAM`, `RAM`, `RAM`, `RAM`, `RAM`, `RAM`),
+     L(`Memoria de trabajo de la computadora. Si se llena, todo se pone muy lento.`,
+       `The computer's working memory. If it fills up, everything becomes very slow.`,
+       `Der Arbeitsspeicher des Computers. Wenn er voll ist, wird alles sehr langsam.`,
+       `La mémoire de travail de l'ordinateur. Si elle se remplit, tout devient très lent.`,
+       `コンピューターの作業用メモリです。いっぱいになると、すべてが非常に遅くなります。`,
+       `A memória de trabalho do computador. Se encher, tudo fica muito lento.`)],
+    [L(`Contexto`, `Context`, `Kontext`, `Contexte`, `コンテキスト`, `Contexto`),
+     L(`Cuánto texto “recuerda” un modelo de chat a la vez (la conversación + documentos). Más contexto = más memoria usada.`,
+       `How much text a chat model “remembers” at once (the conversation + documents). More context = more memory used.`,
+       `Wie viel Text sich ein Chat-Modell auf einmal „merkt“ (Unterhaltung + Dokumente). Mehr Kontext = mehr belegter Speicher.`,
+       `La quantité de texte qu'un modèle de chat « retient » à la fois (la conversation + les documents). Plus de contexte = plus de mémoire utilisée.`,
+       `チャットモデルが一度に「覚えている」テキストの量です(会話+ドキュメント)。コンテキストが大きいほど、使うメモリも増えます。`,
+       `Quanto texto um modelo de chat “lembra” de uma vez (a conversa + documentos). Mais contexto = mais memória usada.`)],
+    [L(`Cuantización`, `Quantization`, `Quantisierung`, `Quantification`, `量子化`, `Quantização`),
+     L(`Versión “comprimida” de un modelo (Q4, Q8…). Ocupa menos memoria a cambio de un poco de calidad. Q4_K_M es un buen equilibrio.`,
+       `A “compressed” version of a model (Q4, Q8…). It uses less memory in exchange for a little quality. Q4_K_M is a good balance.`,
+       `Eine „komprimierte“ Version eines Modells (Q4, Q8 …). Sie braucht weniger Speicher, dafür etwas Qualität. Q4_K_M ist ein guter Kompromiss.`,
+       `Une version « compressée » d'un modèle (Q4, Q8…). Elle occupe moins de mémoire au prix d'un peu de qualité. Q4_K_M est un bon compromis.`,
+       `モデルを「圧縮」したバージョン(Q4、Q8 など)です。品質が少し下がる代わりに、使うメモリが少なくなります。Q4_K_M はバランスが良い選択です。`,
+       `Versão “comprimida” de um modelo (Q4, Q8…). Ocupa menos memória em troca de um pouco de qualidade. O Q4_K_M é um bom equilíbrio.`)],
+    [L(`Parámetros`, `Parameters`, `Parameter`, `Paramètres`, `パラメーター`, `Parâmetros`),
+     L(`Tamaño del modelo (7B = 7 mil millones). Más grande suele ser más inteligente pero más lento y pesado.`,
+       `The size of the model (7B = 7 billion). Bigger is usually smarter but slower and heavier.`,
+       `Die Größe des Modells (7B = 7 Milliarden). Größer ist meist intelligenter, aber langsamer und schwerer.`,
+       `La taille du modèle (7B = 7 milliards). Plus gros est généralement plus intelligent, mais plus lent et plus lourd.`,
+       `モデルの大きさです(7B = 70 億)。大きいほど賢い傾向がありますが、遅くて重くなります。`,
+       `O tamanho do modelo (7B = 7 bilhões). Maior costuma ser mais inteligente, mas mais lento e pesado.`)],
+    [L(`Puerto`, `Port`, `Port`, `Port`, `ポート`, `Porta`),
+     L(`Número que identifica a un programa dentro de tu compu (ej.: 7860). Dos programas no pueden usar el mismo puerto.`,
+       `A number that identifies a program inside your computer (e.g. 7860). Two programs can't use the same port.`,
+       `Eine Nummer, die ein Programm in deinem Computer identifiziert (z. B. 7860). Zwei Programme können nicht denselben Port verwenden.`,
+       `Un numéro qui identifie un programme dans votre ordinateur (p. ex. 7860). Deux programmes ne peuvent pas utiliser le même port.`,
+       `コンピューター内でプログラムを識別する番号です(例: 7860)。2 つのプログラムが同じポートを使うことはできません。`,
+       `Número que identifica um programa dentro do seu computador (ex.: 7860). Dois programas não podem usar a mesma porta.`)],
+    [L(`API`, `API`, `API`, `API`, `API`, `API`),
+     L(`Forma en que otros programas pueden usar éste automáticamente, sin la interfaz.`,
+       `A way for other programs to use this one automatically, without the interface.`,
+       `Eine Möglichkeit, wie andere Programme dieses automatisch nutzen können, ohne die Oberfläche.`,
+       `Une façon pour d'autres programmes d'utiliser celui-ci automatiquement, sans l'interface.`,
+       `他のプログラムが、画面を使わずにこのプログラムを自動的に利用するための仕組みです。`,
+       `Forma pela qual outros programas podem usar este automaticamente, sem a interface.`)],
+    [L(`Token`, `Token`, `Token`, `Token`, `トークン`, `Token`),
+     L(`Pedacito de texto (aprox. ¾ de una palabra). La velocidad de un modelo se mide en tokens por segundo.`,
+       `A small piece of text (roughly ¾ of a word). A model's speed is measured in tokens per second.`,
+       `Ein kleines Textstück (etwa ¾ eines Wortes). Die Geschwindigkeit eines Modells wird in Tokens pro Sekunde gemessen.`,
+       `Un petit morceau de texte (environ ¾ de mot). La vitesse d'un modèle se mesure en tokens par seconde.`,
+       `テキストの小さな断片です(おおよそ単語の ¾)。モデルの速度は 1 秒あたりのトークン数で測ります。`,
+       `Pedacinho de texto (aprox. ¾ de uma palavra). A velocidade de um modelo é medida em tokens por segundo.`)],
+    [L(`SD 1.5 / SDXL / Flux`, `SD 1.5 / SDXL / Flux`, `SD 1.5 / SDXL / Flux`, `SD 1.5 / SDXL / Flux`, `SD 1.5 / SDXL / Flux`, `SD 1.5 / SDXL / Flux`),
+     L(`Generaciones de modelos de imagen. SD 1.5 es liviano (512px); SDXL da mejor calidad (1024px) y usa más memoria; Flux es más nuevo y muy pesado.`,
+       `Generations of image models. SD 1.5 is lightweight (512px); SDXL gives better quality (1024px) and uses more memory; Flux is newer and very heavy.`,
+       `Generationen von Bildmodellen. SD 1.5 ist leicht (512 px); SDXL liefert bessere Qualität (1024 px) und braucht mehr Speicher; Flux ist neuer und sehr schwer.`,
+       `Générations de modèles d'image. SD 1.5 est léger (512 px) ; SDXL donne une meilleure qualité (1024 px) et utilise plus de mémoire ; Flux est plus récent et très lourd.`,
+       `画像モデルの世代です。SD 1.5 は軽量(512px)、SDXL はより高品質(1024px)でメモリを多く使い、Flux は新しく非常に重いモデルです。`,
+       `Gerações de modelos de imagem. O SD 1.5 é leve (512px); o SDXL dá melhor qualidade (1024px) e usa mais memória; o Flux é mais novo e muito pesado.`)],
+  ];
 
   // ------------------------------------------------------------------ guías por sección
   const sections = {
-    monitor: `<b>Qué es esto:</b> lo que está corriendo ahora y cuánta memoria usa. Si la compu anda lenta, mirá acá qué ocupa más y detené lo que no estés usando.
+    monitor: L(
+      `<b>Qué es esto:</b> lo que está corriendo ahora y cuánta memoria usa. Si la compu anda lenta, mirá acá qué ocupa más y detené lo que no estés usando.
       <br><b>Detener</b> le pide al programa que se cierre bien. <b>Forzar</b> lo corta de golpe (usalo sólo si “Detener” no funcionó).`,
-    ollama: `<b>Ollama</b> corre modelos de <b>chat/texto</b> en tu compu, sin internet y sin mandar tus datos a nadie (como un ChatGPT local).
+      `<b>What this is:</b> what is running right now and how much memory it uses. If your computer is slow, look here to see what uses the most and stop what you're not using.
+      <br><b>Stop</b> asks the program to close properly. <b>Force</b> cuts it off abruptly (use it only if “Stop” didn't work).`,
+      `<b>Was das ist:</b> was gerade läuft und wie viel Speicher es belegt. Wenn dein Computer langsam ist, siehst du hier, was am meisten braucht, und kannst stoppen, was du nicht benutzt.
+      <br><b>Stoppen</b> bittet das Programm, sich ordentlich zu beenden. <b>Erzwingen</b> beendet es abrupt (nur verwenden, wenn „Stoppen“ nicht funktioniert hat).`,
+      `<b>De quoi s'agit-il :</b> ce qui tourne en ce moment et la mémoire utilisée. Si l'ordinateur est lent, regardez ici ce qui consomme le plus et arrêtez ce que vous n'utilisez pas.
+      <br><b>Arrêter</b> demande au programme de se fermer proprement. <b>Forcer</b> le coupe brutalement (à n'utiliser que si « Arrêter » n'a pas fonctionné).`,
+      `<b>これは何か:</b> 現在実行中のものと、使用しているメモリを表示します。コンピューターが遅いときは、ここで何が最も多く使っているかを確認し、使っていないものを停止してください。
+      <br><b>停止</b>はプログラムに正常な終了を依頼します。<b>強制終了</b>は即座に切断します(「停止」で止まらなかった場合のみ使ってください)。`,
+      `<b>O que é isto:</b> o que está em execução agora e quanta memória usa. Se o computador estiver lento, veja aqui o que ocupa mais e pare o que não estiver usando.
+      <br><b>Parar</b> pede ao programa que feche corretamente. <b>Forçar</b> o corta de uma vez (use só se “Parar” não funcionou).`),
+    ollama: L(
+      `<b>Ollama</b> corre modelos de <b>chat/texto</b> en tu compu, sin internet y sin mandar tus datos a nadie (como un ChatGPT local).
       <br><b>Cómo se usa:</b> 1) tocá <b>Iniciar</b>, 2) descargá un modelo (abajo), 3) tocá <b>Chat en terminal</b> o usalo desde otra app compatible con Ollama.
       <br><b>Las opciones</b> son para casos especiales: si no sabés qué tocar, dejalas como están.`,
-    a1111: `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> genera <b>imágenes a partir de texto</b> (o modifica imágenes). Se usa desde el navegador.
+      `<b>Ollama</b> runs <b>chat/text</b> models on your computer, without internet and without sending your data to anyone (like a local ChatGPT).
+      <br><b>How to use it:</b> 1) click <b>Start</b>, 2) download a model (below), 3) click <b>Terminal chat</b> or use it from another Ollama-compatible app.
+      <br><b>The options</b> are for special cases: if you don't know what to change, leave them as they are.`,
+      `<b>Ollama</b> führt <b>Chat-/Textmodelle</b> auf deinem Computer aus, ohne Internet und ohne deine Daten an irgendjemanden zu senden (wie ein lokales ChatGPT).
+      <br><b>So geht's:</b> 1) klicke auf <b>Starten</b>, 2) lade ein Modell herunter (unten), 3) klicke auf <b>Chat im Terminal</b> oder nutze es aus einer anderen Ollama-kompatiblen App.
+      <br><b>Die Optionen</b> sind für Sonderfälle: Wenn du nicht weißt, was du ändern sollst, lass sie, wie sie sind.`,
+      `<b>Ollama</b> exécute des modèles de <b>chat/texte</b> sur votre ordinateur, sans internet et sans envoyer vos données à personne (comme un ChatGPT local).
+      <br><b>Comment l'utiliser :</b> 1) cliquez sur <b>Démarrer</b>, 2) téléchargez un modèle (ci-dessous), 3) cliquez sur <b>Chat dans le terminal</b> ou utilisez-le depuis une autre app compatible Ollama.
+      <br><b>Les options</b> sont pour des cas particuliers : si vous ne savez pas quoi modifier, laissez-les telles quelles.`,
+      `<b>Ollama</b> は<b>チャット/テキスト</b>モデルを、インターネットなしで、データを誰にも送らずにコンピューター上で実行します(ローカルの ChatGPT のようなものです)。
+      <br><b>使い方:</b> 1) <b>起動</b>をクリック、2) モデルをダウンロード(下)、3) <b>ターミナルでチャット</b>をクリックするか、Ollama 対応の他のアプリから使います。
+      <br><b>オプション</b>は特別な場合用です。何を変えればよいか分からなければ、そのままにしてください。`,
+      `<b>Ollama</b> executa modelos de <b>chat/texto</b> no seu computador, sem internet e sem enviar seus dados a ninguém (como um ChatGPT local).
+      <br><b>Como usar:</b> 1) clique em <b>Iniciar</b>, 2) baixe um modelo (abaixo), 3) clique em <b>Chat no terminal</b> ou use-o a partir de outro app compatível com o Ollama.
+      <br><b>As opções</b> são para casos especiais: se você não sabe o que mudar, deixe como estão.`),
+    a1111: L(
+      `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> genera <b>imágenes a partir de texto</b> (o modifica imágenes). Se usa desde el navegador.
       <br><b>Cómo se usa:</b> 1) tocá <b>Iniciar</b> (la primera vez tarda unos minutos), 2) <b>Abrir en el navegador</b>, 3) escribí qué querés ver en “prompt” y tocá <i>Generate</i>.`,
-    forge: `<b>Forge</b> es una versión de Stable Diffusion WebUI optimizada para usar menos memoria y ser más rápida. Se usa igual que AUTOMATIC1111.`,
-    comfyui: `<b>ComfyUI</b> genera imágenes armando un “diagrama” de bloques conectados. Es más flexible (y más complejo) que A1111. Ideal para flujos avanzados o modelos nuevos como Flux.`,
-    kohya: `<b>Kohya_ss</b> sirve para <b>entrenar</b> tus propios LoRAs: le das 15–50 imágenes de algo (un personaje, un estilo) y aprende a dibujarlo.
+      `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> generates <b>images from text</b> (or modifies images). You use it from the browser.
+      <br><b>How to use it:</b> 1) click <b>Start</b> (the first time it takes a few minutes), 2) <b>Open in browser</b>, 3) write what you want to see in “prompt” and click <i>Generate</i>.`,
+      `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> erzeugt <b>Bilder aus Text</b> (oder verändert Bilder). Es wird im Browser benutzt.
+      <br><b>So geht's:</b> 1) klicke auf <b>Starten</b> (beim ersten Mal dauert es einige Minuten), 2) <b>Im Browser öffnen</b>, 3) schreibe in „prompt“, was du sehen möchtest, und klicke auf <i>Generate</i>.`,
+      `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> génère des <b>images à partir de texte</b> (ou modifie des images). Il s'utilise depuis le navigateur.
+      <br><b>Comment l'utiliser :</b> 1) cliquez sur <b>Démarrer</b> (la première fois, cela prend quelques minutes), 2) <b>Ouvrir dans le navigateur</b>, 3) écrivez ce que vous voulez voir dans « prompt » et cliquez sur <i>Generate</i>.`,
+      `<b>Stable Diffusion WebUI(AUTOMATIC1111)</b>は<b>テキストから画像</b>を生成します(画像の加工も可能)。ブラウザから使います。
+      <br><b>使い方:</b> 1) <b>起動</b>をクリック(初回は数分かかります)、2) <b>ブラウザで開く</b>、3) 「prompt」に見たいものを書いて <i>Generate</i> をクリックします。`,
+      `<b>Stable Diffusion WebUI (AUTOMATIC1111)</b> gera <b>imagens a partir de texto</b> (ou modifica imagens). Usa-se pelo navegador.
+      <br><b>Como usar:</b> 1) clique em <b>Iniciar</b> (na primeira vez leva alguns minutos), 2) <b>Abrir no navegador</b>, 3) escreva o que quer ver em “prompt” e clique em <i>Generate</i>.`),
+    forge: L(
+      `<b>Forge</b> es una versión de Stable Diffusion WebUI optimizada para usar menos memoria y ser más rápida. Se usa igual que AUTOMATIC1111.`,
+      `<b>Forge</b> is a version of Stable Diffusion WebUI optimized to use less memory and be faster. You use it the same way as AUTOMATIC1111.`,
+      `<b>Forge</b> ist eine Version der Stable Diffusion WebUI, die für geringeren Speicherverbrauch und mehr Geschwindigkeit optimiert ist. Die Bedienung ist wie bei AUTOMATIC1111.`,
+      `<b>Forge</b> est une version de Stable Diffusion WebUI optimisée pour utiliser moins de mémoire et être plus rapide. Elle s'utilise comme AUTOMATIC1111.`,
+      `<b>Forge</b> は、メモリ使用量を抑えて高速化した Stable Diffusion WebUI のバージョンです。使い方は AUTOMATIC1111 と同じです。`,
+      `<b>Forge</b> é uma versão do Stable Diffusion WebUI otimizada para usar menos memória e ser mais rápida. Usa-se igual ao AUTOMATIC1111.`),
+    comfyui: L(
+      `<b>ComfyUI</b> genera imágenes armando un “diagrama” de bloques conectados. Es más flexible (y más complejo) que A1111. Ideal para flujos avanzados o modelos nuevos como Flux.`,
+      `<b>ComfyUI</b> generates images by building a “diagram” of connected blocks. It is more flexible (and more complex) than A1111. Ideal for advanced workflows or new models like Flux.`,
+      `<b>ComfyUI</b> erzeugt Bilder, indem man ein „Diagramm“ aus verbundenen Blöcken aufbaut. Es ist flexibler (und komplexer) als A1111. Ideal für fortgeschrittene Abläufe oder neue Modelle wie Flux.`,
+      `<b>ComfyUI</b> génère des images en construisant un « schéma » de blocs connectés. Il est plus flexible (et plus complexe) que A1111. Idéal pour les flux avancés ou les nouveaux modèles comme Flux.`,
+      `<b>ComfyUI</b> は、ブロックをつなげた「図」を組み立てて画像を生成します。A1111 より柔軟(かつ複雑)で、高度なワークフローや Flux などの新しいモデルに最適です。`,
+      `<b>ComfyUI</b> gera imagens montando um “diagrama” de blocos conectados. É mais flexível (e mais complexo) que o A1111. Ideal para fluxos avançados ou modelos novos como o Flux.`),
+    kohya: L(
+      `<b>Kohya_ss</b> sirve para <b>entrenar</b> tus propios LoRAs: le das 15–50 imágenes de algo (un personaje, un estilo) y aprende a dibujarlo.
       <br>Entrenar usa <b>mucha memoria durante bastante tiempo</b> (de minutos a horas). Mientras entrena, conviene no tener Stable Diffusion ni modelos grandes de Ollama abiertos.`,
-  };
-
-  // ------------------------------------------------------------------ variables de Ollama
-  const ollama = {
-    OLLAMA_HOST: { simple: true, text: "Dirección donde escucha Ollama. Por defecto sólo tu compu puede usarlo. Poné <code>0.0.0.0:11434</code> para usarlo desde otros dispositivos de tu red (celular, otra compu).", tip: "Si no lo vas a usar desde otro dispositivo, dejalo vacío." },
-    OLLAMA_KEEP_ALIVE: { simple: true, text: "Cuánto tiempo queda un modelo cargado en memoria después de usarlo. Mientras está cargado responde al instante, pero ocupa memoria.", tip: "<code>5m</code> = 5 minutos (normal). <code>0</code> = liberar enseguida (ahorra memoria). <code>-1</code> = nunca liberar." },
-    OLLAMA_CONTEXT_LENGTH: { simple: true, text: "Cuánto texto puede “recordar” el modelo en una conversación. Más alto permite charlas o documentos más largos, pero usa más memoria.", tip: "4096 alcanza para charlas normales. 16384 o más para leer documentos largos." },
-    OLLAMA_MODELS: { simple: true, text: "Carpeta donde se guardan los modelos descargados. Cambiala si querés guardarlos en un disco externo con más espacio.", tip: "Los modelos ocupan varios GB cada uno." },
-    OLLAMA_MAX_LOADED_MODELS: { simple: false, text: "Cuántos modelos distintos pueden estar cargados a la vez. Cada uno ocupa su propia memoria.", tip: "Con 16 GB o menos, 1 es lo más seguro." },
-    OLLAMA_NUM_PARALLEL: { simple: false, text: "Cuántas preguntas atiende a la vez el mismo modelo. Sólo sirve si varias apps o personas lo usan al mismo tiempo; cada una suma memoria.", tip: "Para uso personal, 1." },
-    OLLAMA_MAX_QUEUE: { simple: false, text: "Cuántos pedidos pueden esperar en fila antes de que Ollama empiece a rechazarlos." },
-    OLLAMA_FLASH_ATTENTION: { simple: true, text: "Optimización que reduce la memoria usada y suele acelerar las respuestas, sobre todo con contextos largos.", tip: "Recomendado activarlo. Si notás errores raros, desactivalo." },
-    OLLAMA_KV_CACHE_TYPE: { simple: false, text: "Comprime la “memoria de la conversación”. <code>q8_0</code> usa la mitad de memoria casi sin perder calidad; <code>q4_0</code> aún menos pero se nota más.", tip: "Necesita Flash Attention activado. Útil si te falta memoria con contextos largos." },
-    OLLAMA_ORIGINS: { simple: false, text: "Qué páginas web pueden usar Ollama desde el navegador. Necesario para algunas extensiones o apps web.", tip: "Ej.: <code>*</code> permite todas (menos seguro)." },
-    OLLAMA_DEBUG: { simple: false, text: "Muestra información técnica detallada en los logs. Útil para diagnosticar problemas." },
-    OLLAMA_NOPRUNE: { simple: false, text: "Evita que Ollama borre al arrancar archivos de modelos que quedaron incompletos o sin uso." },
-    OLLAMA_SCHED_SPREAD: { simple: false, text: "Reparte cada modelo entre todas las placas de video (sólo si tenés más de una)." },
-    OLLAMA_GPU_OVERHEAD: { simple: false, text: "Memoria de video que Ollama deja libre a propósito (en bytes), para que otros programas no se queden sin." },
-    OLLAMA_LOAD_TIMEOUT: { simple: false, text: "Cuánto espera Ollama a que un modelo termine de cargar antes de darse por vencido. Subilo si tu disco es lento o el modelo es enorme." },
-    OLLAMA_NO_CLOUD: { simple: false, text: "Desactiva las funciones en la nube de Ollama (modelos remotos y búsqueda web). Todo queda 100% local." },
-    OLLAMA_LLM_LIBRARY: { simple: false, text: "Fuerza un motor de cálculo específico en lugar de que Ollama elija solo. Sólo para diagnóstico." },
-    OLLAMA_IGPU_ENABLE: { simple: false, text: "Permite usar la placa de video integrada (de PCs con Windows/Linux)." },
-    OLLAMA_MAX_TRANSFER_STREAMS: { simple: false, text: "Cuántas partes de un modelo se descargan en paralelo. Más puede descargar más rápido si tu internet es bueno." },
-    LLAMA_ARG_FIT: { simple: false, text: "Ajusta automáticamente cuánta memoria usa cada modelo para que entre en tu equipo." },
-    LLAMA_ARG_FIT_TARGET: { simple: false, text: "Cuánta memoria de video (en MiB) dejar libre al hacer ese ajuste automático." },
-  };
-
-  // ------------------------------------------------------------------ opciones de imagen
-  // Las claves son las banderas tal cual; `only` limita a ciertos programas.
-  const sd = {
-    // --- red y acceso
-    "--api": { simple: true, text: "Permite que otros programas (y este launcher) controlen la WebUI: ver qué modelo está cargado, liberarlo de memoria, generar imágenes automáticamente.", tip: "Recomendado activarlo." },
-    "--listen": { simple: true, text: "Permite abrir la interfaz desde otros dispositivos de tu red (celular, tablet, otra compu) usando la IP de esta compu.", tip: "Dejalo apagado si sólo la usás en esta compu." },
-    "--port": { simple: true, text: "Número de puerto donde se abre la interfaz (la dirección queda <code>http://127.0.0.1:PUERTO</code>). Cambialo si querés tener dos programas abiertos a la vez.", tip: "Vacío = el de siempre (7860 en A1111/Forge, 8188 en ComfyUI)." },
-    "--server_port": { simple: true, text: "Número de puerto donde se abre la interfaz de Kohya. Cambialo si ya tenés Stable Diffusion abierto en el 7860.", tip: "Vacío = 7860 o el siguiente libre." },
-    "--autolaunch": { simple: true, text: "Abre la interfaz en el navegador automáticamente cuando termina de arrancar." },
-    "--auto-launch": { simple: true, text: "Abre ComfyUI en el navegador automáticamente al arrancar." },
-    "--inbrowser": { simple: true, text: "Abre Kohya en el navegador automáticamente al arrancar." },
-    "--share": { simple: false, text: "Crea un enlace público temporal en internet (gradio.live) para usar la interfaz desde cualquier lugar.", tip: "⚠️ Cualquiera con el enlace puede usar tu compu para generar. Usalo con cuidado." },
-    "--gradio-auth": { simple: false, text: "Pide usuario y contraseña para entrar a la interfaz. Formato: <code>usuario:contraseña</code>.", tip: "Recomendado si activás --listen o --share." },
-    "--username": { simple: false, text: "Usuario para entrar a Kohya (junto con --password). Útil si lo abrís en red." },
-    "--password": { simple: false, text: "Contraseña para entrar a Kohya." },
-    "--headless": { simple: false, text: "Para usar Kohya en un servidor sin pantalla: oculta botones que abren ventanas para elegir archivos." },
-    "--theme": { simple: true, text: "Colores de la interfaz: claro (<code>light</code>) u oscuro (<code>dark</code>)." },
-    "--language": { simple: false, text: "Idioma de la interfaz de Kohya (si hay traducción disponible)." },
-    "--enable-insecure-extension-access": { simple: false, text: "Permite instalar extensiones desde la interfaz aunque esté abierta en red.", tip: "⚠️ Riesgoso si otras personas tienen acceso." },
-    "--nowebui": { simple: false, text: "Arranca sólo la API, sin la interfaz web. Para usarla desde otros programas." },
-    "--cors-allow-origins": { simple: false, text: "Qué páginas web pueden usar la API desde el navegador." },
-
-    // --- memoria y rendimiento
-    "--medvram": { simple: true, text: "Ahorra memoria cargando partes del modelo sólo cuando se necesitan. Genera un poco más lento.", tip: "Probalo si aparece “out of memory” con modelos SD 1.5." },
-    "--medvram-sdxl": { simple: true, text: "Lo mismo que --medvram pero sólo se activa con modelos SDXL (los grandes, de 1024px).", tip: "Recomendado en compus con 16 GB o menos si usás SDXL." },
-    "--lowvram": { simple: true, text: "Ahorro de memoria extremo. Mucho más lento.", tip: "Sólo si --medvram no alcanza." },
-    "--lowram": { simple: false, text: "Carga los modelos directo a la memoria de video en vez de pasar por la RAM. Útil en PCs con poca RAM y buena placa de video." },
-    "--no-half": { simple: true, text: "Calcula con más precisión (32 bits). Evita imágenes negras o errores en algunos equipos, pero usa el doble de memoria y es más lento.", tip: "En Mac con chip Apple suele hacer falta para modelos SD 1.5." },
-    "--no-half-vae": { simple: true, text: "Lo mismo que --no-half pero sólo para la parte que convierte el resultado en imagen (VAE). Arregla imágenes negras gastando poca memoria extra.", tip: "Ya viene activado en Mac." },
-    "--upcast-sampling": { simple: true, text: "Alternativa más liviana a --no-half: evita errores de precisión usando menos memoria.", tip: "Ya viene activado en Mac." },
-    "--precision": { simple: false, text: "Precisión numérica de los cálculos. <code>autocast</code> elige sola; <code>full</code> es más exacta pero más lenta." },
-    "--opt-sub-quad-attention": { simple: true, text: "Optimización que reduce mucho la memoria al generar imágenes grandes.", tip: "Buena opción en Mac y en placas AMD." },
-    "--opt-split-attention": { simple: false, text: "Optimización de memoria clásica. Normalmente se elige sola." },
-    "--opt-split-attention-v1": { simple: false, text: "Versión vieja de la optimización anterior: usa menos memoria pero es más lenta." },
-    "--opt-sdp-attention": { simple: false, text: "Optimización moderna de PyTorch, rápida en placas NVIDIA recientes." },
-    "--opt-sdp-no-mem-attention": { simple: false, text: "Como la anterior pero con resultados idénticos en cada generación (más reproducible)." },
-    "--xformers": { simple: false, text: "Optimización para placas NVIDIA que acelera y ahorra memoria.", tip: "Sólo NVIDIA. En Mac no tiene efecto." },
-    "--disable-nan-check": { simple: false, text: "Desactiva el control que detecta imágenes negras/rotas. Sólo para diagnóstico." },
-    "--use-cpu": { simple: false, text: "Usa el procesador (no la placa de video) para ciertas partes. Mucho más lento; sólo para equipos sin placa compatible." },
-    "--skip-load-model-at-start": { simple: true, text: "No carga ningún modelo al arrancar: la interfaz abre más rápido y no ocupa memoria hasta que elijas uno." },
-    "--ckpt": { simple: true, text: "Qué modelo (checkpoint) cargar al arrancar. Define el estilo de las imágenes.", tip: "Si lo dejás vacío, usa el último que elegiste en la interfaz." },
-    "--cpu": { simple: false, text: "Hace todo con el procesador. Muy lento; sólo si no tenés placa de video compatible." },
-    "--highvram": { simple: false, text: "Mantiene todos los modelos en la memoria de video para ir más rápido. Sólo con placas de mucha memoria." },
-    "--normalvram": { simple: false, text: "Fuerza el uso normal de memoria si ComfyUI eligió el modo bajo por error." },
-    "--force-fp16": { simple: false, text: "Fuerza cálculos de 16 bits: ahorra memoria pero puede dar errores en algunos equipos." },
-    "--preview-method": { simple: true, text: "Cómo mostrar la imagen mientras se va generando. <code>auto</code> es lo más cómodo; <code>none</code> ahorra un poco de tiempo." },
-
-    // --- rutas
-    "--data-dir": { simple: false, text: "Carpeta base donde se guardan modelos, configuración y resultados." },
-    "--models-dir": { simple: false, text: "Carpeta donde están los modelos. Útil para compartir modelos entre varias instalaciones o guardarlos en un disco externo." },
-    "--ckpt-dir": { simple: false, text: "Carpeta extra donde buscar checkpoints (modelos de imagen)." },
-    "--lora-dir": { simple: false, text: "Carpeta extra donde buscar LoRAs." },
-    "--vae-dir": { simple: false, text: "Carpeta donde buscar archivos VAE (afinan los colores y detalles finales)." },
-    "--embeddings-dir": { simple: false, text: "Carpeta de embeddings (palabras clave entrenadas, por ejemplo para mejorar manos o evitar defectos)." },
-    "--output-directory": { simple: false, text: "Carpeta donde ComfyUI guarda las imágenes generadas." },
-    "--config": { simple: false, text: "Archivo de configuración a usar." },
-
-    // --- arranque
-    "--skip-torch-cuda-test": { simple: false, text: "Salta la comprobación de placa NVIDIA. Necesario en Mac (ya viene activado)." },
-    "--skip-install": { simple: false, text: "No revisa ni instala dependencias al arrancar: arranca más rápido, pero no se actualiza nada." },
-    "--skip-prepare-environment": { simple: false, text: "Salta toda la preparación inicial. Arranca más rápido si ya está todo instalado." },
-    "--skip-version-check": { simple: false, text: "No comprueba las versiones de los componentes al arrancar." },
-    "--update-check": { simple: false, text: "Avisa al arrancar si hay una versión nueva." },
-    "--update-all-extensions": { simple: false, text: "Actualiza todas las extensiones al arrancar." },
-    "--reinstall-torch": { simple: false, text: "Reinstala PyTorch (el motor de cálculo). Usalo si algo se rompió después de una actualización." },
-    "--disable-all-extensions": { simple: false, text: "Arranca sin ninguna extensión. Útil para saber si una extensión está causando un problema." },
-    "--disable-extra-extensions": { simple: false, text: "Arranca sólo con las extensiones que vienen incluidas." },
-    "--loglevel": { simple: false, text: "Cuánto detalle mostrar en los logs (DEBUG = todo, ERROR = sólo errores)." },
-    "--debug": { simple: false, text: "Muestra información técnica detallada en los logs." },
-    "--noverify": { simple: false, text: "Kohya no verifica las dependencias al arrancar (más rápido)." },
-    "--do_not_share": { simple: false, text: "Kohya: oculta la opción de compartir públicamente." },
-    "--requirements": { simple: false, text: "Kohya: archivo de dependencias a usar (lo elige solo según tu sistema)." },
-    "--use-ipex": { simple: false, text: "Usa placas de video Intel Arc." },
-    "--use-rocm": { simple: false, text: "Usa placas de video AMD (Linux)." },
+      `<b>Kohya_ss</b> is used to <b>train</b> your own LoRAs: you give it 15–50 images of something (a character, a style) and it learns to draw it.
+      <br>Training uses <b>a lot of memory for quite a while</b> (minutes to hours). While it trains, it's best not to have Stable Diffusion or large Ollama models open.`,
+      `<b>Kohya_ss</b> dient zum <b>Trainieren</b> eigener LoRAs: Du gibst 15–50 Bilder von etwas (einer Figur, einem Stil) vor und es lernt, es zu zeichnen.
+      <br>Das Training belegt <b>viel Speicher über längere Zeit</b> (Minuten bis Stunden). Während des Trainings sollten Stable Diffusion und große Ollama-Modelle nicht geöffnet sein.`,
+      `<b>Kohya_ss</b> sert à <b>entraîner</b> vos propres LoRA : vous lui donnez 15 à 50 images de quelque chose (un personnage, un style) et il apprend à le dessiner.
+      <br>L'entraînement utilise <b>beaucoup de mémoire pendant assez longtemps</b> (de quelques minutes à plusieurs heures). Pendant l'entraînement, il vaut mieux ne pas avoir Stable Diffusion ni de gros modèles Ollama ouverts.`,
+      `<b>Kohya_ss</b> は、独自の LoRA を<b>トレーニング</b>するためのものです。あるもの(キャラクターやスタイル)の画像を 15〜50 枚渡すと、それを描けるように学習します。
+      <br>トレーニングは<b>長時間にわたって大量のメモリ</b>を使います(数分〜数時間)。トレーニング中は、Stable Diffusion や大きな Ollama モデルを開かないことをおすすめします。`,
+      `O <b>Kohya_ss</b> serve para <b>treinar</b> seus próprios LoRAs: você dá 15–50 imagens de algo (um personagem, um estilo) e ele aprende a desenhá-lo.
+      <br>Treinar usa <b>muita memória por bastante tempo</b> (de minutos a horas). Enquanto treina, convém não ter o Stable Diffusion nem modelos grandes do Ollama abertos.`),
   };
 
   // ------------------------------------------------------------------ para qué sirve cada app
   const purpose = {
-    ollama: "Chat con inteligencia artificial en tu compu, como ChatGPT pero sin internet y privado.",
-    a1111: "Crea imágenes a partir de una descripción en texto. Se usa desde el navegador.",
-    forge: "Crea imágenes a partir de texto, como A1111 pero más rápido y con menos memoria.",
-    comfyui: "Crea imágenes armando flujos con bloques. Más flexible, para usuarios avanzados.",
-    kohya: "Entrena tus propios estilos o personajes (LoRA) para después usarlos al crear imágenes.",
+    ollama: L(`Chat con inteligencia artificial en tu compu, como ChatGPT pero sin internet y privado.`,
+      `Chat with artificial intelligence on your computer, like ChatGPT but without internet and private.`,
+      `Chat mit künstlicher Intelligenz auf deinem Computer, wie ChatGPT, aber ohne Internet und privat.`,
+      `Discutez avec une intelligence artificielle sur votre ordinateur, comme ChatGPT mais sans internet et en privé.`,
+      `コンピューター上で AI とチャットできます。ChatGPT のようですが、インターネット不要でプライベートです。`,
+      `Chat com inteligência artificial no seu computador, como o ChatGPT, mas sem internet e privado.`),
+    a1111: L(`Crea imágenes a partir de una descripción en texto. Se usa desde el navegador.`,
+      `Creates images from a text description. You use it from the browser.`,
+      `Erstellt Bilder aus einer Textbeschreibung. Wird im Browser benutzt.`,
+      `Crée des images à partir d'une description textuelle. S'utilise depuis le navigateur.`,
+      `テキストの説明から画像を作成します。ブラウザから使います。`,
+      `Cria imagens a partir de uma descrição em texto. Usa-se pelo navegador.`),
+    forge: L(`Crea imágenes a partir de texto, como A1111 pero más rápido y con menos memoria.`,
+      `Creates images from text, like A1111 but faster and with less memory.`,
+      `Erstellt Bilder aus Text, wie A1111, aber schneller und mit weniger Speicher.`,
+      `Crée des images à partir de texte, comme A1111 mais plus rapide et avec moins de mémoire.`,
+      `テキストから画像を作成します。A1111 と同様ですが、より高速でメモリ使用量も少なめです。`,
+      `Cria imagens a partir de texto, como o A1111, mas mais rápido e com menos memória.`),
+    comfyui: L(`Crea imágenes armando flujos con bloques. Más flexible, para usuarios avanzados.`,
+      `Creates images by building workflows with blocks. More flexible, for advanced users.`,
+      `Erstellt Bilder, indem man Abläufe aus Blöcken aufbaut. Flexibler, für fortgeschrittene Nutzer.`,
+      `Crée des images en construisant des flux avec des blocs. Plus flexible, pour utilisateurs avancés.`,
+      `ブロックでワークフローを組み立てて画像を作成します。より柔軟で、上級者向けです。`,
+      `Cria imagens montando fluxos com blocos. Mais flexível, para usuários avançados.`),
+    kohya: L(`Entrena tus propios estilos o personajes (LoRA) para después usarlos al crear imágenes.`,
+      `Trains your own styles or characters (LoRA) to use later when creating images.`,
+      `Trainiert eigene Stile oder Figuren (LoRA), die du später beim Erstellen von Bildern verwenden kannst.`,
+      `Entraîne vos propres styles ou personnages (LoRA) pour les utiliser ensuite lors de la création d'images.`,
+      `独自のスタイルやキャラクター(LoRA)をトレーニングし、あとで画像作成に使えるようにします。`,
+      `Treina seus próprios estilos ou personagens (LoRA) para usar depois na criação de imagens.`),
+  };
+
+  // ------------------------------------------------------------------ variables de Ollama
+  const ollama = {
+    OLLAMA_HOST: O(true,
+      L(`Dirección donde escucha Ollama. Por defecto sólo tu compu puede usarlo. Poné <code>0.0.0.0:11434</code> para usarlo desde otros dispositivos de tu red (celular, otra compu).`,
+        `Address where Ollama listens. By default only your computer can use it. Set <code>0.0.0.0:11434</code> to use it from other devices on your network (phone, another computer).`,
+        `Adresse, auf der Ollama lauscht. Standardmäßig kann nur dein Computer es nutzen. Setze <code>0.0.0.0:11434</code>, um es von anderen Geräten in deinem Netzwerk zu nutzen (Handy, anderer Computer).`,
+        `Adresse sur laquelle Ollama écoute. Par défaut, seul votre ordinateur peut l'utiliser. Indiquez <code>0.0.0.0:11434</code> pour l'utiliser depuis d'autres appareils de votre réseau (téléphone, autre ordinateur).`,
+        `Ollama が待ち受けるアドレスです。デフォルトでは、このコンピューターからのみ使えます。<code>0.0.0.0:11434</code> にすると、ネットワーク内の他のデバイス(スマートフォン、別のコンピューター)から使えます。`,
+        `Endereço em que o Ollama escuta. Por padrão, só o seu computador pode usá-lo. Defina <code>0.0.0.0:11434</code> para usá-lo de outros dispositivos da sua rede (celular, outro computador).`),
+      L(`Si no lo vas a usar desde otro dispositivo, dejalo vacío.`, `If you won't use it from another device, leave it empty.`, `Wenn du es nicht von einem anderen Gerät nutzt, lass es leer.`, `Si vous ne l'utiliserez pas depuis un autre appareil, laissez vide.`, `他のデバイスから使わない場合は、空のままにしてください。`, `Se você não for usá-lo de outro dispositivo, deixe vazio.`)),
+    OLLAMA_KEEP_ALIVE: O(true,
+      L(`Cuánto tiempo queda un modelo cargado en memoria después de usarlo. Mientras está cargado responde al instante, pero ocupa memoria.`,
+        `How long a model stays loaded in memory after use. While loaded it responds instantly, but it takes up memory.`,
+        `Wie lange ein Modell nach der Nutzung im Speicher geladen bleibt. Solange es geladen ist, antwortet es sofort, belegt aber Speicher.`,
+        `Combien de temps un modèle reste chargé en mémoire après utilisation. Tant qu'il est chargé, il répond instantanément, mais il occupe de la mémoire.`,
+        `使用後にモデルがメモリに読み込まれたままになる時間です。読み込まれている間は即座に応答しますが、メモリを占有します。`,
+        `Quanto tempo um modelo fica carregado na memória após o uso. Enquanto está carregado, responde na hora, mas ocupa memória.`),
+      L(`<code>5m</code> = 5 minutos (normal). <code>0</code> = liberar enseguida (ahorra memoria). <code>-1</code> = nunca liberar.`,
+        `<code>5m</code> = 5 minutes (normal). <code>0</code> = free right away (saves memory). <code>-1</code> = never free.`,
+        `<code>5m</code> = 5 Minuten (normal). <code>0</code> = sofort freigeben (spart Speicher). <code>-1</code> = nie freigeben.`,
+        `<code>5m</code> = 5 minutes (normal). <code>0</code> = libérer immédiatement (économise la mémoire). <code>-1</code> = ne jamais libérer.`,
+        `<code>5m</code> = 5 分(通常)。<code>0</code> = すぐに解放(メモリを節約)。<code>-1</code> = 解放しない。`,
+        `<code>5m</code> = 5 minutos (normal). <code>0</code> = liberar imediatamente (economiza memória). <code>-1</code> = nunca liberar.`)),
+    OLLAMA_CONTEXT_LENGTH: O(true,
+      L(`Cuánto texto puede “recordar” el modelo en una conversación. Más alto permite charlas o documentos más largos, pero usa más memoria.`,
+        `How much text the model can “remember” in a conversation. Higher allows longer chats or documents, but uses more memory.`,
+        `Wie viel Text sich das Modell in einer Unterhaltung „merken“ kann. Höher erlaubt längere Unterhaltungen oder Dokumente, braucht aber mehr Speicher.`,
+        `La quantité de texte que le modèle peut « retenir » dans une conversation. Plus élevé permet des conversations ou documents plus longs, mais utilise plus de mémoire.`,
+        `会話の中でモデルが「覚えて」おけるテキストの量です。大きくすると長い会話やドキュメントを扱えますが、メモリも多く使います。`,
+        `Quanto texto o modelo pode “lembrar” em uma conversa. Mais alto permite conversas ou documentos mais longos, mas usa mais memória.`),
+      L(`4096 alcanza para charlas normales. 16384 o más para leer documentos largos.`,
+        `4096 is enough for normal chats. 16384 or more for reading long documents.`,
+        `4096 reicht für normale Unterhaltungen. 16384 oder mehr zum Lesen langer Dokumente.`,
+        `4096 suffit pour des conversations normales. 16384 ou plus pour lire de longs documents.`,
+        `通常の会話なら 4096 で十分です。長いドキュメントを読ませるなら 16384 以上にします。`,
+        `4096 basta para conversas normais. 16384 ou mais para ler documentos longos.`)),
+    OLLAMA_MODELS: O(true,
+      L(`Carpeta donde se guardan los modelos descargados. Cambiala si querés guardarlos en un disco externo con más espacio.`,
+        `Folder where downloaded models are stored. Change it if you want to keep them on an external drive with more space.`,
+        `Ordner, in dem heruntergeladene Modelle gespeichert werden. Ändere ihn, wenn du sie auf einer externen Festplatte mit mehr Platz speichern möchtest.`,
+        `Dossier où sont stockés les modèles téléchargés. Modifiez-le si vous voulez les ranger sur un disque externe avec plus d'espace.`,
+        `ダウンロードしたモデルの保存先フォルダーです。空き容量の大きい外付けディスクに保存したい場合は変更してください。`,
+        `Pasta onde os modelos baixados são guardados. Mude se quiser guardá-los em um disco externo com mais espaço.`),
+      L(`Los modelos ocupan varios GB cada uno.`, `Each model takes up several GB.`, `Jedes Modell belegt mehrere GB.`, `Chaque modèle occupe plusieurs Go.`, `モデルは 1 つにつき数 GB を占めます。`, `Cada modelo ocupa vários GB.`)),
+    OLLAMA_MAX_LOADED_MODELS: O(false,
+      L(`Cuántos modelos distintos pueden estar cargados a la vez. Cada uno ocupa su propia memoria.`,
+        `How many different models can be loaded at once. Each one takes its own memory.`,
+        `Wie viele verschiedene Modelle gleichzeitig geladen sein können. Jedes belegt eigenen Speicher.`,
+        `Combien de modèles différents peuvent être chargés en même temps. Chacun occupe sa propre mémoire.`,
+        `同時に読み込める異なるモデルの数です。それぞれが専用のメモリを使います。`,
+        `Quantos modelos diferentes podem estar carregados ao mesmo tempo. Cada um ocupa sua própria memória.`),
+      L(`Con 16 GB o menos, 1 es lo más seguro.`, `With 16 GB or less, 1 is the safest.`, `Mit 16 GB oder weniger ist 1 am sichersten.`, `Avec 16 Go ou moins, 1 est le plus sûr.`, `16 GB 以下なら 1 が最も安全です。`, `Com 16 GB ou menos, 1 é o mais seguro.`)),
+    OLLAMA_NUM_PARALLEL: O(false,
+      L(`Cuántas preguntas atiende a la vez el mismo modelo. Sólo sirve si varias apps o personas lo usan al mismo tiempo; cada una suma memoria.`,
+        `How many requests the same model handles at once. Only useful if several apps or people use it at the same time; each one adds memory.`,
+        `Wie viele Anfragen dasselbe Modell gleichzeitig bearbeitet. Nur sinnvoll, wenn mehrere Apps oder Personen es gleichzeitig nutzen; jede braucht zusätzlichen Speicher.`,
+        `Combien de requêtes le même modèle traite à la fois. Utile seulement si plusieurs apps ou personnes l'utilisent en même temps ; chacune ajoute de la mémoire.`,
+        `同じモデルが同時に処理するリクエストの数です。複数のアプリや人が同時に使う場合にのみ役立ち、1 つ増えるごとにメモリも増えます。`,
+        `Quantas solicitações o mesmo modelo atende ao mesmo tempo. Só serve se vários apps ou pessoas o usam simultaneamente; cada uma soma memória.`),
+      L(`Para uso personal, 1.`, `For personal use, 1.`, `Für die persönliche Nutzung: 1.`, `Pour un usage personnel, 1.`, `個人利用なら 1 です。`, `Para uso pessoal, 1.`)),
+    OLLAMA_MAX_QUEUE: O(false,
+      L(`Cuántos pedidos pueden esperar en fila antes de que Ollama empiece a rechazarlos.`,
+        `How many requests can wait in line before Ollama starts rejecting them.`,
+        `Wie viele Anfragen in der Warteschlange warten können, bevor Ollama beginnt, sie abzulehnen.`,
+        `Combien de requêtes peuvent attendre en file avant qu'Ollama ne commence à les refuser.`,
+        `Ollama がリクエストを拒否し始めるまでに、待機列に並べるリクエストの数です。`,
+        `Quantos pedidos podem esperar na fila antes de o Ollama começar a recusá-los.`)),
+    OLLAMA_FLASH_ATTENTION: O(true,
+      L(`Optimización que reduce la memoria usada y suele acelerar las respuestas, sobre todo con contextos largos.`,
+        `An optimization that reduces memory use and usually speeds up responses, especially with long contexts.`,
+        `Eine Optimierung, die den Speicherverbrauch senkt und Antworten meist beschleunigt, besonders bei langen Kontexten.`,
+        `Une optimisation qui réduit la mémoire utilisée et accélère généralement les réponses, surtout avec de longs contextes.`,
+        `メモリ使用量を減らし、特に長いコンテキストで応答を速くする最適化です。`,
+        `Otimização que reduz a memória usada e costuma acelerar as respostas, principalmente com contextos longos.`),
+      L(`Recomendado activarlo. Si notás errores raros, desactivalo.`,
+        `Recommended to turn on. If you notice strange errors, turn it off.`,
+        `Aktivieren wird empfohlen. Wenn du merkwürdige Fehler bemerkst, deaktiviere es.`,
+        `Il est recommandé de l'activer. Si vous remarquez des erreurs étranges, désactivez-le.`,
+        `有効にすることをおすすめします。おかしなエラーが出る場合は無効にしてください。`,
+        `Recomendado ativar. Se notar erros estranhos, desative.`)),
+    OLLAMA_KV_CACHE_TYPE: O(false,
+      L(`Comprime la “memoria de la conversación”. <code>q8_0</code> usa la mitad de memoria casi sin perder calidad; <code>q4_0</code> aún menos pero se nota más.`,
+        `Compresses the “conversation memory”. <code>q8_0</code> uses half the memory with almost no quality loss; <code>q4_0</code> even less but it's more noticeable.`,
+        `Komprimiert das „Gesprächsgedächtnis“. <code>q8_0</code> braucht halb so viel Speicher fast ohne Qualitätsverlust; <code>q4_0</code> noch weniger, ist aber deutlicher spürbar.`,
+        `Compresse la « mémoire de la conversation ». <code>q8_0</code> utilise moitié moins de mémoire presque sans perte de qualité ; <code>q4_0</code> encore moins, mais c'est plus visible.`,
+        `「会話の記憶」を圧縮します。<code>q8_0</code> は品質をほとんど落とさずにメモリを半分にします。<code>q4_0</code> はさらに少なくなりますが、違いが目立ちます。`,
+        `Comprime a “memória da conversa”. <code>q8_0</code> usa metade da memória quase sem perder qualidade; <code>q4_0</code> ainda menos, mas é mais perceptível.`),
+      L(`Necesita Flash Attention activado. Útil si te falta memoria con contextos largos.`,
+        `Needs Flash Attention enabled. Useful if you run low on memory with long contexts.`,
+        `Benötigt aktiviertes Flash Attention. Nützlich, wenn dir bei langen Kontexten der Speicher ausgeht.`,
+        `Nécessite que Flash Attention soit activé. Utile si vous manquez de mémoire avec de longs contextes.`,
+        `Flash Attention を有効にする必要があります。長いコンテキストでメモリが足りないときに便利です。`,
+        `Precisa do Flash Attention ativado. Útil se faltar memória com contextos longos.`)),
+    OLLAMA_ORIGINS: O(false,
+      L(`Qué páginas web pueden usar Ollama desde el navegador. Necesario para algunas extensiones o apps web.`,
+        `Which web pages can use Ollama from the browser. Needed for some extensions or web apps.`,
+        `Welche Webseiten Ollama aus dem Browser nutzen dürfen. Für manche Erweiterungen oder Web-Apps nötig.`,
+        `Quelles pages web peuvent utiliser Ollama depuis le navigateur. Nécessaire pour certaines extensions ou apps web.`,
+        `ブラウザから Ollama を利用できるウェブページを指定します。一部の拡張機能やウェブアプリで必要です。`,
+        `Quais páginas web podem usar o Ollama a partir do navegador. Necessário para algumas extensões ou apps web.`),
+      L(`Ej.: <code>*</code> permite todas (menos seguro).`, `E.g. <code>*</code> allows all (less secure).`, `Z. B. <code>*</code> erlaubt alle (weniger sicher).`, `P. ex. <code>*</code> les autorise toutes (moins sûr).`, `例: <code>*</code> はすべて許可します(安全性は下がります)。`, `Ex.: <code>*</code> permite todas (menos seguro).`)),
+    OLLAMA_DEBUG: O(false,
+      L(`Muestra información técnica detallada en los logs. Útil para diagnosticar problemas.`,
+        `Shows detailed technical information in the logs. Useful for diagnosing problems.`,
+        `Zeigt detaillierte technische Informationen in den Protokollen an. Nützlich zur Fehlersuche.`,
+        `Affiche des informations techniques détaillées dans les journaux. Utile pour diagnostiquer des problèmes.`,
+        `ログに詳細な技術情報を表示します。問題の診断に役立ちます。`,
+        `Mostra informações técnicas detalhadas nos logs. Útil para diagnosticar problemas.`)),
+    OLLAMA_NOPRUNE: O(false,
+      L(`Evita que Ollama borre al arrancar archivos de modelos que quedaron incompletos o sin uso.`,
+        `Prevents Ollama from deleting, at startup, model files that were left incomplete or unused.`,
+        `Verhindert, dass Ollama beim Start unvollständige oder ungenutzte Modelldateien löscht.`,
+        `Empêche Ollama de supprimer au démarrage les fichiers de modèles restés incomplets ou inutilisés.`,
+        `起動時に、不完全または未使用のモデルファイルを Ollama が削除しないようにします。`,
+        `Evita que o Ollama apague, ao iniciar, arquivos de modelos que ficaram incompletos ou sem uso.`)),
+    OLLAMA_SCHED_SPREAD: O(false,
+      L(`Reparte cada modelo entre todas las placas de video (sólo si tenés más de una).`,
+        `Spreads each model across all graphics cards (only if you have more than one).`,
+        `Verteilt jedes Modell auf alle Grafikkarten (nur wenn du mehr als eine hast).`,
+        `Répartit chaque modèle sur toutes les cartes graphiques (seulement si vous en avez plusieurs).`,
+        `各モデルをすべてのグラフィックカードに分散させます(複数ある場合のみ)。`,
+        `Distribui cada modelo entre todas as placas de vídeo (só se você tiver mais de uma).`)),
+    OLLAMA_GPU_OVERHEAD: O(false,
+      L(`Memoria de video que Ollama deja libre a propósito (en bytes), para que otros programas no se queden sin.`,
+        `Video memory that Ollama deliberately leaves free (in bytes), so other programs don't run out.`,
+        `Grafikspeicher, den Ollama absichtlich frei lässt (in Bytes), damit anderen Programmen nicht der Speicher ausgeht.`,
+        `Mémoire vidéo qu'Ollama laisse volontairement libre (en octets), pour que les autres programmes n'en manquent pas.`,
+        `Ollama が意図的に空けておくビデオメモリ(バイト単位)です。他のプログラムがメモリ不足にならないようにします。`,
+        `Memória de vídeo que o Ollama deixa livre de propósito (em bytes), para que outros programas não fiquem sem.`)),
+    OLLAMA_LOAD_TIMEOUT: O(false,
+      L(`Cuánto espera Ollama a que un modelo termine de cargar antes de darse por vencido. Subilo si tu disco es lento o el modelo es enorme.`,
+        `How long Ollama waits for a model to finish loading before giving up. Raise it if your disk is slow or the model is huge.`,
+        `Wie lange Ollama wartet, bis ein Modell fertig geladen ist, bevor es aufgibt. Erhöhe den Wert, wenn deine Festplatte langsam oder das Modell riesig ist.`,
+        `Combien de temps Ollama attend qu'un modèle finisse de se charger avant d'abandonner. Augmentez-le si votre disque est lent ou si le modèle est énorme.`,
+        `Ollama がモデルの読み込み完了を待つ時間です(それを過ぎると諦めます)。ディスクが遅い場合やモデルが巨大な場合は長くしてください。`,
+        `Quanto o Ollama espera um modelo terminar de carregar antes de desistir. Aumente se o seu disco for lento ou o modelo for enorme.`)),
+    OLLAMA_NO_CLOUD: O(false,
+      L(`Desactiva las funciones en la nube de Ollama (modelos remotos y búsqueda web). Todo queda 100% local.`,
+        `Disables Ollama's cloud features (remote models and web search). Everything stays 100% local.`,
+        `Deaktiviert die Cloud-Funktionen von Ollama (Remote-Modelle und Websuche). Alles bleibt zu 100 % lokal.`,
+        `Désactive les fonctions cloud d'Ollama (modèles distants et recherche web). Tout reste 100 % local.`,
+        `Ollama のクラウド機能(リモートモデルとウェブ検索)を無効にします。すべてが 100% ローカルで動作します。`,
+        `Desativa os recursos de nuvem do Ollama (modelos remotos e busca na web). Tudo fica 100% local.`)),
+    OLLAMA_LLM_LIBRARY: O(false,
+      L(`Fuerza un motor de cálculo específico en lugar de que Ollama elija solo. Sólo para diagnóstico.`,
+        `Forces a specific compute engine instead of letting Ollama choose by itself. For diagnostics only.`,
+        `Erzwingt eine bestimmte Berechnungs-Engine, statt Ollama selbst wählen zu lassen. Nur zur Diagnose.`,
+        `Force un moteur de calcul précis au lieu de laisser Ollama choisir seul. Uniquement pour le diagnostic.`,
+        `Ollama に任せず、特定の計算エンジンを強制します。診断用です。`,
+        `Força um mecanismo de cálculo específico em vez de deixar o Ollama escolher sozinho. Apenas para diagnóstico.`)),
+    OLLAMA_IGPU_ENABLE: O(false,
+      L(`Permite usar la placa de video integrada (de PCs con Windows/Linux).`,
+        `Allows using the integrated graphics card (on Windows/Linux PCs).`,
+        `Erlaubt die Nutzung der integrierten Grafikkarte (bei Windows-/Linux-PCs).`,
+        `Permet d'utiliser la carte graphique intégrée (sur les PC Windows/Linux).`,
+        `内蔵グラフィックス(Windows/Linux の PC)の使用を許可します。`,
+        `Permite usar a placa de vídeo integrada (de PCs com Windows/Linux).`)),
+    OLLAMA_MAX_TRANSFER_STREAMS: O(false,
+      L(`Cuántas partes de un modelo se descargan en paralelo. Más puede descargar más rápido si tu internet es bueno.`,
+        `How many parts of a model are downloaded in parallel. More can download faster if your internet is good.`,
+        `Wie viele Teile eines Modells parallel heruntergeladen werden. Mehr kann schneller sein, wenn dein Internet gut ist.`,
+        `Combien de parties d'un modèle sont téléchargées en parallèle. Plus peut télécharger plus vite si votre connexion est bonne.`,
+        `モデルの何分割分を並列でダウンロードするかです。回線が速ければ、増やすとダウンロードが速くなることがあります。`,
+        `Quantas partes de um modelo são baixadas em paralelo. Mais pode baixar mais rápido se a sua internet for boa.`)),
+    LLAMA_ARG_FIT: O(false,
+      L(`Ajusta automáticamente cuánta memoria usa cada modelo para que entre en tu equipo.`,
+        `Automatically adjusts how much memory each model uses so it fits on your machine.`,
+        `Passt automatisch an, wie viel Speicher jedes Modell nutzt, damit es auf deinen Rechner passt.`,
+        `Ajuste automatiquement la mémoire utilisée par chaque modèle pour qu'il tienne sur votre machine.`,
+        `各モデルが使うメモリ量を自動調整して、お使いのマシンに収まるようにします。`,
+        `Ajusta automaticamente quanta memória cada modelo usa para que caiba no seu equipamento.`)),
+    LLAMA_ARG_FIT_TARGET: O(false,
+      L(`Cuánta memoria de video (en MiB) dejar libre al hacer ese ajuste automático.`,
+        `How much video memory (in MiB) to leave free when doing that automatic adjustment.`,
+        `Wie viel Grafikspeicher (in MiB) bei dieser automatischen Anpassung frei bleiben soll.`,
+        `Quelle quantité de mémoire vidéo (en Mio) laisser libre lors de cet ajustement automatique.`,
+        `この自動調整の際に空けておくビデオメモリの量(MiB)です。`,
+        `Quanta memória de vídeo (em MiB) deixar livre ao fazer esse ajuste automático.`)),
+  };
+
+  // ------------------------------------------------------------------ opciones de imagen
+  // Las claves son las banderas tal cual.
+  const sd = {
+    // --- red y acceso
+    "--api": O(true,
+      L(`Permite que otros programas (y este launcher) controlen la WebUI: ver qué modelo está cargado, liberarlo de memoria, generar imágenes automáticamente.`,
+        `Lets other programs (and this launcher) control the WebUI: see which model is loaded, free it from memory, generate images automatically.`,
+        `Erlaubt anderen Programmen (und diesem Launcher), die WebUI zu steuern: sehen, welches Modell geladen ist, es aus dem Speicher freigeben, Bilder automatisch erzeugen.`,
+        `Permet à d'autres programmes (et à ce launcher) de contrôler la WebUI : voir quel modèle est chargé, le libérer de la mémoire, générer des images automatiquement.`,
+        `他のプログラム(およびこのランチャー)が WebUI を制御できるようにします。読み込まれているモデルの確認、メモリからの解放、画像の自動生成などが可能になります。`,
+        `Permite que outros programas (e este launcher) controlem a WebUI: ver qual modelo está carregado, liberá-lo da memória, gerar imagens automaticamente.`),
+      L(`Recomendado activarlo.`, `Recommended to turn on.`, `Aktivieren wird empfohlen.`, `Il est recommandé de l'activer.`, `有効にすることをおすすめします。`, `Recomendado ativar.`)),
+    "--listen": O(true,
+      L(`Permite abrir la interfaz desde otros dispositivos de tu red (celular, tablet, otra compu) usando la IP de esta compu.`,
+        `Lets you open the interface from other devices on your network (phone, tablet, another computer) using this computer's IP.`,
+        `Erlaubt es, die Oberfläche von anderen Geräten in deinem Netzwerk (Handy, Tablet, anderer Computer) über die IP dieses Computers zu öffnen.`,
+        `Permet d'ouvrir l'interface depuis d'autres appareils de votre réseau (téléphone, tablette, autre ordinateur) avec l'IP de cet ordinateur.`,
+        `このコンピューターの IP アドレスを使って、ネットワーク内の他のデバイス(スマートフォン、タブレット、別のコンピューター)から画面を開けるようにします。`,
+        `Permite abrir a interface a partir de outros dispositivos da sua rede (celular, tablet, outro computador) usando o IP deste computador.`),
+      L(`Dejalo apagado si sólo la usás en esta compu.`, `Leave it off if you only use it on this computer.`, `Lass es ausgeschaltet, wenn du es nur auf diesem Computer nutzt.`, `Laissez-le désactivé si vous ne l'utilisez que sur cet ordinateur.`, `このコンピューターだけで使う場合は、オフのままにしてください。`, `Deixe desligado se você só a usa neste computador.`)),
+    "--port": O(true,
+      L(`Número de puerto donde se abre la interfaz (la dirección queda <code>http://127.0.0.1:PUERTO</code>). Cambialo si querés tener dos programas abiertos a la vez.`,
+        `Port number where the interface opens (the address becomes <code>http://127.0.0.1:PORT</code>). Change it if you want to have two programs open at once.`,
+        `Portnummer, unter der sich die Oberfläche öffnet (die Adresse lautet <code>http://127.0.0.1:PORT</code>). Ändere sie, wenn du zwei Programme gleichzeitig geöffnet haben möchtest.`,
+        `Numéro de port sur lequel l'interface s'ouvre (l'adresse devient <code>http://127.0.0.1:PORT</code>). Modifiez-le si vous voulez avoir deux programmes ouverts en même temps.`,
+        `画面を開くポート番号です(アドレスは <code>http://127.0.0.1:ポート</code> になります)。2 つのプログラムを同時に開きたい場合は変更してください。`,
+        `Número da porta em que a interface abre (o endereço fica <code>http://127.0.0.1:PORTA</code>). Mude se quiser ter dois programas abertos ao mesmo tempo.`),
+      L(`Vacío = el de siempre (7860 en A1111/Forge, 8188 en ComfyUI).`, `Empty = the usual one (7860 on A1111/Forge, 8188 on ComfyUI).`, `Leer = der übliche (7860 bei A1111/Forge, 8188 bei ComfyUI).`, `Vide = le port habituel (7860 pour A1111/Forge, 8188 pour ComfyUI).`, `空欄 = いつもの番号(A1111/Forge は 7860、ComfyUI は 8188)。`, `Vazio = o de sempre (7860 no A1111/Forge, 8188 no ComfyUI).`)),
+    "--server_port": O(true,
+      L(`Número de puerto donde se abre la interfaz de Kohya. Cambialo si ya tenés Stable Diffusion abierto en el 7860.`,
+        `Port number where the Kohya interface opens. Change it if you already have Stable Diffusion open on 7860.`,
+        `Portnummer, unter der sich die Kohya-Oberfläche öffnet. Ändere sie, wenn Stable Diffusion bereits auf 7860 läuft.`,
+        `Numéro de port sur lequel l'interface de Kohya s'ouvre. Modifiez-le si Stable Diffusion est déjà ouvert sur le 7860.`,
+        `Kohya の画面を開くポート番号です。Stable Diffusion がすでに 7860 で開いている場合は変更してください。`,
+        `Número da porta em que a interface do Kohya abre. Mude se você já tem o Stable Diffusion aberto na 7860.`),
+      L(`Vacío = 7860 o el siguiente libre.`, `Empty = 7860 or the next free one.`, `Leer = 7860 oder der nächste freie.`, `Vide = 7860 ou le suivant disponible.`, `空欄 = 7860 または次の空きポート。`, `Vazio = 7860 ou a próxima livre.`)),
+    "--autolaunch": O(true,
+      L(`Abre la interfaz en el navegador automáticamente cuando termina de arrancar.`, `Opens the interface in the browser automatically when it finishes starting.`, `Öffnet die Oberfläche automatisch im Browser, sobald der Start abgeschlossen ist.`, `Ouvre automatiquement l'interface dans le navigateur à la fin du démarrage.`, `起動が完了したら、画面を自動的にブラウザで開きます。`, `Abre a interface no navegador automaticamente quando termina de iniciar.`)),
+    "--auto-launch": O(true,
+      L(`Abre ComfyUI en el navegador automáticamente al arrancar.`, `Opens ComfyUI in the browser automatically on startup.`, `Öffnet ComfyUI beim Start automatisch im Browser.`, `Ouvre automatiquement ComfyUI dans le navigateur au démarrage.`, `起動時に ComfyUI を自動的にブラウザで開きます。`, `Abre o ComfyUI no navegador automaticamente ao iniciar.`)),
+    "--inbrowser": O(true,
+      L(`Abre Kohya en el navegador automáticamente al arrancar.`, `Opens Kohya in the browser automatically on startup.`, `Öffnet Kohya beim Start automatisch im Browser.`, `Ouvre automatiquement Kohya dans le navigateur au démarrage.`, `起動時に Kohya を自動的にブラウザで開きます。`, `Abre o Kohya no navegador automaticamente ao iniciar.`)),
+    "--share": O(false,
+      L(`Crea un enlace público temporal en internet (gradio.live) para usar la interfaz desde cualquier lugar.`,
+        `Creates a temporary public link on the internet (gradio.live) to use the interface from anywhere.`,
+        `Erstellt einen temporären öffentlichen Link im Internet (gradio.live), um die Oberfläche von überall zu nutzen.`,
+        `Crée un lien public temporaire sur internet (gradio.live) pour utiliser l'interface de n'importe où.`,
+        `インターネット上に一時的な公開リンク(gradio.live)を作成し、どこからでも画面を使えるようにします。`,
+        `Cria um link público temporário na internet (gradio.live) para usar a interface de qualquer lugar.`),
+      L(`⚠️ Cualquiera con el enlace puede usar tu compu para generar. Usalo con cuidado.`,
+        `⚠️ Anyone with the link can use your computer to generate. Use it with care.`,
+        `⚠️ Jeder mit dem Link kann deinen Computer zum Erzeugen nutzen. Verwende es mit Vorsicht.`,
+        `⚠️ Toute personne disposant du lien peut utiliser votre ordinateur pour générer. À utiliser avec précaution.`,
+        `⚠️ リンクを知っている人なら誰でも、あなたのコンピューターで生成できてしまいます。注意して使ってください。`,
+        `⚠️ Qualquer pessoa com o link pode usar o seu computador para gerar. Use com cuidado.`)),
+    "--gradio-auth": O(false,
+      L(`Pide usuario y contraseña para entrar a la interfaz. Formato: <code>usuario:contraseña</code>.`,
+        `Asks for a username and password to enter the interface. Format: <code>user:password</code>.`,
+        `Verlangt Benutzername und Passwort für den Zugang zur Oberfläche. Format: <code>benutzer:passwort</code>.`,
+        `Demande un nom d'utilisateur et un mot de passe pour accéder à l'interface. Format : <code>utilisateur:motdepasse</code>.`,
+        `画面に入るためにユーザー名とパスワードを要求します。形式: <code>ユーザー名:パスワード</code>。`,
+        `Pede usuário e senha para entrar na interface. Formato: <code>usuario:senha</code>.`),
+      L(`Recomendado si activás --listen o --share.`, `Recommended if you turn on --listen or --share.`, `Empfohlen, wenn du --listen oder --share aktivierst.`, `Recommandé si vous activez --listen ou --share.`, `--listen または --share を有効にする場合に推奨されます。`, `Recomendado se você ativar --listen ou --share.`)),
+    "--username": O(false,
+      L(`Usuario para entrar a Kohya (junto con --password). Útil si lo abrís en red.`, `Username to enter Kohya (together with --password). Useful if you open it on a network.`, `Benutzername für den Zugang zu Kohya (zusammen mit --password). Nützlich, wenn du es im Netzwerk öffnest.`, `Nom d'utilisateur pour accéder à Kohya (avec --password). Utile si vous l'ouvrez sur un réseau.`, `Kohya に入るためのユーザー名です(--password と併用)。ネットワークで公開する場合に便利です。`, `Usuário para entrar no Kohya (junto com --password). Útil se você o abrir em rede.`)),
+    "--password": O(false,
+      L(`Contraseña para entrar a Kohya.`, `Password to enter Kohya.`, `Passwort für den Zugang zu Kohya.`, `Mot de passe pour accéder à Kohya.`, `Kohya に入るためのパスワードです。`, `Senha para entrar no Kohya.`)),
+    "--headless": O(false,
+      L(`Para usar Kohya en un servidor sin pantalla: oculta botones que abren ventanas para elegir archivos.`, `For using Kohya on a server without a screen: hides buttons that open windows for choosing files.`, `Für die Nutzung von Kohya auf einem Server ohne Bildschirm: blendet Schaltflächen aus, die Fenster zur Dateiauswahl öffnen.`, `Pour utiliser Kohya sur un serveur sans écran : masque les boutons qui ouvrent des fenêtres de choix de fichiers.`, `画面のないサーバーで Kohya を使うためのオプションです。ファイル選択ウィンドウを開くボタンを非表示にします。`, `Para usar o Kohya em um servidor sem tela: oculta botões que abrem janelas para escolher arquivos.`)),
+    "--theme": O(true,
+      L(`Colores de la interfaz: claro (<code>light</code>) u oscuro (<code>dark</code>).`, `Interface colors: light (<code>light</code>) or dark (<code>dark</code>).`, `Farben der Oberfläche: hell (<code>light</code>) oder dunkel (<code>dark</code>).`, `Couleurs de l'interface : clair (<code>light</code>) ou sombre (<code>dark</code>).`, `画面の配色です。ライト(<code>light</code>)またはダーク(<code>dark</code>)。`, `Cores da interface: claro (<code>light</code>) ou escuro (<code>dark</code>).`)),
+    "--language": O(false,
+      L(`Idioma de la interfaz de Kohya (si hay traducción disponible).`, `Language of the Kohya interface (if a translation is available).`, `Sprache der Kohya-Oberfläche (falls eine Übersetzung verfügbar ist).`, `Langue de l'interface de Kohya (si une traduction est disponible).`, `Kohya の画面の言語です(翻訳がある場合)。`, `Idioma da interface do Kohya (se houver tradução disponível).`)),
+    "--enable-insecure-extension-access": O(false,
+      L(`Permite instalar extensiones desde la interfaz aunque esté abierta en red.`, `Allows installing extensions from the interface even when it is open on a network.`, `Erlaubt die Installation von Erweiterungen über die Oberfläche, auch wenn sie im Netzwerk geöffnet ist.`, `Permet d'installer des extensions depuis l'interface même lorsqu'elle est ouverte sur un réseau.`, `ネットワークに公開している場合でも、画面から拡張機能をインストールできるようにします。`, `Permite instalar extensões pela interface mesmo quando ela está aberta em rede.`),
+      L(`⚠️ Riesgoso si otras personas tienen acceso.`, `⚠️ Risky if other people have access.`, `⚠️ Riskant, wenn andere Personen Zugriff haben.`, `⚠️ Risqué si d'autres personnes y ont accès.`, `⚠️ 他の人がアクセスできる場合は危険です。`, `⚠️ Arriscado se outras pessoas tiverem acesso.`)),
+    "--nowebui": O(false,
+      L(`Arranca sólo la API, sin la interfaz web. Para usarla desde otros programas.`, `Starts only the API, without the web interface. For using it from other programs.`, `Startet nur die API, ohne die Weboberfläche. Zur Nutzung durch andere Programme.`, `Démarre uniquement l'API, sans l'interface web. Pour l'utiliser depuis d'autres programmes.`, `ウェブ画面なしで API だけを起動します。他のプログラムから使うためのものです。`, `Inicia só a API, sem a interface web. Para usá-la a partir de outros programas.`)),
+    "--cors-allow-origins": O(false,
+      L(`Qué páginas web pueden usar la API desde el navegador.`, `Which web pages can use the API from the browser.`, `Welche Webseiten die API aus dem Browser nutzen dürfen.`, `Quelles pages web peuvent utiliser l'API depuis le navigateur.`, `ブラウザから API を利用できるウェブページを指定します。`, `Quais páginas web podem usar a API a partir do navegador.`)),
+
+    // --- memoria y rendimiento
+    "--medvram": O(true,
+      L(`Ahorra memoria cargando partes del modelo sólo cuando se necesitan. Genera un poco más lento.`, `Saves memory by loading parts of the model only when needed. Generates a bit slower.`, `Spart Speicher, indem Teile des Modells nur bei Bedarf geladen werden. Die Erzeugung ist etwas langsamer.`, `Économise la mémoire en ne chargeant des parties du modèle qu'en cas de besoin. Génère un peu plus lentement.`, `モデルの一部を必要なときだけ読み込んでメモリを節約します。生成は少し遅くなります。`, `Economiza memória carregando partes do modelo só quando necessário. Gera um pouco mais devagar.`),
+      L(`Probalo si aparece “out of memory” con modelos SD 1.5.`, `Try it if “out of memory” appears with SD 1.5 models.`, `Probiere es aus, wenn bei SD-1.5-Modellen „out of memory“ erscheint.`, `Essayez-le si « out of memory » apparaît avec des modèles SD 1.5.`, `SD 1.5 モデルで「out of memory」が出る場合に試してください。`, `Experimente se aparecer “out of memory” com modelos SD 1.5.`)),
+    "--medvram-sdxl": O(true,
+      L(`Lo mismo que --medvram pero sólo se activa con modelos SDXL (los grandes, de 1024px).`, `The same as --medvram but only active with SDXL models (the large, 1024px ones).`, `Dasselbe wie --medvram, aber nur bei SDXL-Modellen aktiv (die großen mit 1024 px).`, `Identique à --medvram mais ne s'active qu'avec les modèles SDXL (les gros, en 1024 px).`, `--medvram と同じですが、SDXL モデル(1024px の大きなモデル)のときだけ有効になります。`, `O mesmo que --medvram, mas só é ativado com modelos SDXL (os grandes, de 1024px).`),
+      L(`Recomendado en compus con 16 GB o menos si usás SDXL.`, `Recommended on computers with 16 GB or less if you use SDXL.`, `Empfohlen bei Computern mit 16 GB oder weniger, wenn du SDXL verwendest.`, `Recommandé sur les ordinateurs avec 16 Go ou moins si vous utilisez SDXL.`, `SDXL を使う場合、16 GB 以下のコンピューターで推奨されます。`, `Recomendado em computadores com 16 GB ou menos se você usa SDXL.`)),
+    "--lowvram": O(true,
+      L(`Ahorro de memoria extremo. Mucho más lento.`, `Extreme memory saving. Much slower.`, `Extremes Speichersparen. Deutlich langsamer.`, `Économie de mémoire extrême. Beaucoup plus lent.`, `メモリを極限まで節約します。大幅に遅くなります。`, `Economia extrema de memória. Muito mais lento.`),
+      L(`Sólo si --medvram no alcanza.`, `Only if --medvram isn't enough.`, `Nur wenn --medvram nicht ausreicht.`, `Seulement si --medvram ne suffit pas.`, `--medvram で足りない場合のみ。`, `Só se --medvram não for suficiente.`)),
+    "--lowram": O(false,
+      L(`Carga los modelos directo a la memoria de video en vez de pasar por la RAM. Útil en PCs con poca RAM y buena placa de video.`, `Loads models straight into video memory instead of going through RAM. Useful on PCs with little RAM and a good graphics card.`, `Lädt Modelle direkt in den Grafikspeicher, statt über den Arbeitsspeicher zu gehen. Nützlich bei PCs mit wenig RAM und guter Grafikkarte.`, `Charge les modèles directement dans la mémoire vidéo au lieu de passer par la RAM. Utile sur les PC avec peu de RAM et une bonne carte graphique.`, `RAM を経由せず、モデルを直接ビデオメモリに読み込みます。RAM が少なく高性能なグラフィックカードを持つ PC で便利です。`, `Carrega os modelos direto na memória de vídeo em vez de passar pela RAM. Útil em PCs com pouca RAM e boa placa de vídeo.`)),
+    "--no-half": O(true,
+      L(`Calcula con más precisión (32 bits). Evita imágenes negras o errores en algunos equipos, pero usa el doble de memoria y es más lento.`, `Calculates with higher precision (32 bits). Avoids black images or errors on some machines, but uses double the memory and is slower.`, `Rechnet mit höherer Genauigkeit (32 Bit). Vermeidet schwarze Bilder oder Fehler auf manchen Rechnern, braucht aber doppelt so viel Speicher und ist langsamer.`, `Calcule avec une plus grande précision (32 bits). Évite les images noires ou les erreurs sur certaines machines, mais utilise le double de mémoire et est plus lent.`, `より高い精度(32 ビット)で計算します。一部の環境で起きる黒い画像やエラーを防ぎますが、メモリを 2 倍使い、遅くなります。`, `Calcula com mais precisão (32 bits). Evita imagens pretas ou erros em alguns equipamentos, mas usa o dobro de memória e é mais lento.`),
+      L(`En Mac con chip Apple suele hacer falta para modelos SD 1.5.`, `On Macs with an Apple chip it's usually needed for SD 1.5 models.`, `Bei Macs mit Apple-Chip ist es für SD-1.5-Modelle meist nötig.`, `Sur les Mac à puce Apple, il est souvent nécessaire pour les modèles SD 1.5.`, `Apple チップの Mac では、SD 1.5 モデルに必要なことが多いです。`, `Em Macs com chip Apple costuma ser necessário para modelos SD 1.5.`)),
+    "--no-half-vae": O(true,
+      L(`Lo mismo que --no-half pero sólo para la parte que convierte el resultado en imagen (VAE). Arregla imágenes negras gastando poca memoria extra.`, `The same as --no-half but only for the part that turns the result into an image (VAE). Fixes black images using little extra memory.`, `Dasselbe wie --no-half, aber nur für den Teil, der das Ergebnis in ein Bild umwandelt (VAE). Behebt schwarze Bilder mit wenig zusätzlichem Speicher.`, `Identique à --no-half mais seulement pour la partie qui convertit le résultat en image (VAE). Corrige les images noires avec peu de mémoire supplémentaire.`, `--no-half と同じですが、結果を画像に変換する部分(VAE)だけが対象です。わずかな追加メモリで黒い画像を解消します。`, `O mesmo que --no-half, mas só para a parte que converte o resultado em imagem (VAE). Corrige imagens pretas gastando pouca memória extra.`),
+      L(`Ya viene activado en Mac.`, `Already enabled by default on Mac.`, `Auf dem Mac bereits standardmäßig aktiviert.`, `Déjà activé par défaut sur Mac.`, `Mac ではすでに有効になっています。`, `Já vem ativado no Mac.`)),
+    "--upcast-sampling": O(true,
+      L(`Alternativa más liviana a --no-half: evita errores de precisión usando menos memoria.`, `A lighter alternative to --no-half: avoids precision errors while using less memory.`, `Eine leichtere Alternative zu --no-half: vermeidet Genauigkeitsfehler bei geringerem Speicherverbrauch.`, `Alternative plus légère à --no-half : évite les erreurs de précision en utilisant moins de mémoire.`, `--no-half の軽量な代替です。メモリ使用量を抑えながら精度エラーを防ぎます。`, `Alternativa mais leve ao --no-half: evita erros de precisão usando menos memória.`),
+      L(`Ya viene activado en Mac.`, `Already enabled by default on Mac.`, `Auf dem Mac bereits standardmäßig aktiviert.`, `Déjà activé par défaut sur Mac.`, `Mac ではすでに有効になっています。`, `Já vem ativado no Mac.`)),
+    "--precision": O(false,
+      L(`Precisión numérica de los cálculos. <code>autocast</code> elige sola; <code>full</code> es más exacta pero más lenta.`, `Numerical precision of the calculations. <code>autocast</code> chooses automatically; <code>full</code> is more exact but slower.`, `Numerische Genauigkeit der Berechnungen. <code>autocast</code> wählt selbst; <code>full</code> ist genauer, aber langsamer.`, `Précision numérique des calculs. <code>autocast</code> choisit automatiquement ; <code>full</code> est plus exacte mais plus lente.`, `計算の数値精度です。<code>autocast</code> は自動で選び、<code>full</code> はより正確ですが遅くなります。`, `Precisão numérica dos cálculos. <code>autocast</code> escolhe sozinho; <code>full</code> é mais exata, porém mais lenta.`)),
+    "--opt-sub-quad-attention": O(true,
+      L(`Optimización que reduce mucho la memoria al generar imágenes grandes.`, `An optimization that greatly reduces memory when generating large images.`, `Eine Optimierung, die den Speicherbedarf beim Erzeugen großer Bilder stark senkt.`, `Une optimisation qui réduit fortement la mémoire lors de la génération de grandes images.`, `大きな画像を生成する際のメモリ使用量を大幅に減らす最適化です。`, `Otimização que reduz muito a memória ao gerar imagens grandes.`),
+      L(`Buena opción en Mac y en placas AMD.`, `A good option on Mac and AMD cards.`, `Eine gute Wahl auf dem Mac und bei AMD-Karten.`, `Une bonne option sur Mac et avec les cartes AMD.`, `Mac や AMD のグラフィックカードに適した選択肢です。`, `Boa opção no Mac e em placas AMD.`)),
+    "--opt-split-attention": O(false,
+      L(`Optimización de memoria clásica. Normalmente se elige sola.`, `Classic memory optimization. Normally chosen automatically.`, `Klassische Speicheroptimierung. Wird normalerweise automatisch gewählt.`, `Optimisation mémoire classique. Normalement choisie automatiquement.`, `従来のメモリ最適化です。通常は自動的に選ばれます。`, `Otimização de memória clássica. Normalmente é escolhida sozinha.`)),
+    "--opt-split-attention-v1": O(false,
+      L(`Versión vieja de la optimización anterior: usa menos memoria pero es más lenta.`, `Old version of the previous optimization: uses less memory but is slower.`, `Alte Version der vorherigen Optimierung: braucht weniger Speicher, ist aber langsamer.`, `Ancienne version de l'optimisation précédente : utilise moins de mémoire mais est plus lente.`, `前述の最適化の旧バージョンです。メモリ使用量は少なくなりますが、遅くなります。`, `Versão antiga da otimização anterior: usa menos memória, mas é mais lenta.`)),
+    "--opt-sdp-attention": O(false,
+      L(`Optimización moderna de PyTorch, rápida en placas NVIDIA recientes.`, `Modern PyTorch optimization, fast on recent NVIDIA cards.`, `Moderne PyTorch-Optimierung, schnell auf aktuellen NVIDIA-Karten.`, `Optimisation moderne de PyTorch, rapide sur les cartes NVIDIA récentes.`, `PyTorch の新しい最適化で、最近の NVIDIA のグラフィックカードで高速です。`, `Otimização moderna do PyTorch, rápida em placas NVIDIA recentes.`)),
+    "--opt-sdp-no-mem-attention": O(false,
+      L(`Como la anterior pero con resultados idénticos en cada generación (más reproducible).`, `Like the previous one but with identical results on every generation (more reproducible).`, `Wie die vorherige, aber mit identischen Ergebnissen bei jeder Erzeugung (besser reproduzierbar).`, `Comme la précédente mais avec des résultats identiques à chaque génération (plus reproductible).`, `前述のものと同様ですが、生成のたびに同一の結果になります(再現性が高い)。`, `Como a anterior, mas com resultados idênticos em cada geração (mais reproduzível).`)),
+    "--xformers": O(false,
+      L(`Optimización para placas NVIDIA que acelera y ahorra memoria.`, `Optimization for NVIDIA cards that speeds things up and saves memory.`, `Optimierung für NVIDIA-Karten, die beschleunigt und Speicher spart.`, `Optimisation pour les cartes NVIDIA qui accélère et économise la mémoire.`, `NVIDIA のグラフィックカード向けの最適化で、高速化とメモリ節約ができます。`, `Otimização para placas NVIDIA que acelera e economiza memória.`),
+      L(`Sólo NVIDIA. En Mac no tiene efecto.`, `NVIDIA only. No effect on Mac.`, `Nur NVIDIA. Auf dem Mac ohne Wirkung.`, `NVIDIA uniquement. Sans effet sur Mac.`, `NVIDIA 専用です。Mac では効果がありません。`, `Somente NVIDIA. No Mac não tem efeito.`)),
+    "--disable-nan-check": O(false,
+      L(`Desactiva el control que detecta imágenes negras/rotas. Sólo para diagnóstico.`, `Disables the check that detects black/broken images. For diagnostics only.`, `Deaktiviert die Prüfung, die schwarze/defekte Bilder erkennt. Nur zur Diagnose.`, `Désactive la vérification qui détecte les images noires/corrompues. Uniquement pour le diagnostic.`, `黒い画像や壊れた画像を検出するチェックを無効にします。診断用です。`, `Desativa a verificação que detecta imagens pretas/quebradas. Apenas para diagnóstico.`)),
+    "--use-cpu": O(false,
+      L(`Usa el procesador (no la placa de video) para ciertas partes. Mucho más lento; sólo para equipos sin placa compatible.`, `Uses the processor (not the graphics card) for certain parts. Much slower; only for machines without a compatible card.`, `Verwendet für bestimmte Teile den Prozessor (nicht die Grafikkarte). Viel langsamer; nur für Rechner ohne kompatible Karte.`, `Utilise le processeur (et non la carte graphique) pour certaines parties. Beaucoup plus lent ; uniquement pour les machines sans carte compatible.`, `一部の処理でグラフィックカードではなくプロセッサーを使います。非常に遅くなるため、対応するグラフィックカードがない場合のみ使ってください。`, `Usa o processador (não a placa de vídeo) em certas partes. Muito mais lento; só para equipamentos sem placa compatível.`)),
+    "--skip-load-model-at-start": O(true,
+      L(`No carga ningún modelo al arrancar: la interfaz abre más rápido y no ocupa memoria hasta que elijas uno.`, `Doesn't load any model at startup: the interface opens faster and uses no memory until you choose one.`, `Lädt beim Start kein Modell: Die Oberfläche öffnet sich schneller und belegt keinen Speicher, bis du eines auswählst.`, `Ne charge aucun modèle au démarrage : l'interface s'ouvre plus vite et n'utilise pas de mémoire tant que vous n'en choisissez pas un.`, `起動時にモデルを読み込みません。画面が速く開き、モデルを選ぶまでメモリも使いません。`, `Não carrega nenhum modelo ao iniciar: a interface abre mais rápido e não ocupa memória até você escolher um.`)),
+    "--ckpt": O(true,
+      L(`Qué modelo (checkpoint) cargar al arrancar. Define el estilo de las imágenes.`, `Which model (checkpoint) to load at startup. It defines the style of the images.`, `Welches Modell (Checkpoint) beim Start geladen wird. Es bestimmt den Stil der Bilder.`, `Quel modèle (checkpoint) charger au démarrage. Il définit le style des images.`, `起動時に読み込むモデル(チェックポイント)です。画像のスタイルを決めます。`, `Qual modelo (checkpoint) carregar ao iniciar. Define o estilo das imagens.`),
+      L(`Si lo dejás vacío, usa el último que elegiste en la interfaz.`, `If you leave it empty, it uses the last one you chose in the interface.`, `Wenn du es leer lässt, wird das zuletzt in der Oberfläche gewählte verwendet.`, `Si vous le laissez vide, il utilise le dernier choisi dans l'interface.`, `空のままにすると、画面で最後に選んだものを使います。`, `Se deixar vazio, usa o último que você escolheu na interface.`)),
+    "--cpu": O(false,
+      L(`Hace todo con el procesador. Muy lento; sólo si no tenés placa de video compatible.`, `Does everything with the processor. Very slow; only if you don't have a compatible graphics card.`, `Macht alles mit dem Prozessor. Sehr langsam; nur wenn du keine kompatible Grafikkarte hast.`, `Fait tout avec le processeur. Très lent ; uniquement si vous n'avez pas de carte graphique compatible.`, `すべての処理をプロセッサーで行います。非常に遅いため、対応するグラフィックカードがない場合のみ使ってください。`, `Faz tudo com o processador. Muito lento; só se você não tiver placa de vídeo compatível.`)),
+    "--highvram": O(false,
+      L(`Mantiene todos los modelos en la memoria de video para ir más rápido. Sólo con placas de mucha memoria.`, `Keeps all models in video memory to go faster. Only with cards that have a lot of memory.`, `Hält alle Modelle im Grafikspeicher, um schneller zu sein. Nur bei Karten mit viel Speicher.`, `Garde tous les modèles dans la mémoire vidéo pour aller plus vite. Seulement avec des cartes disposant de beaucoup de mémoire.`, `すべてのモデルをビデオメモリに保持して高速化します。メモリの多いグラフィックカード専用です。`, `Mantém todos os modelos na memória de vídeo para ir mais rápido. Só com placas de muita memória.`)),
+    "--normalvram": O(false,
+      L(`Fuerza el uso normal de memoria si ComfyUI eligió el modo bajo por error.`, `Forces normal memory use if ComfyUI chose the low mode by mistake.`, `Erzwingt die normale Speichernutzung, falls ComfyUI fälschlicherweise den Sparmodus gewählt hat.`, `Force l'utilisation normale de la mémoire si ComfyUI a choisi le mode bas par erreur.`, `ComfyUI が誤って低メモリモードを選んだ場合に、通常のメモリ使用を強制します。`, `Força o uso normal de memória se o ComfyUI escolheu o modo baixo por engano.`)),
+    "--force-fp16": O(false,
+      L(`Fuerza cálculos de 16 bits: ahorra memoria pero puede dar errores en algunos equipos.`, `Forces 16-bit calculations: saves memory but may cause errors on some machines.`, `Erzwingt 16-Bit-Berechnungen: spart Speicher, kann aber auf manchen Rechnern Fehler verursachen.`, `Force les calculs en 16 bits : économise la mémoire mais peut provoquer des erreurs sur certaines machines.`, `16 ビット計算を強制します。メモリを節約できますが、一部の環境ではエラーが出ることがあります。`, `Força cálculos de 16 bits: economiza memória, mas pode dar erros em alguns equipamentos.`)),
+    "--preview-method": O(true,
+      L(`Cómo mostrar la imagen mientras se va generando. <code>auto</code> es lo más cómodo; <code>none</code> ahorra un poco de tiempo.`, `How to show the image while it is being generated. <code>auto</code> is the most convenient; <code>none</code> saves a little time.`, `Wie das Bild während der Erzeugung angezeigt wird. <code>auto</code> ist am bequemsten; <code>none</code> spart etwas Zeit.`, `Comment afficher l'image pendant sa génération. <code>auto</code> est le plus pratique ; <code>none</code> fait gagner un peu de temps.`, `生成中の画像の表示方法です。<code>auto</code> が最も便利で、<code>none</code> はわずかに時間を節約できます。`, `Como mostrar a imagem enquanto ela é gerada. <code>auto</code> é o mais cômodo; <code>none</code> economiza um pouco de tempo.`)),
+
+    // --- rutas
+    "--data-dir": O(false,
+      L(`Carpeta base donde se guardan modelos, configuración y resultados.`, `Base folder where models, configuration and results are stored.`, `Basisordner, in dem Modelle, Konfiguration und Ergebnisse gespeichert werden.`, `Dossier de base où sont stockés les modèles, la configuration et les résultats.`, `モデル、設定、生成結果を保存するベースフォルダーです。`, `Pasta base onde ficam os modelos, a configuração e os resultados.`)),
+    "--models-dir": O(false,
+      L(`Carpeta donde están los modelos. Útil para compartir modelos entre varias instalaciones o guardarlos en un disco externo.`, `Folder where the models are. Useful for sharing models between several installations or keeping them on an external drive.`, `Ordner, in dem die Modelle liegen. Nützlich, um Modelle zwischen mehreren Installationen zu teilen oder auf einer externen Festplatte zu speichern.`, `Dossier où se trouvent les modèles. Utile pour partager des modèles entre plusieurs installations ou les ranger sur un disque externe.`, `モデルが置かれているフォルダーです。複数のインストール間でモデルを共有したり、外付けディスクに保存したりするのに便利です。`, `Pasta onde ficam os modelos. Útil para compartilhar modelos entre várias instalações ou guardá-los em um disco externo.`)),
+    "--ckpt-dir": O(false,
+      L(`Carpeta extra donde buscar checkpoints (modelos de imagen).`, `Extra folder to look for checkpoints (image models).`, `Zusätzlicher Ordner, in dem nach Checkpoints (Bildmodellen) gesucht wird.`, `Dossier supplémentaire où chercher les checkpoints (modèles d'image).`, `チェックポイント(画像モデル)を探す追加のフォルダーです。`, `Pasta extra para procurar checkpoints (modelos de imagem).`)),
+    "--lora-dir": O(false,
+      L(`Carpeta extra donde buscar LoRAs.`, `Extra folder to look for LoRAs.`, `Zusätzlicher Ordner, in dem nach LoRAs gesucht wird.`, `Dossier supplémentaire où chercher les LoRA.`, `LoRA を探す追加のフォルダーです。`, `Pasta extra para procurar LoRAs.`)),
+    "--vae-dir": O(false,
+      L(`Carpeta donde buscar archivos VAE (afinan los colores y detalles finales).`, `Folder to look for VAE files (they refine the final colors and details).`, `Ordner, in dem nach VAE-Dateien gesucht wird (sie verfeinern Farben und Details).`, `Dossier où chercher les fichiers VAE (ils affinent les couleurs et les détails finaux).`, `VAE ファイル(最終的な色やディテールを整えるもの)を探すフォルダーです。`, `Pasta onde procurar arquivos VAE (eles refinam as cores e os detalhes finais).`)),
+    "--embeddings-dir": O(false,
+      L(`Carpeta de embeddings (palabras clave entrenadas, por ejemplo para mejorar manos o evitar defectos).`, `Embeddings folder (trained keywords, for example to improve hands or avoid defects).`, `Ordner für Embeddings (trainierte Schlüsselwörter, z. B. um Hände zu verbessern oder Fehler zu vermeiden).`, `Dossier des embeddings (mots-clés entraînés, par exemple pour améliorer les mains ou éviter des défauts).`, `エンベディング(学習済みのキーワード。手の改善や不具合の回避などに使う)のフォルダーです。`, `Pasta de embeddings (palavras-chave treinadas, por exemplo para melhorar mãos ou evitar defeitos).`)),
+    "--output-directory": O(false,
+      L(`Carpeta donde ComfyUI guarda las imágenes generadas.`, `Folder where ComfyUI saves the generated images.`, `Ordner, in dem ComfyUI die erzeugten Bilder speichert.`, `Dossier où ComfyUI enregistre les images générées.`, `ComfyUI が生成した画像を保存するフォルダーです。`, `Pasta onde o ComfyUI salva as imagens geradas.`)),
+    "--config": O(false,
+      L(`Archivo de configuración a usar.`, `Configuration file to use.`, `Zu verwendende Konfigurationsdatei.`, `Fichier de configuration à utiliser.`, `使用する設定ファイルです。`, `Arquivo de configuração a usar.`)),
+
+    // --- arranque
+    "--skip-torch-cuda-test": O(false,
+      L(`Salta la comprobación de placa NVIDIA. Necesario en Mac (ya viene activado).`, `Skips the NVIDIA card check. Needed on Mac (already enabled).`, `Überspringt die Prüfung auf eine NVIDIA-Karte. Auf dem Mac nötig (bereits aktiviert).`, `Ignore la vérification de la carte NVIDIA. Nécessaire sur Mac (déjà activé).`, `NVIDIA グラフィックカードの確認をスキップします。Mac では必要です(すでに有効)。`, `Pula a verificação de placa NVIDIA. Necessário no Mac (já vem ativado).`)),
+    "--skip-install": O(false,
+      L(`No revisa ni instala dependencias al arrancar: arranca más rápido, pero no se actualiza nada.`, `Doesn't check or install dependencies at startup: starts faster, but nothing gets updated.`, `Prüft und installiert beim Start keine Abhängigkeiten: startet schneller, aber nichts wird aktualisiert.`, `Ne vérifie ni n'installe les dépendances au démarrage : démarre plus vite, mais rien n'est mis à jour.`, `起動時に依存関係の確認やインストールを行いません。起動は速くなりますが、何も更新されません。`, `Não verifica nem instala dependências ao iniciar: inicia mais rápido, mas nada é atualizado.`)),
+    "--skip-prepare-environment": O(false,
+      L(`Salta toda la preparación inicial. Arranca más rápido si ya está todo instalado.`, `Skips all the initial setup. Starts faster if everything is already installed.`, `Überspringt die gesamte Vorbereitung. Startet schneller, wenn bereits alles installiert ist.`, `Ignore toute la préparation initiale. Démarre plus vite si tout est déjà installé.`, `初期準備をすべてスキップします。すべてインストール済みなら、起動が速くなります。`, `Pula toda a preparação inicial. Inicia mais rápido se tudo já estiver instalado.`)),
+    "--skip-version-check": O(false,
+      L(`No comprueba las versiones de los componentes al arrancar.`, `Doesn't check component versions at startup.`, `Prüft beim Start die Versionen der Komponenten nicht.`, `Ne vérifie pas les versions des composants au démarrage.`, `起動時にコンポーネントのバージョンを確認しません。`, `Não verifica as versões dos componentes ao iniciar.`)),
+    "--update-check": O(false,
+      L(`Avisa al arrancar si hay una versión nueva.`, `Notifies at startup if there is a new version.`, `Weist beim Start auf eine neue Version hin.`, `Prévient au démarrage s'il existe une nouvelle version.`, `起動時に新しいバージョンがあれば通知します。`, `Avisa ao iniciar se houver uma versão nova.`)),
+    "--update-all-extensions": O(false,
+      L(`Actualiza todas las extensiones al arrancar.`, `Updates all extensions at startup.`, `Aktualisiert beim Start alle Erweiterungen.`, `Met à jour toutes les extensions au démarrage.`, `起動時にすべての拡張機能を更新します。`, `Atualiza todas as extensões ao iniciar.`)),
+    "--reinstall-torch": O(false,
+      L(`Reinstala PyTorch (el motor de cálculo). Usalo si algo se rompió después de una actualización.`, `Reinstalls PyTorch (the compute engine). Use it if something broke after an update.`, `Installiert PyTorch (die Berechnungs-Engine) neu. Verwende es, wenn nach einem Update etwas kaputtgegangen ist.`, `Réinstalle PyTorch (le moteur de calcul). À utiliser si quelque chose s'est cassé après une mise à jour.`, `PyTorch(計算エンジン)を再インストールします。更新後に何かが壊れた場合に使ってください。`, `Reinstala o PyTorch (o mecanismo de cálculo). Use se algo quebrou depois de uma atualização.`)),
+    "--disable-all-extensions": O(false,
+      L(`Arranca sin ninguna extensión. Útil para saber si una extensión está causando un problema.`, `Starts without any extensions. Useful to find out whether an extension is causing a problem.`, `Startet ohne Erweiterungen. Nützlich, um herauszufinden, ob eine Erweiterung ein Problem verursacht.`, `Démarre sans aucune extension. Utile pour savoir si une extension cause un problème.`, `拡張機能をすべて無効にして起動します。拡張機能が問題の原因かどうかを調べるのに便利です。`, `Inicia sem nenhuma extensão. Útil para saber se uma extensão está causando um problema.`)),
+    "--disable-extra-extensions": O(false,
+      L(`Arranca sólo con las extensiones que vienen incluidas.`, `Starts only with the built-in extensions.`, `Startet nur mit den mitgelieferten Erweiterungen.`, `Démarre uniquement avec les extensions incluses.`, `標準で付属している拡張機能だけで起動します。`, `Inicia apenas com as extensões que já vêm incluídas.`)),
+    "--loglevel": O(false,
+      L(`Cuánto detalle mostrar en los logs (DEBUG = todo, ERROR = sólo errores).`, `How much detail to show in the logs (DEBUG = everything, ERROR = errors only).`, `Wie viel Detail in den Protokollen angezeigt wird (DEBUG = alles, ERROR = nur Fehler).`, `Quel niveau de détail afficher dans les journaux (DEBUG = tout, ERROR = erreurs uniquement).`, `ログに表示する詳細度です(DEBUG = すべて、ERROR = エラーのみ)。`, `Quanto detalhe mostrar nos logs (DEBUG = tudo, ERROR = só erros).`)),
+    "--debug": O(false,
+      L(`Muestra información técnica detallada en los logs.`, `Shows detailed technical information in the logs.`, `Zeigt detaillierte technische Informationen in den Protokollen an.`, `Affiche des informations techniques détaillées dans les journaux.`, `ログに詳細な技術情報を表示します。`, `Mostra informações técnicas detalhadas nos logs.`)),
+    "--noverify": O(false,
+      L(`Kohya no verifica las dependencias al arrancar (más rápido).`, `Kohya doesn't verify dependencies at startup (faster).`, `Kohya prüft beim Start die Abhängigkeiten nicht (schneller).`, `Kohya ne vérifie pas les dépendances au démarrage (plus rapide).`, `Kohya が起動時に依存関係を検証しません(高速化)。`, `O Kohya não verifica as dependências ao iniciar (mais rápido).`)),
+    "--do_not_share": O(false,
+      L(`Kohya: oculta la opción de compartir públicamente.`, `Kohya: hides the option to share publicly.`, `Kohya: blendet die Option zum öffentlichen Teilen aus.`, `Kohya : masque l'option de partage public.`, `Kohya: 公開共有のオプションを非表示にします。`, `Kohya: oculta a opção de compartilhar publicamente.`)),
+    "--requirements": O(false,
+      L(`Kohya: archivo de dependencias a usar (lo elige solo según tu sistema).`, `Kohya: dependencies file to use (it picks one by itself according to your system).`, `Kohya: zu verwendende Abhängigkeitsdatei (wird je nach System automatisch gewählt).`, `Kohya : fichier de dépendances à utiliser (il le choisit seul selon votre système).`, `Kohya: 使用する依存関係ファイルです(システムに応じて自動で選ばれます)。`, `Kohya: arquivo de dependências a usar (ele escolhe sozinho conforme o seu sistema).`)),
+    "--use-ipex": O(false,
+      L(`Usa placas de video Intel Arc.`, `Uses Intel Arc graphics cards.`, `Verwendet Intel-Arc-Grafikkarten.`, `Utilise les cartes graphiques Intel Arc.`, `Intel Arc グラフィックカードを使用します。`, `Usa placas de vídeo Intel Arc.`)),
+    "--use-rocm": O(false,
+      L(`Usa placas de video AMD (Linux).`, `Uses AMD graphics cards (Linux).`, `Verwendet AMD-Grafikkarten (Linux).`, `Utilise les cartes graphiques AMD (Linux).`, `AMD グラフィックカードを使用します(Linux)。`, `Usa placas de vídeo AMD (Linux).`)),
   };
 
   // ------------------------------------------------------------------ modelos de Ollama
   const families = [
-    [/coder|code|starcoder|codestral|devstral/i, "💻 Especializado en <b>programación</b>: escribe, explica y corrige código."],
-    [/embed|nomic|bge|mxbai|minilm/i, "🔎 Modelo de <b>embeddings</b>: no sirve para chatear; convierte textos en números para buscar documentos (lo usan apps de “chat con tus PDFs”)."],
-    [/llava|vision|-vl\b|moondream|bakllava|minicpm-v/i, "👁️ Puede <b>ver imágenes</b>: describirlas, leer texto en fotos, responder preguntas sobre ellas."],
-    [/deepseek-r1|qwq|reason|thinking|magistral/i, "🧠 Modelo de <b>razonamiento</b>: “piensa” antes de responder. Mejor para matemática y lógica, pero más lento."],
-    [/math/i, "➗ Especializado en <b>matemática</b>."],
-    [/qwen/i, "💬 Modelo de chat general de Alibaba (Qwen). Muy bueno en español, programación y seguir instrucciones."],
-    [/llama/i, "💬 Modelo de chat general de Meta (Llama). Bueno para conversación y tareas variadas."],
-    [/gemma/i, "💬 Modelo de chat general de Google (Gemma). Equilibrado y eficiente."],
-    [/mistral|mixtral|ministral/i, "💬 Modelo de chat general de Mistral. Rápido y bueno en idiomas europeos."],
-    [/phi/i, "💬 Modelo chico de Microsoft (Phi). Rápido, ideal para compus con poca memoria."],
-    [/deepseek/i, "💬 Modelo de DeepSeek, fuerte en razonamiento y programación."],
-    [/gpt-oss/i, "💬 Modelo abierto de OpenAI, bueno en razonamiento y uso de herramientas."],
+    [/coder|code|starcoder|codestral|devstral/i, L(`💻 Especializado en <b>programación</b>: escribe, explica y corrige código.`, `💻 Specialized in <b>programming</b>: writes, explains and fixes code.`, `💻 Spezialisiert auf <b>Programmierung</b>: schreibt, erklärt und korrigiert Code.`, `💻 Spécialisé en <b>programmation</b> : écrit, explique et corrige du code.`, `💻 <b>プログラミング</b>に特化:コードの作成・説明・修正を行います。`, `💻 Especializado em <b>programação</b>: escreve, explica e corrige código.`)],
+    [/embed|nomic|bge|mxbai|minilm/i, L(`🔎 Modelo de <b>embeddings</b>: no sirve para chatear; convierte textos en números para buscar documentos (lo usan apps de “chat con tus PDFs”).`, `🔎 <b>Embeddings</b> model: not for chatting; it turns text into numbers to search documents (used by “chat with your PDFs” apps).`, `🔎 <b>Embedding</b>-Modell: nicht zum Chatten gedacht; wandelt Texte in Zahlen um, um Dokumente zu durchsuchen (wird von „Chat mit deinen PDFs“-Apps verwendet).`, `🔎 Modèle d'<b>embeddings</b> : ne sert pas à discuter ; il convertit des textes en nombres pour rechercher des documents (utilisé par les apps de « chat avec vos PDF »).`, `🔎 <b>埋め込み(embeddings)</b>モデル:チャット用ではなく、テキストを数値に変換してドキュメントを検索するためのものです(「PDF とチャット」系のアプリが使います)。`, `🔎 Modelo de <b>embeddings</b>: não serve para conversar; converte textos em números para buscar documentos (usado por apps de “chat com seus PDFs”).`)],
+    [/llava|vision|-vl\b|moondream|bakllava|minicpm-v/i, L(`👁️ Puede <b>ver imágenes</b>: describirlas, leer texto en fotos, responder preguntas sobre ellas.`, `👁️ Can <b>see images</b>: describe them, read text in photos, answer questions about them.`, `👁️ Kann <b>Bilder sehen</b>: sie beschreiben, Text in Fotos lesen, Fragen dazu beantworten.`, `👁️ Peut <b>voir des images</b> : les décrire, lire du texte dans des photos, répondre à des questions à leur sujet.`, `👁️ <b>画像を認識</b>できます:説明する、写真内の文字を読む、画像についての質問に答える、など。`, `👁️ Pode <b>ver imagens</b>: descrevê-las, ler texto em fotos, responder perguntas sobre elas.`)],
+    [/deepseek-r1|qwq|reason|thinking|magistral/i, L(`🧠 Modelo de <b>razonamiento</b>: “piensa” antes de responder. Mejor para matemática y lógica, pero más lento.`, `🧠 <b>Reasoning</b> model: it “thinks” before answering. Better for math and logic, but slower.`, `🧠 <b>Reasoning</b>-Modell: „denkt“ vor dem Antworten nach. Besser für Mathematik und Logik, aber langsamer.`, `🧠 Modèle de <b>raisonnement</b> : il « réfléchit » avant de répondre. Meilleur en mathématiques et en logique, mais plus lent.`, `🧠 <b>推論</b>モデル:答える前に「考え」ます。数学や論理に強いですが、遅くなります。`, `🧠 Modelo de <b>raciocínio</b>: “pensa” antes de responder. Melhor em matemática e lógica, porém mais lento.`)],
+    [/math/i, L(`➗ Especializado en <b>matemática</b>.`, `➗ Specialized in <b>math</b>.`, `➗ Spezialisiert auf <b>Mathematik</b>.`, `➗ Spécialisé en <b>mathématiques</b>.`, `➗ <b>数学</b>に特化しています。`, `➗ Especializado em <b>matemática</b>.`)],
+    [/qwen/i, L(`💬 Modelo de chat general de Alibaba (Qwen). Muy bueno en español, programación y seguir instrucciones.`, `💬 General chat model from Alibaba (Qwen). Very good at many languages, programming and following instructions.`, `💬 Allgemeines Chat-Modell von Alibaba (Qwen). Sehr gut in vielen Sprachen, Programmierung und beim Befolgen von Anweisungen.`, `💬 Modèle de chat généraliste d'Alibaba (Qwen). Très bon en langues, en programmation et pour suivre des instructions.`, `💬 Alibaba 製の汎用チャットモデル(Qwen)。多言語、プログラミング、指示への追従に優れています。`, `💬 Modelo de chat geral da Alibaba (Qwen). Muito bom em vários idiomas, programação e em seguir instruções.`)],
+    [/llama/i, L(`💬 Modelo de chat general de Meta (Llama). Bueno para conversación y tareas variadas.`, `💬 General chat model from Meta (Llama). Good for conversation and varied tasks.`, `💬 Allgemeines Chat-Modell von Meta (Llama). Gut für Unterhaltungen und vielfältige Aufgaben.`, `💬 Modèle de chat généraliste de Meta (Llama). Bon pour la conversation et des tâches variées.`, `💬 Meta 製の汎用チャットモデル(Llama)。会話やさまざまなタスクに向いています。`, `💬 Modelo de chat geral da Meta (Llama). Bom para conversas e tarefas variadas.`)],
+    [/gemma/i, L(`💬 Modelo de chat general de Google (Gemma). Equilibrado y eficiente.`, `💬 General chat model from Google (Gemma). Balanced and efficient.`, `💬 Allgemeines Chat-Modell von Google (Gemma). Ausgewogen und effizient.`, `💬 Modèle de chat généraliste de Google (Gemma). Équilibré et efficace.`, `💬 Google 製の汎用チャットモデル(Gemma)。バランスが良く効率的です。`, `💬 Modelo de chat geral do Google (Gemma). Equilibrado e eficiente.`)],
+    [/mistral|mixtral|ministral/i, L(`💬 Modelo de chat general de Mistral. Rápido y bueno en idiomas europeos.`, `💬 General chat model from Mistral. Fast and good in European languages.`, `💬 Allgemeines Chat-Modell von Mistral. Schnell und gut in europäischen Sprachen.`, `💬 Modèle de chat généraliste de Mistral. Rapide et bon dans les langues européennes.`, `💬 Mistral 製の汎用チャットモデル。高速で、ヨーロッパ言語に強いです。`, `💬 Modelo de chat geral da Mistral. Rápido e bom em idiomas europeus.`)],
+    [/phi/i, L(`💬 Modelo chico de Microsoft (Phi). Rápido, ideal para compus con poca memoria.`, `💬 Small model from Microsoft (Phi). Fast, ideal for computers with little memory.`, `💬 Kleines Modell von Microsoft (Phi). Schnell, ideal für Computer mit wenig Speicher.`, `💬 Petit modèle de Microsoft (Phi). Rapide, idéal pour les ordinateurs avec peu de mémoire.`, `💬 Microsoft 製の小型モデル(Phi)。高速で、メモリの少ないコンピューターに最適です。`, `💬 Modelo pequeno da Microsoft (Phi). Rápido, ideal para computadores com pouca memória.`)],
+    [/deepseek/i, L(`💬 Modelo de DeepSeek, fuerte en razonamiento y programación.`, `💬 DeepSeek model, strong in reasoning and programming.`, `💬 DeepSeek-Modell, stark in logischem Denken und Programmierung.`, `💬 Modèle DeepSeek, fort en raisonnement et en programmation.`, `💬 DeepSeek のモデル。推論とプログラミングに強いです。`, `💬 Modelo da DeepSeek, forte em raciocínio e programação.`)],
+    [/gpt-oss/i, L(`💬 Modelo abierto de OpenAI, bueno en razonamiento y uso de herramientas.`, `💬 Open model from OpenAI, good at reasoning and tool use.`, `💬 Offenes Modell von OpenAI, gut in logischem Denken und bei der Nutzung von Werkzeugen.`, `💬 Modèle ouvert d'OpenAI, bon en raisonnement et en utilisation d'outils.`, `💬 OpenAI のオープンモデル。推論とツールの利用に優れています。`, `💬 Modelo aberto da OpenAI, bom em raciocínio e uso de ferramentas.`)],
   ];
+  const DEFAULT_FAMILY = L(`💬 Modelo de chat general.`, `💬 General chat model.`, `💬 Allgemeines Chat-Modell.`, `💬 Modèle de chat généraliste.`, `💬 汎用チャットモデル。`, `💬 Modelo de chat geral.`);
   const caps = {
-    vision: "👁️ entiende imágenes", tools: "🛠️ puede usar herramientas (lo usan agentes y automatizaciones)",
-    thinking: "🧠 razona paso a paso", embedding: "🔎 embeddings", completion: null, insert: null,
+    vision: L(`👁️ entiende imágenes`, `👁️ understands images`, `👁️ versteht Bilder`, `👁️ comprend les images`, `👁️ 画像を理解`, `👁️ entende imagens`),
+    tools: L(`🛠️ puede usar herramientas (lo usan agentes y automatizaciones)`, `🛠️ can use tools (used by agents and automations)`, `🛠️ kann Werkzeuge nutzen (von Agenten und Automatisierungen verwendet)`, `🛠️ peut utiliser des outils (utilisé par les agents et les automatisations)`, `🛠️ ツールを使用可能(エージェントや自動化で利用)`, `🛠️ pode usar ferramentas (usado por agentes e automações)`),
+    thinking: L(`🧠 razona paso a paso`, `🧠 reasons step by step`, `🧠 denkt Schritt für Schritt`, `🧠 raisonne étape par étape`, `🧠 段階的に推論`, `🧠 raciocina passo a passo`),
+    embedding: L(`🔎 embeddings`, `🔎 embeddings`, `🔎 Embeddings`, `🔎 embeddings`, `🔎 埋め込み`, `🔎 embeddings`),
   };
+  const T = {
+    capsLabel: L(`Capacidades: {list}.`, `Capabilities: {list}.`, `Fähigkeiten: {list}.`, `Capacités : {list}.`, `機能:{list}。`, `Capacidades: {list}.`),
+    ctx: L(`Contexto máximo: {n} tokens.`, `Maximum context: {n} tokens.`, `Maximaler Kontext: {n} Tokens.`, `Contexte maximal : {n} tokens.`, `最大コンテキスト:{n} トークン。`, `Contexto máximo: {n} tokens.`),
+    small: L(`Chico: rápido, respuestas más simples.`, `Small: fast, simpler answers.`, `Klein: schnell, einfachere Antworten.`, `Petit : rapide, réponses plus simples.`, `小型:高速で、回答はシンプルです。`, `Pequeno: rápido, respostas mais simples.`),
+    medium: L(`Mediano: buen equilibrio entre calidad y velocidad.`, `Medium: good balance between quality and speed.`, `Mittel: gute Balance zwischen Qualität und Geschwindigkeit.`, `Moyen : bon équilibre entre qualité et vitesse.`, `中型:品質と速度のバランスが良好です。`, `Médio: bom equilíbrio entre qualidade e velocidade.`),
+    large: L(`Grande: respuestas de mejor calidad, más lento.`, `Large: better-quality answers, slower.`, `Groß: Antworten von höherer Qualität, langsamer.`, `Grand : réponses de meilleure qualité, plus lent.`, `大型:回答の質は高くなりますが、遅くなります。`, `Grande: respostas de melhor qualidade, mais lento.`),
+    xlarge: L(`Muy grande: necesita mucha memoria.`, `Very large: needs a lot of memory.`, `Sehr groß: braucht viel Speicher.`, `Très grand : nécessite beaucoup de mémoire.`, `超大型:大量のメモリが必要です。`, `Muito grande: precisa de muita memória.`),
+    fitHigh: L(` ⚠️ Ocupa casi toda tu memoria: puede andar muy lento.`, ` ⚠️ Takes up almost all of your memory: it may run very slowly.`, ` ⚠️ Belegt fast deinen gesamten Speicher: kann sehr langsam laufen.`, ` ⚠️ Occupe presque toute votre mémoire : peut être très lent.`, ` ⚠️ ほぼすべてのメモリを使用します。非常に遅くなる可能性があります。`, ` ⚠️ Ocupa quase toda a sua memória: pode ficar muito lento.`),
+    fitMid: L(` Ocupa bastante de tu memoria: cerrá otras cosas pesadas al usarlo.`, ` Takes up a lot of your memory: close other heavy apps when using it.`, ` Belegt viel von deinem Speicher: Schließe beim Verwenden andere speicherintensive Programme.`, ` Occupe une bonne partie de votre mémoire : fermez les autres applications lourdes pendant l'utilisation.`, ` メモリをかなり使用します。使用中は他の重いアプリを閉じてください。`, ` Ocupa bastante da sua memória: feche outras coisas pesadas ao usá-lo.`),
+    fitOk: L(` Entra cómodo en tu memoria.`, ` Fits comfortably in your memory.`, ` Passt bequem in deinen Speicher.`, ` Tient confortablement dans votre mémoire.`, ` メモリに余裕で収まります。`, ` Cabe confortavelmente na sua memória.`),
+    flux: L(`Modelo <b>Flux</b>: muy buena calidad y entiende bien textos largos; necesita mucha memoria.`, `<b>Flux</b> model: very good quality and understands long prompts well; needs a lot of memory.`, `<b>Flux</b>-Modell: sehr gute Qualität und versteht lange Texte gut; braucht viel Speicher.`, `Modèle <b>Flux</b> : très bonne qualité et comprend bien les textes longs ; nécessite beaucoup de mémoire.`, `<b>Flux</b> モデル:非常に高品質で、長い文章もよく理解します。大量のメモリが必要です。`, `Modelo <b>Flux</b>: muito boa qualidade e entende bem textos longos; precisa de muita memória.`),
+    sdxl: L(`Modelo <b>SDXL</b>: imágenes de 1024px con buena calidad. Usá tamaños como 1024×1024.`, `<b>SDXL</b> model: 1024px images with good quality. Use sizes like 1024×1024.`, `<b>SDXL</b>-Modell: Bilder mit 1024 px in guter Qualität. Verwende Größen wie 1024×1024.`, `Modèle <b>SDXL</b> : images de 1024 px de bonne qualité. Utilisez des tailles comme 1024×1024.`, `<b>SDXL</b> モデル:1024px の高品質な画像を生成します。1024×1024 などのサイズを使ってください。`, `Modelo <b>SDXL</b>: imagens de 1024px com boa qualidade. Use tamanhos como 1024×1024.`),
+    sd3: L(`Modelo <b>SD3</b>.`, `<b>SD3</b> model.`, `<b>SD3</b>-Modell.`, `Modèle <b>SD3</b>.`, `<b>SD3</b> モデル。`, `Modelo <b>SD3</b>.`),
+    sd15: L(`Probablemente <b>SD 1.5</b>: liviano, imágenes de 512px. Usá tamaños como 512×512 o 512×768.`, `Probably <b>SD 1.5</b>: lightweight, 512px images. Use sizes like 512×512 or 512×768.`, `Wahrscheinlich <b>SD 1.5</b>: leicht, Bilder mit 512 px. Verwende Größen wie 512×512 oder 512×768.`, `Probablement <b>SD 1.5</b> : léger, images de 512 px. Utilisez des tailles comme 512×512 ou 512×768.`, `おそらく <b>SD 1.5</b>:軽量で、512px の画像を生成します。512×512 や 512×768 などのサイズを使ってください。`, `Provavelmente <b>SD 1.5</b>: leve, imagens de 512px. Use tamanhos como 512×512 ou 512×768.`),
+    pixel: L(`Estilo <b>pixel art</b> (ideal para sprites de juegos).`, `<b>Pixel art</b> style (ideal for game sprites).`, `<b>Pixel-Art</b>-Stil (ideal für Spiele-Sprites).`, `Style <b>pixel art</b> (idéal pour les sprites de jeux).`, `<b>ピクセルアート</b>スタイル(ゲームのスプライトに最適)。`, `Estilo <b>pixel art</b> (ideal para sprites de jogos).`),
+    anime: L(`Estilo <b>anime/ilustración</b>.`, `<b>Anime/illustration</b> style.`, `<b>Anime-/Illustrations</b>-Stil.`, `Style <b>anime/illustration</b>.`, `<b>アニメ/イラスト</b>スタイル。`, `Estilo <b>anime/ilustração</b>.`),
+    photo: L(`Estilo <b>fotorrealista</b>.`, `<b>Photorealistic</b> style.`, `<b>Fotorealistischer</b> Stil.`, `Style <b>photoréaliste</b>.`, `<b>フォトリアル</b>スタイル。`, `Estilo <b>fotorrealista</b>.`),
+    inpaint: L(`Versión especial para <b>inpainting</b> (corregir partes de una imagen).`, `Special version for <b>inpainting</b> (fixing parts of an image).`, `Spezielle Version für <b>Inpainting</b> (Teile eines Bildes korrigieren).`, `Version spéciale pour l'<b>inpainting</b> (corriger des parties d'une image).`, `<b>インペインティング</b>(画像の一部の修正)用の特別バージョン。`, `Versão especial para <b>inpainting</b> (corrigir partes de uma imagem).`),
+    sprite: L(`Pensado para <b>sprites</b> y personajes de juegos.`, `Designed for game <b>sprites</b> and characters.`, `Gedacht für <b>Sprites</b> und Figuren in Spielen.`, `Conçu pour les <b>sprites</b> et personnages de jeux.`, `ゲームの<b>スプライト</b>やキャラクター向けです。`, `Pensado para <b>sprites</b> e personagens de jogos.`),
+  };
+  const interp = (s, v) => s.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m);
+  const tx = (o, v) => interp(pick(o), v || {});
+
   function sizeAdvice(paramStr, bytes, totalMem) {
     const b = parseFloat(String(paramStr || "").replace(/[^\d.]/g, "")) || 0;
-    const sizeTxt = b ? (b < 4 ? "Chico: rápido, respuestas más simples." : b < 15 ? "Mediano: buen equilibrio entre calidad y velocidad." : b < 40 ? "Grande: respuestas de mejor calidad, más lento." : "Muy grande: necesita mucha memoria.") : "";
+    const sizeTxt = b ? pick(b < 4 ? T.small : b < 15 ? T.medium : b < 40 ? T.large : T.xlarge) : "";
     let fit = "";
     if (bytes && totalMem) {
       const ratio = bytes / totalMem;
-      fit = ratio > 0.7 ? " ⚠️ Ocupa casi toda tu memoria: puede andar muy lento." : ratio > 0.45 ? " Ocupa bastante de tu memoria: cerrá otras cosas pesadas al usarlo." : " Entra cómodo en tu memoria.";
+      fit = pick(ratio > 0.7 ? T.fitHigh : ratio > 0.45 ? T.fitMid : T.fitOk);
     }
     return sizeTxt + fit;
   }
@@ -177,12 +636,12 @@ window.HELP = (() => {
     const info = m.info || {};
     const parts = [];
     const fam = families.find(([re]) => re.test(name) || re.test(info.family || ""));
-    parts.push(fam ? fam[1] : "💬 Modelo de chat general.");
-    const cs = (info.capabilities || []).map(c => caps[c]).filter(Boolean);
-    if (cs.length) parts.push("Capacidades: " + cs.join(" · ") + ".");
+    parts.push(pick(fam ? fam[1] : DEFAULT_FAMILY));
+    const cs = (info.capabilities || []).map(c => caps[c] && pick(caps[c])).filter(Boolean);
+    if (cs.length) parts.push(tx(T.capsLabel, { list: cs.join(" · ") }));
     const adv = sizeAdvice(info.parameter_size || m.details?.parameter_size, m.size, totalMem);
     if (adv) parts.push(adv);
-    if (info.context_length) parts.push("Contexto máximo: " + Number(info.context_length).toLocaleString("es") + " tokens.");
+    if (info.context_length) parts.push(tx(T.ctx, { n: Number(info.context_length).toLocaleString(lang()) }));
     return parts.join(" ");
   }
 
@@ -190,15 +649,15 @@ window.HELP = (() => {
   function checkpoint(name, size) {
     const n = name.toLowerCase();
     const out = [];
-    if (/flux/.test(n)) out.push("Modelo <b>Flux</b>: muy buena calidad y entiende bien textos largos; necesita mucha memoria.");
-    else if (/sdxl|xl|pony|illustrious|noob/.test(n) || size > 5e9) out.push("Modelo <b>SDXL</b>: imágenes de 1024px con buena calidad. Usá tamaños como 1024×1024.");
-    else if (/sd3/.test(n)) out.push("Modelo <b>SD3</b>.");
-    else out.push("Probablemente <b>SD 1.5</b>: liviano, imágenes de 512px. Usá tamaños como 512×512 o 512×768.");
-    if (/pixel/.test(n)) out.push("Estilo <b>pixel art</b> (ideal para sprites de juegos).");
-    if (/anime|anything|counterfeit|pony|illustrious|noob/.test(n)) out.push("Estilo <b>anime/ilustración</b>.");
-    if (/real|photo|juggernaut|epic/.test(n)) out.push("Estilo <b>fotorrealista</b>.");
-    if (/inpaint/.test(n)) out.push("Versión especial para <b>inpainting</b> (corregir partes de una imagen).");
-    if (/sprite|shaper/.test(n)) out.push("Pensado para <b>sprites</b> y personajes de juegos.");
+    if (/flux/.test(n)) out.push(pick(T.flux));
+    else if (/sdxl|xl|pony|illustrious|noob/.test(n) || size > 5e9) out.push(pick(T.sdxl));
+    else if (/sd3/.test(n)) out.push(pick(T.sd3));
+    else out.push(pick(T.sd15));
+    if (/pixel/.test(n)) out.push(pick(T.pixel));
+    if (/anime|anything|counterfeit|pony|illustrious|noob/.test(n)) out.push(pick(T.anime));
+    if (/real|photo|juggernaut|epic/.test(n)) out.push(pick(T.photo));
+    if (/inpaint/.test(n)) out.push(pick(T.inpaint));
+    if (/sprite|shaper/.test(n)) out.push(pick(T.sprite));
     return out.join(" ");
   }
 
@@ -206,16 +665,26 @@ window.HELP = (() => {
   function suggestions(totalMem) {
     const gb = totalMem / 2 ** 30;
     const list = [
-      ["gemma3:1b", "chico y muy rápido, para probar", 1],
-      ["llama3.2", "chat general liviano (3B)", 4],
-      ["qwen3:4b", "chat en español, buen equilibrio", 6],
-      ["qwen2.5-coder:7b", "ayuda para programar", 8],
-      ["gemma3:12b", "chat general de mejor calidad, entiende imágenes", 14],
-      ["qwen3:14b", "chat avanzado y razonamiento", 16],
-      ["qwen3:32b", "muy buena calidad (lento)", 32],
+      ["gemma3:1b", L(`chico y muy rápido, para probar`, `small and very fast, for trying things out`, `klein und sehr schnell, zum Ausprobieren`, `petit et très rapide, pour essayer`, `小型で非常に高速。お試し用`, `pequeno e muito rápido, para testar`), 1],
+      ["llama3.2", L(`chat general liviano (3B)`, `lightweight general chat (3B)`, `leichtes allgemeines Chat-Modell (3B)`, `chat généraliste léger (3B)`, `軽量な汎用チャット(3B)`, `chat geral leve (3B)`), 4],
+      ["qwen3:4b", L(`chat en español, buen equilibrio`, `multilingual chat, good balance`, `mehrsprachiger Chat, gute Balance`, `chat multilingue, bon équilibre`, `多言語対応のチャット。バランスが良い`, `chat multilíngue, bom equilíbrio`), 6],
+      ["qwen2.5-coder:7b", L(`ayuda para programar`, `help with programming`, `Hilfe beim Programmieren`, `aide à la programmation`, `プログラミング支援`, `ajuda para programar`), 8],
+      ["gemma3:12b", L(`chat general de mejor calidad, entiende imágenes`, `higher-quality general chat, understands images`, `hochwertigerer allgemeiner Chat, versteht Bilder`, `chat généraliste de meilleure qualité, comprend les images`, `より高品質な汎用チャット。画像も理解`, `chat geral de melhor qualidade, entende imagens`), 14],
+      ["qwen3:14b", L(`chat avanzado y razonamiento`, `advanced chat and reasoning`, `fortgeschrittener Chat und logisches Denken`, `chat avancé et raisonnement`, `高度なチャットと推論`, `chat avançado e raciocínio`), 16],
+      ["qwen3:32b", L(`muy buena calidad (lento)`, `very high quality (slow)`, `sehr hohe Qualität (langsam)`, `très haute qualité (lent)`, `非常に高品質(低速)`, `qualidade muito alta (lento)`), 32],
     ];
-    return list.filter(x => x[2] <= gb).slice(-5);
+    return list.filter(x => x[2] <= gb).slice(-5).map(([n, d]) => [n, pick(d)]);
   }
 
-  return { glossary, sections, ollama, sd, purpose, ollamaModel, checkpoint, suggestions };
+  // ------------------------------------------------------------------ acceso resuelto al idioma actual
+  const resolveOpt = o => o && ({ simple: o.simple, text: pick(o.text), tip: o.tip ? pick(o.tip) : undefined, rec: !!(o.tip && /Recomendado/.test(o.tip.es || "")) });
+  return {
+    LANGS,
+    ollamaOpt: name => resolveOpt(ollama[name]),
+    sdOpt: flag => resolveOpt(sd[flag]),
+    section: key => pick(sections[key]),
+    purposeOf: kind => pick(purpose[kind]),
+    glossaryList: () => glossary.map(([term, def]) => [pick(term), pick(def)]),
+    ollamaModel, checkpoint, suggestions,
+  };
 })();

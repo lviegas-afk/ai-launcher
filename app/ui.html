@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -149,24 +149,393 @@ pre.log { background: var(--code); border: 1px solid var(--line); border-radius:
 <body>
 <nav>
   <h1>⚡︎ AI Launcher</h1>
-  <button data-view="monitor" class="active">📊 Monitor</button>
-  <button data-view="ollama">🦙 Ollama</button>
-  <button data-view="sd">🎨 Imagen</button>
-  <button data-view="logs">📜 Logs</button>
-  <button data-view="settings">⚙️ Ajustes</button>
+  <button data-view="monitor" class="active" data-i18n="nav.monitor"></button>
+  <button data-view="ollama" data-i18n="nav.ollama"></button>
+  <button data-view="sd" data-i18n="nav.sd"></button>
+  <button data-view="logs" data-i18n="nav.logs"></button>
+  <button data-view="settings" data-i18n="nav.settings"></button>
   <div class="spacer"></div>
-  <button data-view="install">＋ Instalar apps</button>
+  <button data-view="install" data-i18n="nav.install"></button>
   <div class="mem" id="navMem"></div>
 </nav>
 <main id="main"></main>
 <div class="toast-wrap" id="toasts"></div>
 
+<script>
+// ---------------------------------------------------------------- i18n (inline: no extra route needed)
+window.I18N = (() => {
+  const LANGS = ["es", "en", "de", "fr", "ja", "pt"];
+  const NAMES = { es: "Español", en: "English", de: "Deutsch", fr: "Français", ja: "日本語", pt: "Português" };
+  const D = {
+// ---- nav / os / common
+"nav.monitor":[`📊 Monitor`,`📊 Monitor`,`📊 Monitor`,`📊 Moniteur`,`📊 モニター`,`📊 Monitor`],
+"nav.ollama":[`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`],
+"nav.sd":[`🎨 Imagen`,`🎨 Image`,`🎨 Bilder`,`🎨 Images`,`🎨 画像`,`🎨 Imagem`],
+"nav.logs":[`📜 Logs`,`📜 Logs`,`📜 Protokolle`,`📜 Journaux`,`📜 ログ`,`📜 Logs`],
+"nav.settings":[`⚙️ Ajustes`,`⚙️ Settings`,`⚙️ Einstellungen`,`⚙️ Réglages`,`⚙️ 設定`,`⚙️ Configurações`],
+"nav.install":[`＋ Instalar apps`,`＋ Install apps`,`＋ Apps installieren`,`＋ Installer des apps`,`＋ アプリをインストール`,`＋ Instalar apps`],
+"nav.memory":[`Memoria {used} / {total}`,`Memory {used} / {total}`,`Speicher {used} / {total}`,`Mémoire {used} / {total}`,`メモリ {used} / {total}`,`Memória {used} / {total}`],
+
+"os.mac.tray":[`en la barra de menú`,`in the menu bar`,`in der Menüleiste`,`dans la barre des menus`,`メニューバー`,`na barra de menus`],
+"os.windows.tray":[`en la bandeja del sistema`,`in the system tray`,`im Infobereich der Taskleiste`,`dans la zone de notification`,`システムトレイ`,`na bandeja do sistema`],
+"os.linux.tray":[`en la bandeja`,`in the tray`,`im Systembereich`,`dans la zone de notification`,`システムトレイ`,`na bandeja`],
+"os.mac.device":[`en la Mac`,`on your Mac`,`auf deinem Mac`,`sur votre Mac`,`この Mac`,`no seu Mac`],
+"os.windows.device":[`en la PC`,`on your PC`,`auf deinem PC`,`sur votre PC`,`この PC`,`no seu PC`],
+"os.linux.device":[`en la PC`,`on your PC`,`auf deinem PC`,`sur votre PC`,`この PC`,`no seu PC`],
+"btn.showIn.mac":[`Mostrar en Finder`,`Show in Finder`,`Im Finder anzeigen`,`Afficher dans le Finder`,`Finder で表示`,`Mostrar no Finder`],
+"btn.showIn.windows":[`Mostrar en el Explorador`,`Show in File Explorer`,`Im Explorer anzeigen`,`Afficher dans l'Explorateur`,`エクスプローラーで表示`,`Mostrar no Explorador de Arquivos`],
+"btn.showIn.linux":[`Mostrar en el gestor de archivos`,`Show in file manager`,`Im Dateimanager anzeigen`,`Afficher dans le gestionnaire de fichiers`,`ファイルマネージャーで表示`,`Mostrar no gerenciador de arquivos`],
+
+"btn.cancel":[`Cancelar`,`Cancel`,`Abbrechen`,`Annuler`,`キャンセル`,`Cancelar`],
+"btn.confirm":[`Confirmar`,`Confirm`,`Bestätigen`,`Confirmer`,`確認`,`Confirmar`],
+"btn.save":[`Guardar`,`Save`,`Speichern`,`Enregistrer`,`保存`,`Salvar`],
+"btn.stop":[`Detener`,`Stop`,`Stoppen`,`Arrêter`,`停止`,`Parar`],
+"btn.start":[`Iniciar`,`Start`,`Starten`,`Démarrer`,`起動`,`Iniciar`],
+"btn.force":[`Forzar`,`Force`,`Erzwingen`,`Forcer`,`強制終了`,`Forçar`],
+"btn.options":[`Opciones…`,`Options…`,`Optionen…`,`Options…`,`オプション…`,`Opções…`],
+"btn.load":[`Cargar`,`Load`,`Laden`,`Charger`,`読み込む`,`Carregar`],
+"btn.unload":[`Descargar de memoria`,`Unload from memory`,`Aus dem Speicher entladen`,`Décharger de la mémoire`,`メモリから解放`,`Descarregar da memória`],
+"btn.open":[`abrir`,`open`,`öffnen`,`ouvrir`,`開く`,`abrir`],
+"btn.show":[`mostrar`,`show`,`anzeigen`,`afficher`,`表示`,`mostrar`],
+"btn.download":[`Descargar`,`Download`,`Herunterladen`,`Télécharger`,`ダウンロード`,`Baixar`],
+"btn.catalog":[`Ver catálogo ↗`,`Browse catalog ↗`,`Katalog ansehen ↗`,`Voir le catalogue ↗`,`カタログを見る ↗`,`Ver catálogo ↗`],
+"btn.remove":[`quitar`,`remove`,`entfernen`,`retirer`,`削除`,`remover`],
+"btn.use":[`usar`,`use`,`anwenden`,`utiliser`,`使う`,`usar`],
+"btn.delete":[`Borrar`,`Delete`,`Löschen`,`Supprimer`,`削除`,`Excluir`],
+"btn.retry":[`Reintentar`,`Retry`,`Erneut versuchen`,`Réessayer`,`再試行`,`Tentar novamente`],
+"btn.copy":[`Copiar`,`Copy`,`Kopieren`,`Copier`,`コピー`,`Copiar`],
+"btn.copied":[`¡Copiado!`,`Copied!`,`Kopiert!`,`Copié !`,`コピーしました`,`Copiado!`],
+"btn.change":[`Cambiar…`,`Change…`,`Ändern…`,`Modifier…`,`変更…`,`Alterar…`],
+"btn.choose":[`Elegir…`,`Choose…`,`Auswählen…`,`Choisir…`,`選択…`,`Escolher…`],
+"btn.chat":[`Chat en terminal`,`Terminal chat`,`Chat im Terminal`,`Chat dans le terminal`,`ターミナルでチャット`,`Chat no terminal`],
+"btn.installApps":[`Instalar apps`,`Install apps`,`Apps installieren`,`Installer des apps`,`アプリをインストール`,`Instalar apps`],
+"btn.openBrowser":[`Abrir en el navegador ↗`,`Open in browser ↗`,`Im Browser öffnen ↗`,`Ouvrir dans le navigateur ↗`,`ブラウザで開く ↗`,`Abrir no navegador ↗`],
+"btn.stopLoseTraining":[`Detener y perder el entrenamiento`,`Stop and lose the training`,`Stoppen und Training verlieren`,`Arrêter et perdre l'entraînement`,`停止してトレーニングを破棄`,`Parar e perder o treinamento`],
+"btn.viewLog":[`Ver log completo`,`View full log`,`Vollständiges Protokoll ansehen`,`Voir le journal complet`,`ログ全体を見る`,`Ver log completo`],
+"general.none":[`ninguno`,`none`,`keine`,`aucun`,`なし`,`nenhum`],
+"general.noneF":[`ninguna`,`none`,`keine`,`aucune`,`なし`,`nenhuma`],
+"general.loading":[`Cargando…`,`Loading…`,`Lädt…`,`Chargement…`,`読み込み中…`,`Carregando…`],
+
+// ---- status
+"status.running":[`Corriendo · {url}`,`Running · {url}`,`Läuft · {url}`,`En cours · {url}`,`実行中 · {url}`,`Em execução · {url}`],
+"status.starting":[`Iniciando…`,`Starting…`,`Startet…`,`Démarrage…`,`起動中…`,`Iniciando…`],
+"status.startingSd":[`Iniciando… (puede tardar un minuto)`,`Starting… (may take a minute)`,`Startet… (kann eine Minute dauern)`,`Démarrage… (peut prendre une minute)`,`起動中…(1分ほどかかることがあります)`,`Iniciando… (pode levar um minuto)`],
+"status.failed":[`No pudo iniciar`,`Failed to start`,`Start fehlgeschlagen`,`Échec du démarrage`,`起動に失敗しました`,`Falha ao iniciar`],
+"status.stopped":[`Detenido`,`Stopped`,`Gestoppt`,`Arrêté`,`停止中`,`Parado`],
+"status.training":[`Entrenando un LoRA…`,`Training a LoRA…`,`Trainiert ein LoRA…`,`Entraînement d'un LoRA…`,`LoRA をトレーニング中…`,`Treinando um LoRA…`],
+
+// ---- error box
+"err.detail":[`Ver detalle`,`Show details`,`Details anzeigen`,`Voir les détails`,`詳細を表示`,`Ver detalhes`],
+"err.logEmpty":[`(el log está vacío)`,`(the log is empty)`,`(das Protokoll ist leer)`,`(le journal est vide)`,`(ログは空です)`,`(o log está vazio)`],
+"err.dismiss":[`Descartar`,`Dismiss`,`Verwerfen`,`Ignorer`,`閉じる`,`Dispensar`],
+
+// ---- dialogs: stop
+"dlg.stopOllama.title":[`Detener Ollama`,`Stop Ollama`,`Ollama stoppen`,`Arrêter Ollama`,`Ollama を停止`,`Parar o Ollama`],
+"dlg.stopOllama.text":[`Se van a cerrar {n} proceso(s) de Ollama ({list}). Los modelos cargados se liberan de memoria.`,`{n} Ollama process(es) will be closed ({list}). Loaded models are freed from memory.`,`{n} Ollama-Prozess(e) werden beendet ({list}). Geladene Modelle werden aus dem Speicher freigegeben.`,`{n} processus Ollama vont être fermés ({list}). Les modèles chargés sont libérés de la mémoire.`,`Ollama のプロセスを {n} 個終了します({list})。読み込まれているモデルはメモリから解放されます。`,`{n} processo(s) do Ollama serão encerrados ({list}). Os modelos carregados serão liberados da memória.`],
+"toast.ollamaStopped":[`Ollama detenido`,`Ollama stopped`,`Ollama gestoppt`,`Ollama arrêté`,`Ollama を停止しました`,`Ollama parado`],
+"toast.startingOllama":[`Iniciando Ollama…`,`Starting Ollama…`,`Ollama wird gestartet…`,`Démarrage d'Ollama…`,`Ollama を起動しています…`,`Iniciando o Ollama…`],
+"sd.defaultName":[`la app de imagen`,`the image app`,`die Bilder-App`,`l'app d'images`,`画像アプリ`,`o app de imagem`],
+"dlg.stopSD.title":[`Detener {name}`,`Stop {name}`,`{name} stoppen`,`Arrêter {name}`,`{name} を停止`,`Parar {name}`],
+"dlg.stopSD.training":[`{name} está entrenando un LoRA. Si la detenés ahora, el entrenamiento se pierde y vas a tener que empezar de nuevo.`,`{name} is training a LoRA. If you stop it now, the training is lost and you will have to start over.`,`{name} trainiert gerade ein LoRA. Wenn du es jetzt stoppst, geht das Training verloren und du musst von vorn beginnen.`,`{name} est en train d'entraîner un LoRA. Si vous l'arrêtez maintenant, l'entraînement sera perdu et vous devrez recommencer.`,`{name} は LoRA をトレーニング中です。今停止するとトレーニングは失われ、最初からやり直しになります。`,`{name} está treinando um LoRA. Se você parar agora, o treinamento será perdido e você terá que começar de novo.`],
+"dlg.stopSD.idle":[`Se cierra la app y se libera la memoria del modelo. Si estás generando una imagen, se pierde.`,`The app is closed and the model's memory is freed. If you are generating an image, it will be lost.`,`Die App wird geschlossen und der Modellspeicher freigegeben. Wenn du gerade ein Bild erzeugst, geht es verloren.`,`L'app est fermée et la mémoire du modèle est libérée. Si vous générez une image, elle sera perdue.`,`アプリを終了し、モデルのメモリを解放します。画像を生成中の場合は失われます。`,`O app é fechado e a memória do modelo é liberada. Se você estiver gerando uma imagem, ela será perdida.`],
+"toast.nameStopped":[`{name} detenido`,`{name} stopped`,`{name} gestoppt`,`{name} arrêté`,`{name} を停止しました`,`{name} parado`],
+"toast.sdStarting":[`Iniciando… se abrirá en {url} (puede tardar un minuto)`,`Starting… it will open at {url} (may take a minute)`,`Startet… öffnet sich unter {url} (kann eine Minute dauern)`,`Démarrage… s'ouvrira sur {url} (peut prendre une minute)`,`起動中… {url} で開きます(1分ほどかかることがあります)`,`Iniciando… abrirá em {url} (pode levar um minuto)`],
+
+// ---- conflict modal
+"conflict.title":[`Iniciar {label}`,`Start {label}`,`{label} starten`,`Démarrer {label}`,`{label} を起動`,`Iniciar {label}`],
+"conflict.warn":[`<b>No es recomendable tener los dos abiertos.</b><br>Los dos programas compiten por la misma memoria (en Mac, la memoria RAM y la de video son lo mismo). Todo puede ponerse muy lento, la generación puede fallar o la compu puede trabarse.`,`<b>Running both at once is not recommended.</b><br>Both programs compete for the same memory (on a Mac, RAM and video memory are the same thing). Everything can become very slow, generation may fail, or the computer may freeze.`,`<b>Beide gleichzeitig zu öffnen ist nicht empfehlenswert.</b><br>Die beiden Programme konkurrieren um denselben Speicher (beim Mac sind RAM und Grafikspeicher dasselbe). Alles kann sehr langsam werden, die Erzeugung kann fehlschlagen oder der Computer kann hängen bleiben.`,`<b>Il n'est pas recommandé d'avoir les deux ouverts en même temps.</b><br>Les deux programmes se disputent la même mémoire (sur Mac, la RAM et la mémoire vidéo sont la même chose). Tout peut devenir très lent, la génération peut échouer ou l'ordinateur peut se bloquer.`,`<b>両方を同時に起動することはおすすめしません。</b><br>2つのプログラムが同じメモリを奪い合います(Mac では RAM とビデオメモリは同じものです)。動作が非常に遅くなったり、生成が失敗したり、コンピューターがフリーズしたりすることがあります。`,`<b>Não é recomendável manter os dois abertos.</b><br>Os dois programas disputam a mesma memória (no Mac, a RAM e a memória de vídeo são a mesma coisa). Tudo pode ficar muito lento, a geração pode falhar ou o computador pode travar.`],
+"conflict.memNow":[`Memoria en uso ahora:`,`Memory in use now:`,`Aktuell belegter Speicher:`,`Mémoire utilisée actuellement :`,`現在使用中のメモリ:`,`Memória em uso agora:`],
+"conflict.memOf":[`{used} de {total}`,`{used} of {total}`,`{used} von {total}`,`{used} sur {total}`,`{used} / {total}`,`{used} de {total}`],
+"conflict.uses":[`usa {rss}`,`uses {rss}`,`belegt {rss}`,`utilise {rss}`,`{rss} 使用`,`usa {rss}`],
+"conflict.training":[`(entrenando)`,`(training)`,`(trainiert)`,`(entraînement)`,`(トレーニング中)`,`(treinando)`],
+"conflict.port":[`puerto {ports}`,`port {ports}`,`Port {ports}`,`port {ports}`,`ポート {ports}`,`porta {ports}`],
+"conflict.kohya":[`<b>Kohya está entrenando un LoRA:</b> si te quedás sin memoria, el entrenamiento puede fallar y perder el progreso.`,`<b>Kohya is training a LoRA:</b> if you run out of memory, the training may fail and lose its progress.`,`<b>Kohya trainiert gerade ein LoRA:</b> Wenn dir der Speicher ausgeht, kann das Training fehlschlagen und der Fortschritt geht verloren.`,`<b>Kohya entraîne un LoRA :</b> si la mémoire vient à manquer, l'entraînement peut échouer et la progression être perdue.`,`<b>Kohya が LoRA をトレーニング中です:</b>メモリが不足すると、トレーニングが失敗して進行状況が失われる可能性があります。`,`<b>O Kohya está treinando um LoRA:</b> se faltar memória, o treinamento pode falhar e perder o progresso.`],
+"conflict.portTaken":[`El puerto {port} ya está en uso, así que se abrirá en el puerto {suggested}.`,`Port {port} is already in use, so it will open on port {suggested}.`,`Port {port} ist bereits belegt, deshalb wird Port {suggested} verwendet.`,`Le port {port} est déjà utilisé, l'app s'ouvrira donc sur le port {suggested}.`,`ポート {port} は既に使用中のため、ポート {suggested} で開きます。`,`A porta {port} já está em uso, então abrirá na porta {suggested}.`],
+"conflict.stopMany":[`Detener las apps abiertas y abrir {label}`,`Stop the open apps and open {label}`,`Geöffnete Apps stoppen und {label} öffnen`,`Arrêter les apps ouvertes et ouvrir {label}`,`起動中のアプリを停止して {label} を開く`,`Parar os apps abertos e abrir {label}`],
+"conflict.stopOne":[`Detener {name} y abrir`,`Stop {name} and open`,`{name} stoppen und öffnen`,`Arrêter {name} et ouvrir`,`{name} を停止して開く`,`Parar {name} e abrir`],
+"conflict.force":[`Abrir igual en el puerto {port}`,`Open anyway on port {port}`,`Trotzdem auf Port {port} öffnen`,`Ouvrir quand même sur le port {port}`,`それでもポート {port} で開く`,`Abrir mesmo assim na porta {port}`],
+"toast.waitClose":[`Esperando que se cierre…`,`Waiting for it to close…`,`Warte auf das Beenden…`,`En attente de la fermeture…`,`終了を待っています…`,`Aguardando o encerramento…`],
+"toast.closeSlow":[`Tardó más de lo esperado en cerrarse.`,`It took longer than expected to close.`,`Das Beenden hat länger gedauert als erwartet.`,`La fermeture a pris plus de temps que prévu.`,`終了に予想より時間がかかりました。`,`Demorou mais que o esperado para encerrar.`],
+
+// ---- kill process
+"dlg.kill.titleForce":[`Forzar cierre`,`Force quit`,`Beenden erzwingen`,`Forcer la fermeture`,`強制終了`,`Forçar encerramento`],
+"dlg.kill.title":[`Detener proceso`,`Stop process`,`Prozess stoppen`,`Arrêter le processus`,`プロセスを停止`,`Parar processo`],
+"kill.force":[`{label} (PID {pid}) se cierra de inmediato (SIGKILL), sin darle tiempo a guardar.`,`{label} (PID {pid}) is closed immediately (SIGKILL), with no time to save.`,`{label} (PID {pid}) wird sofort beendet (SIGKILL), ohne Zeit zum Speichern.`,`{label} (PID {pid}) est fermé immédiatement (SIGKILL), sans avoir le temps d'enregistrer.`,`{label}(PID {pid})は即座に終了されます(SIGKILL)。保存する時間はありません。`,`{label} (PID {pid}) é encerrado imediatamente (SIGKILL), sem tempo para salvar.`],
+"kill.soft":[`{label} (PID {pid}) y sus subprocesos reciben la señal para cerrarse.`,`{label} (PID {pid}) and its subprocesses are signaled to close.`,`{label} (PID {pid}) und seine Unterprozesse erhalten das Signal zum Beenden.`,`{label} (PID {pid}) et ses sous-processus reçoivent le signal de fermeture.`,`{label}(PID {pid})とそのサブプロセスに終了シグナルを送ります。`,`{label} (PID {pid}) e seus subprocessos recebem o sinal para encerrar.`],
+"kill.training":[` ⚠️ Está entrenando un LoRA: si lo detenés, el entrenamiento se pierde.`,` ⚠️ It is training a LoRA: if you stop it, the training is lost.`,` ⚠️ Es trainiert gerade ein LoRA: Wenn du es stoppst, geht das Training verloren.`,` ⚠️ Il entraîne un LoRA : si vous l'arrêtez, l'entraînement sera perdu.`,` ⚠️ LoRA をトレーニング中です。停止するとトレーニングは失われます。`,` ⚠️ Está treinando um LoRA: se você parar, o treinamento será perdido.`],
+"toast.signalSent":[`Señal enviada a PID {pid}`,`Signal sent to PID {pid}`,`Signal an PID {pid} gesendet`,`Signal envoyé au PID {pid}`,`PID {pid} にシグナルを送信しました`,`Sinal enviado ao PID {pid}`],
+"toast.unloaded":[`{model} descargado de memoria`,`{model} unloaded from memory`,`{model} aus dem Speicher entladen`,`{model} déchargé de la mémoire`,`{model} をメモリから解放しました`,`{model} descarregado da memória`],
+
+// ---- models table
+"th.model":[`Modelo`,`Model`,`Modell`,`Modèle`,`モデル`,`Modelo`],
+"th.size":[`Tamaño`,`Size`,`Größe`,`Taille`,`サイズ`,`Tamanho`],
+"th.gpu":[`En GPU`,`On GPU`,`Auf GPU`,`Sur GPU`,`GPU 上`,`Na GPU`],
+"th.frees":[`Se libera`,`Frees`,`Wird freigegeben`,`Libération`,`解放まで`,`Libera`],
+"th.process":[`Proceso`,`Process`,`Prozess`,`Processus`,`プロセス`,`Processo`],
+"th.mem":[`Memoria`,`Memory`,`Speicher`,`Mémoire`,`メモリ`,`Memória`],
+"th.since":[`Hace`,`Uptime`,`Laufzeit`,`Durée`,`稼働時間`,`Há`],
+"th.ports":[`Puertos`,`Ports`,`Ports`,`Ports`,`ポート`,`Portas`],
+"th.params":[`Parámetros`,`Parameters`,`Parameter`,`Paramètres`,`パラメーター`,`Parâmetros`],
+"th.modified":[`Modificado`,`Modified`,`Geändert`,`Modifié`,`更新日`,`Modificado`],
+"models.ollamaDown":[`Ollama no está corriendo.`,`Ollama is not running.`,`Ollama läuft nicht.`,`Ollama n'est pas en cours d'exécution.`,`Ollama は実行されていません。`,`O Ollama não está em execução.`],
+"models.noneLoaded":[`No hay modelos cargados en memoria. Se cargan solos cuando les hacés un pedido.`,`No models are loaded in memory. They load automatically when you send them a request.`,`Es sind keine Modelle im Speicher geladen. Sie werden automatisch geladen, sobald du eine Anfrage stellst.`,`Aucun modèle n'est chargé en mémoire. Ils se chargent automatiquement lorsque vous leur envoyez une requête.`,`メモリに読み込まれているモデルはありません。リクエストを送ると自動的に読み込まれます。`,`Não há modelos carregados na memória. Eles são carregados automaticamente quando você faz uma solicitação.`],
+"time.never":[`nunca (keep_alive -1)`,`never (keep_alive -1)`,`nie (keep_alive -1)`,`jamais (keep_alive -1)`,`なし(keep_alive -1)`,`nunca (keep_alive -1)`],
+"time.now":[`ahora`,`now`,`jetzt`,`maintenant`,`今すぐ`,`agora`],
+"time.inH":[`en {n} h`,`in {n} h`,`in {n} Std.`,`dans {n} h`,`{n} 時間後`,`em {n} h`],
+"time.inMin":[`en {n} min`,`in {n} min`,`in {n} Min.`,`dans {n} min`,`{n} 分後`,`em {n} min`],
+"time.inS":[`en {n} s`,`in {n} s`,`in {n} Sek.`,`dans {n} s`,`{n} 秒後`,`em {n} s`],
+
+// ---- sd api
+"sdapi.needApi":[`Para ver y descargar el checkpoint desde acá, iniciá con <span class="mono">--api</span>.`,`To see and unload the checkpoint from here, start with <span class="mono">--api</span>.`,`Um den Checkpoint von hier aus zu sehen und zu entladen, starte mit <span class="mono">--api</span>.`,`Pour voir et décharger le checkpoint depuis ici, démarrez avec <span class="mono">--api</span>.`,`ここからチェックポイントを確認・解放するには、<span class="mono">--api</span> を付けて起動してください。`,`Para ver e descarregar o checkpoint daqui, inicie com <span class="mono">--api</span>.`],
+"sdapi.ckpt":[`Checkpoint en memoria:`,`Checkpoint in memory:`,`Checkpoint im Speicher:`,`Checkpoint en mémoire :`,`メモリ上のチェックポイント:`,`Checkpoint na memória:`],
+"toast.ckptUnloaded":[`Checkpoint descargado de memoria`,`Checkpoint unloaded from memory`,`Checkpoint aus dem Speicher entladen`,`Checkpoint déchargé de la mémoire`,`チェックポイントをメモリから解放しました`,`Checkpoint descarregado da memória`],
+"toast.ckptLoading":[`Cargando checkpoint…`,`Loading checkpoint…`,`Checkpoint wird geladen…`,`Chargement du checkpoint…`,`チェックポイントを読み込み中…`,`Carregando checkpoint…`],
+
+// ---- monitor
+"mon.title":[`Monitor`,`Monitor`,`Monitor`,`Moniteur`,`モニター`,`Monitor`],
+"mon.sub":[`Qué está corriendo ahora mismo, cuánto consume, y botones para cerrar lo que no uses. Se actualiza solo.`,`What is running right now, how much it uses, and buttons to close what you're not using. It updates by itself.`,`Was gerade läuft, wie viel es verbraucht, und Schaltflächen, um nicht benötigte Programme zu beenden. Aktualisiert sich automatisch.`,`Ce qui tourne en ce moment, ce que ça consomme, et des boutons pour fermer ce que vous n'utilisez pas. Se met à jour automatiquement.`,`現在実行中のもの、その消費量、使っていないものを終了するボタンを表示します。自動的に更新されます。`,`O que está em execução agora, quanto consome e botões para fechar o que você não está usando. Atualiza sozinho.`],
+"mon.imageApps":[`🎨 Apps de imagen`,`🎨 Image apps`,`🎨 Bilder-Apps`,`🎨 Apps d'images`,`🎨 画像アプリ`,`🎨 Apps de imagem`],
+"mon.noInstall":[`No encontré ninguna instalación.`,`I couldn't find any installation.`,`Ich habe keine Installation gefunden.`,`Je n'ai trouvé aucune installation.`,`インストールが見つかりませんでした。`,`Não encontrei nenhuma instalação.`],
+"mon.searchAdd":[`Buscar o agregar…`,`Search or add…`,`Suchen oder hinzufügen…`,`Rechercher ou ajouter…`,`検索または追加…`,`Buscar ou adicionar…`],
+"chip.training":[`entrenando`,`training`,`trainiert`,`entraînement`,`トレーニング中`,`treinando`],
+"chip.here":[`iniciado aquí`,`started here`,`hier gestartet`,`démarré ici`,`ここで起動`,`iniciado aqui`],
+"chip.external":[`externo`,`external`,`extern`,`externe`,`外部`,`externo`],
+"mon.models.one":[`· {n} modelo en memoria`,`· {n} model in memory`,`· {n} Modell im Speicher`,`· {n} modèle en mémoire`,`· メモリ上に {n} 個のモデル`,`· {n} modelo na memória`],
+"mon.models.other":[`· {n} modelos en memoria`,`· {n} models in memory`,`· {n} Modelle im Speicher`,`· {n} modèles en mémoire`,`· メモリ上に {n} 個のモデル`,`· {n} modelos na memória`],
+"mon.missing.title":[`¿Te falta alguna app?`,`Missing an app?`,`Fehlt dir eine App?`,`Il vous manque une app ?`,`足りないアプリはありませんか?`,`Está faltando algum app?`],
+"mon.missing.sub":[`Podés instalar Ollama, Stable Diffusion y otras sin usar la terminal.`,`You can install Ollama, Stable Diffusion and others without using the terminal.`,`Du kannst Ollama, Stable Diffusion und andere installieren, ohne das Terminal zu benutzen.`,`Vous pouvez installer Ollama, Stable Diffusion et d'autres sans utiliser le terminal.`,`ターミナルを使わずに Ollama や Stable Diffusion などをインストールできます。`,`Você pode instalar o Ollama, o Stable Diffusion e outros sem usar o terminal.`],
+"mon.procs":[`Procesos detectados`,`Detected processes`,`Erkannte Prozesse`,`Processus détectés`,`検出されたプロセス`,`Processos detectados`],
+"mon.totalMem":[`· {mem} de memoria en total`,`· {mem} of memory in total`,`· insgesamt {mem} Speicher`,`· {mem} de mémoire au total`,`· メモリ合計 {mem}`,`· {mem} de memória no total`],
+"mon.noProcs":[`Nada corriendo: ni Ollama ni apps de imagen.`,`Nothing running: no Ollama and no image apps.`,`Nichts läuft: weder Ollama noch Bilder-Apps.`,`Rien en cours : ni Ollama ni apps d'images.`,`実行中のものはありません(Ollama も画像アプリも)。`,`Nada em execução: nem Ollama nem apps de imagem.`],
+"mon.slowTip":[`¿La compu anda lenta? Mirá qué proceso usa más memoria y detené lo que no estés usando.`,`Is your computer slow? Check which process uses the most memory and stop what you're not using.`,`Der Computer ist langsam? Schau, welcher Prozess am meisten Speicher belegt, und stoppe, was du nicht brauchst.`,`L'ordinateur est lent ? Regardez quel processus utilise le plus de mémoire et arrêtez ce que vous n'utilisez pas.`,`コンピューターが遅いですか?メモリを最も使っているプロセスを確認して、使っていないものを停止してください。`,`O computador está lento? Veja qual processo usa mais memória e pare o que não estiver usando.`],
+"mon.loadedModels":[`Modelos de Ollama en memoria`,`Ollama models in memory`,`Ollama-Modelle im Speicher`,`Modèles Ollama en mémoire`,`メモリ上の Ollama モデル`,`Modelos do Ollama na memória`],
+"guide.summary":[`💡 ¿Qué es esto y cómo se usa?`,`💡 What is this and how is it used?`,`💡 Was ist das und wie benutzt man es?`,`💡 Qu'est-ce que c'est et comment l'utiliser ?`,`💡 これは何で、どう使うのですか?`,`💡 O que é isso e como usar?`],
+// ---- options / modes
+"opt.options":[`Opciones`,`Options`,`Optionen`,`Options`,`オプション`,`Opções`],
+"opt.simple":[`Simple`,`Simple`,`Einfach`,`Simple`,`シンプル`,`Simples`],
+"opt.advanced":[`Avanzado`,`Advanced`,`Erweitert`,`Avancé`,`詳細`,`Avançado`],
+"opt.advDesc":[`Todas las opciones, ordenadas por tema.`,`All options, grouped by topic.`,`Alle Optionen, nach Thema geordnet.`,`Toutes les options, classées par thème.`,`すべてのオプションをテーマ別に表示します。`,`Todas as opções, organizadas por tema.`],
+"opt.simpleDesc":[`Sólo lo más útil. Si no sabés qué tocar, dejá todo como está.`,`Only the most useful ones. If you're not sure what to change, leave everything as is.`,`Nur das Nützlichste. Wenn du nicht weißt, was du ändern sollst, lass alles wie es ist.`,`Seulement les plus utiles. Si vous ne savez pas quoi modifier, laissez tout tel quel.`,`よく使うものだけを表示します。何を変えればよいか分からない場合は、そのままにしてください。`,`Só as mais úteis. Se você não sabe o que mudar, deixe tudo como está.`],
+"badge.recommended":[`recomendado`,`recommended`,`empfohlen`,`recommandé`,`推奨`,`recomendado`],
+"opt.original":[`Original: {text}`,`Original: {text}`,`Original: {text}`,`Original : {text}`,`原文: {text}`,`Original: {text}`],
+"opt.main":[`Opciones principales`,`Main options`,`Wichtigste Optionen`,`Options principales`,`主なオプション`,`Opções principais`],
+"opt.showing":[`Mostrando {n} de {total} opciones. Cambiá a Avanzado para ver todas.`,`Showing {n} of {total} options. Switch to Advanced to see them all.`,`{n} von {total} Optionen werden angezeigt. Wechsle zu „Erweitert“, um alle zu sehen.`,`Affichage de {n} options sur {total}. Passez en mode Avancé pour toutes les voir.`,`{total} 個中 {n} 個のオプションを表示しています。すべて表示するには「詳細」に切り替えてください。`,`Mostrando {n} de {total} opções. Mude para Avançado para ver todas.`],
+"opt.noneMain":[`No hay opciones principales para mostrar.`,`No main options to show.`,`Keine wichtigen Optionen zum Anzeigen.`,`Aucune option principale à afficher.`,`表示する主なオプションはありません。`,`Não há opções principais para mostrar.`],
+"opt.default":[`(por defecto{d})`,`(default{d})`,`(Standard{d})`,`(par défaut{d})`,`(デフォルト{d})`,`(padrão{d})`],
+"opt.valuePh":[`valor opcional`,`optional value`,`optionaler Wert`,`valeur facultative`,`値(省略可)`,`valor opcional`],
+"opt.defaultPh":[`por defecto: {v}`,`default: {v}`,`Standard: {v}`,`par défaut : {v}`,`デフォルト: {v}`,`padrão: {v}`],
+"cat.count":[`{n}/{total} configuradas`,`{n}/{total} configured`,`{n}/{total} konfiguriert`,`{n}/{total} configurées`,`{n}/{total} 設定済み`,`{n}/{total} configuradas`],
+"cat.Red":[`Red`,`Network`,`Netzwerk`,`Réseau`,`ネットワーク`,`Rede`],
+"cat.Memoria y rendimiento":[`Memoria y rendimiento`,`Memory & performance`,`Speicher & Leistung`,`Mémoire et performances`,`メモリとパフォーマンス`,`Memória e desempenho`],
+"cat.Almacenamiento":[`Almacenamiento`,`Storage`,`Speicherplatz`,`Stockage`,`ストレージ`,`Armazenamento`],
+"cat.Otros":[`Otros`,`Other`,`Sonstiges`,`Autres`,`その他`,`Outros`],
+"cat.Más usadas":[`Más usadas`,`Most used`,`Am häufigsten genutzt`,`Les plus utilisées`,`よく使うもの`,`Mais usadas`],
+"cat.Red y API":[`Red y API`,`Network & API`,`Netzwerk & API`,`Réseau et API`,`ネットワークと API`,`Rede e API`],
+"cat.Rutas":[`Rutas`,`Paths`,`Pfade`,`Chemins`,`パス`,`Caminhos`],
+"cat.Interfaz":[`Interfaz`,`Interface`,`Oberfläche`,`Interface`,`インターフェース`,`Interface`],
+"cat.Arranque e instalación":[`Arranque e instalación`,`Startup & installation`,`Start & Installation`,`Démarrage et installation`,`起動とインストール`,`Inicialização e instalação`],
+"cathint.top":[`Las opciones que más se suelen tocar. El resto está agrupado abajo, o usá el buscador.`,`The options people change the most. The rest are grouped below, or use the search box.`,`Die Optionen, die am häufigsten geändert werden. Der Rest ist unten gruppiert, oder nutze die Suche.`,`Les options les plus souvent modifiées. Les autres sont regroupées plus bas, ou utilisez la recherche.`,`よく変更されるオプションです。残りは下にまとめてあります。検索も使えます。`,`As opções que mais costumam ser alteradas. O resto está agrupado abaixo, ou use a busca.`],
+"cathint.net":[`Para acceder desde otros dispositivos (--listen), usar la API (--api) o cambiar el puerto.`,`To access from other devices (--listen), use the API (--api) or change the port.`,`Für den Zugriff von anderen Geräten (--listen), die API (--api) oder um den Port zu ändern.`,`Pour accéder depuis d'autres appareils (--listen), utiliser l'API (--api) ou changer le port.`,`他のデバイスからアクセスする(--listen)、API を使う(--api)、ポートを変更する場合に使います。`,`Para acessar de outros dispositivos (--listen), usar a API (--api) ou mudar a porta.`],
+"cathint.mem":[`Con poca memoria probá --medvram-sdxl o --lowvram. En Mac con Apple Silicon, --no-half suele hacer falta para modelos SD 1.5.`,`With little memory try --medvram-sdxl or --lowvram. On Macs with Apple Silicon, --no-half is usually needed for SD 1.5 models.`,`Bei wenig Speicher probiere --medvram-sdxl oder --lowvram. Auf Macs mit Apple Silicon wird für SD-1.5-Modelle meist --no-half benötigt.`,`Avec peu de mémoire, essayez --medvram-sdxl ou --lowvram. Sur Mac avec Apple Silicon, --no-half est souvent nécessaire pour les modèles SD 1.5.`,`メモリが少ない場合は --medvram-sdxl または --lowvram を試してください。Apple Silicon の Mac では、SD 1.5 モデルに --no-half が必要なことが多いです。`,`Com pouca memória, tente --medvram-sdxl ou --lowvram. Em Macs com Apple Silicon, --no-half costuma ser necessário para modelos SD 1.5.`],
+"sd.searchPh":[`🔍  Buscar opción (por ej. vram, port, api, theme)…`,`🔍  Search option (e.g. vram, port, api, theme)…`,`🔍  Option suchen (z. B. vram, port, api, theme)…`,`🔍  Rechercher une option (p. ex. vram, port, api, theme)…`,`🔍  オプションを検索(例: vram, port, api, theme)…`,`🔍  Buscar opção (ex.: vram, port, api, theme)…`],
+
+// ---- ollama view
+"ollama.notFound":[`No encontré Ollama {device}. Instalalo desde <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> y tocá <b>Buscar de nuevo</b> en Ajustes.`,`I couldn't find Ollama {device}. Install it from <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> and click <b>Search again</b> in Settings.`,`Ich habe Ollama {device} nicht gefunden. Installiere es von <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> und klicke in den Einstellungen auf <b>Erneut suchen</b>.`,`Je n'ai pas trouvé Ollama {device}. Installez-le depuis <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> puis cliquez sur <b>Rechercher à nouveau</b> dans les Réglages.`,`{device}で Ollama が見つかりませんでした。<button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> からインストールし、設定で<b>再検索</b>をクリックしてください。`,`Não encontrei o Ollama {device}. Instale-o em <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> e clique em <b>Buscar novamente</b> em Configurações.`],
+"ollama.title":[`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`,`🦙 Ollama`],
+"ollama.sub":[`Las opciones se leen de <span class="mono">ollama serve --help</span> de tu versión instalada.`,`The options are read from <span class="mono">ollama serve --help</span> of your installed version.`,`Die Optionen werden aus <span class="mono">ollama serve --help</span> deiner installierten Version gelesen.`,`Les options sont lues depuis <span class="mono">ollama serve --help</span> de votre version installée.`,`オプションは、インストール済みバージョンの <span class="mono">ollama serve --help</span> から読み取られます。`,`As opções são lidas de <span class="mono">ollama serve --help</span> da sua versão instalada.`],
+"kv.exe":[`Ejecutable`,`Executable`,`Programmdatei`,`Exécutable`,`実行ファイル`,`Executável`],
+"kv.app":[`App`,`App`,`App`,`App`,`アプリ`,`App`],
+"kv.version":[`Versión`,`Version`,`Version`,`Version`,`バージョン`,`Versão`],
+"kv.models":[`Modelos`,`Models`,`Modelle`,`Modèles`,`モデル`,`Modelos`],
+"kv.location":[`Ubicación`,`Location`,`Speicherort`,`Emplacement`,`場所`,`Local`],
+"chip.verifiedCache":[`verificada desde la caché`,`verified from cache`,`aus dem Cache verifiziert`,`vérifié depuis le cache`,`キャッシュから確認済み`,`verificada pelo cache`],
+"ollama.howStart":[`Cómo iniciarlo`,`How to start it`,`So wird es gestartet`,`Comment le démarrer`,`起動方法`,`Como iniciar`],
+"ollama.howSub":[`Las dos formas usan las opciones de abajo.`,`Both ways use the options below.`,`Beide Varianten verwenden die Optionen unten.`,`Les deux méthodes utilisent les options ci-dessous.`,`どちらの方法も下のオプションを使用します。`,`As duas formas usam as opções abaixo.`],
+"ollama.appBtn":[`App de Ollama`,`Ollama app`,`Ollama-App`,`App Ollama`,`Ollama アプリ`,`App do Ollama`],
+"ollama.mode.cli":[`Corre el servidor en segundo plano, con logs en la pestaña Logs. Sin el ícono propio de Ollama.`,`Runs the server in the background, with logs in the Logs tab. Without Ollama's own icon.`,`Führt den Server im Hintergrund aus, mit Protokollen im Tab „Protokolle“. Ohne das eigene Ollama-Symbol.`,`Lance le serveur en arrière-plan, avec les journaux dans l'onglet Journaux. Sans l'icône propre d'Ollama.`,`サーバーをバックグラウンドで実行し、ログは「ログ」タブに表示されます。Ollama 独自のアイコンは表示されません。`,`Executa o servidor em segundo plano, com logs na aba Logs. Sem o ícone próprio do Ollama.`],
+"ollama.mode.appMac":[`Abre Ollama.app. Las opciones se pasan con <span class='mono'>launchctl setenv</span> (quedan hasta reiniciar la Mac).`,`Opens Ollama.app. Options are passed with <span class='mono'>launchctl setenv</span> (they stay until you restart the Mac).`,`Öffnet Ollama.app. Die Optionen werden mit <span class='mono'>launchctl setenv</span> übergeben (sie bleiben bis zum Neustart des Macs bestehen).`,`Ouvre Ollama.app. Les options sont transmises avec <span class='mono'>launchctl setenv</span> (elles restent jusqu'au redémarrage du Mac).`,`Ollama.app を開きます。オプションは <span class='mono'>launchctl setenv</span> で渡され、Mac を再起動するまで有効です。`,`Abre o Ollama.app. As opções são passadas com <span class='mono'>launchctl setenv</span> (valem até reiniciar o Mac).`],
+"ollama.mode.appOther":[`Abre la app de Ollama (ícono {tray}) con estas opciones como variables de entorno.`,`Opens the Ollama app (icon {tray}) with these options as environment variables.`,`Öffnet die Ollama-App (Symbol {tray}) mit diesen Optionen als Umgebungsvariablen.`,`Ouvre l'app Ollama (icône {tray}) avec ces options comme variables d'environnement.`,`これらのオプションを環境変数として Ollama アプリ({tray}にアイコン)を開きます。`,`Abre o app do Ollama (ícone {tray}) com estas opções como variáveis de ambiente.`],
+"models.installed":[`Modelos instalados`,`Installed models`,`Installierte Modelle`,`Modèles installés`,`インストール済みモデル`,`Modelos instalados`],
+"models.startToSee":[`Iniciá Ollama para ver y administrar los modelos.`,`Start Ollama to see and manage models.`,`Starte Ollama, um Modelle zu sehen und zu verwalten.`,`Démarrez Ollama pour voir et gérer les modèles.`,`モデルを表示・管理するには Ollama を起動してください。`,`Inicie o Ollama para ver e gerenciar os modelos.`],
+"models.noneInstalled":[`No hay modelos instalados.`,`No models installed.`,`Keine Modelle installiert.`,`Aucun modèle installé.`,`インストール済みのモデルはありません。`,`Nenhum modelo instalado.`],
+"chip.inMemory":[`en memoria`,`in memory`,`im Speicher`,`en mémoire`,`メモリ上`,`na memória`],
+"toast.loadingModel":[`Cargando {name}…`,`Loading {name}…`,`{name} wird geladen…`,`Chargement de {name}…`,`{name} を読み込み中…`,`Carregando {name}…`],
+"dlg.delModel.title":[`Borrar {name}`,`Delete {name}`,`{name} löschen`,`Supprimer {name}`,`{name} を削除`,`Excluir {name}`],
+"dlg.delModel.text":[`Se elimina del disco y se liberan {size}. Para volver a usarlo hay que descargarlo de nuevo.`,`It is removed from disk, freeing {size}. To use it again you have to download it again.`,`Es wird von der Festplatte gelöscht und {size} werden frei. Um es wieder zu verwenden, muss es erneut heruntergeladen werden.`,`Il est supprimé du disque, ce qui libère {size}. Pour le réutiliser, il faudra le télécharger à nouveau.`,`ディスクから削除され、{size} が解放されます。再び使うには、もう一度ダウンロードする必要があります。`,`Ele é removido do disco, liberando {size}. Para usá-lo novamente, será preciso baixá-lo de novo.`],
+"toast.deleted":[`{name} borrado`,`{name} deleted`,`{name} gelöscht`,`{name} supprimé`,`{name} を削除しました`,`{name} excluído`],
+"pull.title":[`Descargar un modelo`,`Download a model`,`Ein Modell herunterladen`,`Télécharger un modèle`,`モデルをダウンロード`,`Baixar um modelo`],
+"pull.ph":[`por ej. llama3.2, qwen3:8b, gemma3:4b`,`e.g. llama3.2, qwen3:8b, gemma3:4b`,`z. B. llama3.2, qwen3:8b, gemma3:4b`,`p. ex. llama3.2, qwen3:8b, gemma3:4b`,`例: llama3.2, qwen3:8b, gemma3:4b`,`ex.: llama3.2, qwen3:8b, gemma3:4b`],
+"pull.suggested":[`Sugeridos para tu compu:`,`Suggested for your computer:`,`Empfohlen für deinen Computer:`,`Suggestions pour votre ordinateur :`,`お使いのコンピューターへのおすすめ:`,`Sugeridos para o seu computador:`],
+"pull.suggestedHint":[`(tocá uno para completar el nombre)`,`(click one to fill in the name)`,`(klicke einen an, um den Namen einzutragen)`,`(cliquez sur l'un d'eux pour remplir le nom)`,`(クリックすると名前が入力されます)`,`(clique em um para preencher o nome)`],
+
+// ---- presets
+"preset.title":[`Perfiles`,`Profiles`,`Profile`,`Profils`,`プロファイル`,`Perfis`],
+"preset.empty":[`Guardá la configuración actual para reusarla (por ej. “Rápido”, “Red local”).`,`Save the current configuration to reuse it (e.g. “Fast”, “Local network”).`,`Speichere die aktuelle Konfiguration, um sie wiederzuverwenden (z. B. „Schnell“, „Lokales Netzwerk“).`,`Enregistrez la configuration actuelle pour la réutiliser (p. ex. « Rapide », « Réseau local »).`,`現在の設定を保存して再利用できます(例: 「高速」「ローカルネットワーク」)。`,`Salve a configuração atual para reutilizá-la (ex.: “Rápido”, “Rede local”).`],
+"btn.saveProfile":[`Guardar como perfil…`,`Save as profile…`,`Als Profil speichern…`,`Enregistrer comme profil…`,`プロファイルとして保存…`,`Salvar como perfil…`],
+"preset.nameTitle":[`Nombre del perfil`,`Profile name`,`Profilname`,`Nom du profil`,`プロファイル名`,`Nome do perfil`],
+"preset.namePh":[`por ej. Rápido, Red local`,`e.g. Fast, Local network`,`z. B. Schnell, Lokales Netzwerk`,`p. ex. Rapide, Réseau local`,`例: 高速、ローカルネットワーク`,`ex.: Rápido, Rede local`],
+"toast.profileSaved":[`Perfil guardado`,`Profile saved`,`Profil gespeichert`,`Profil enregistré`,`プロファイルを保存しました`,`Perfil salvo`],
+"toast.profileApplied":[`Perfil “{name}” aplicado`,`Profile “{name}” applied`,`Profil „{name}“ angewendet`,`Profil « {name} » appliqué`,`プロファイル「{name}」を適用しました`,`Perfil “{name}” aplicado`],
+"dlg.delProfile.title":[`Borrar perfil`,`Delete profile`,`Profil löschen`,`Supprimer le profil`,`プロファイルを削除`,`Excluir perfil`],
+"dlg.delProfile.text":[`Se borra el perfil “{name}”.`,`The profile “{name}” will be deleted.`,`Das Profil „{name}“ wird gelöscht.`,`Le profil « {name} » sera supprimé.`,`プロファイル「{name}」を削除します。`,`O perfil “{name}” será excluído.`],
+
+// ---- image apps view
+"toast.installAdded":[`Instalación agregada`,`Installation added`,`Installation hinzugefügt`,`Installation ajoutée`,`インストールを追加しました`,`Instalação adicionada`],
+"toast.searching":[`Buscando…`,`Searching…`,`Suche läuft…`,`Recherche…`,`検索中…`,`Buscando…`],
+"toast.searchingDeep":[`Buscando en toda tu carpeta personal…`,`Searching your whole home folder…`,`Dein gesamter Benutzerordner wird durchsucht…`,`Recherche dans tout votre dossier personnel…`,`ホームフォルダー全体を検索中…`,`Buscando em toda a sua pasta pessoal…`],
+"toast.searchDone.one":[`Listo: {n} instalación de SD encontrada`,`Done: {n} SD installation found`,`Fertig: {n} SD-Installation gefunden`,`Terminé : {n} installation SD trouvée`,`完了: SD のインストールが {n} 件見つかりました`,`Pronto: {n} instalação do SD encontrada`],
+"toast.searchDone.other":[`Listo: {n} instalaciones de SD encontradas`,`Done: {n} SD installations found`,`Fertig: {n} SD-Installationen gefunden`,`Terminé : {n} installations SD trouvées`,`完了: SD のインストールが {n} 件見つかりました`,`Pronto: {n} instalações do SD encontradas`],
+"sd.none":[`No encontré ninguna instalación de AUTOMATIC1111, Forge, ComfyUI ni Kohya_ss.`,`I couldn't find any AUTOMATIC1111, Forge, ComfyUI or Kohya_ss installation.`,`Ich habe keine Installation von AUTOMATIC1111, Forge, ComfyUI oder Kohya_ss gefunden.`,`Je n'ai trouvé aucune installation d'AUTOMATIC1111, Forge, ComfyUI ou Kohya_ss.`,`AUTOMATIC1111、Forge、ComfyUI、Kohya_ss のインストールが見つかりませんでした。`,`Não encontrei nenhuma instalação do AUTOMATIC1111, Forge, ComfyUI ou Kohya_ss.`],
+"btn.searchDisk":[`Buscar en todo el disco`,`Search the whole disk`,`Gesamte Festplatte durchsuchen`,`Rechercher sur tout le disque`,`ディスク全体を検索`,`Buscar em todo o disco`],
+"btn.chooseFolder":[`Elegir carpeta…`,`Choose folder…`,`Ordner auswählen…`,`Choisir un dossier…`,`フォルダーを選択…`,`Escolher pasta…`],
+"sd.titleEmpty":[`🎨 Imagen`,`🎨 Image`,`🎨 Bilder`,`🎨 Images`,`🎨 画像`,`🎨 Imagem`],
+"sd.title":[`🎨 Apps de imagen`,`🎨 Image apps`,`🎨 Bilder-Apps`,`🎨 Apps d'images`,`🎨 画像アプリ`,`🎨 Apps de imagem`],
+"sd.sub":[`Stable Diffusion, ComfyUI y Kohya_ss (entrenamiento). Las {n} opciones se leen directo del código de tu instalación (<span class="mono">{file}</span>), así que siempre coinciden con tu versión.`,`Stable Diffusion, ComfyUI and Kohya_ss (training). The {n} options are read directly from your installation's code (<span class="mono">{file}</span>), so they always match your version.`,`Stable Diffusion, ComfyUI und Kohya_ss (Training). Die {n} Optionen werden direkt aus dem Code deiner Installation gelesen (<span class="mono">{file}</span>) und passen daher immer zu deiner Version.`,`Stable Diffusion, ComfyUI et Kohya_ss (entraînement). Les {n} options sont lues directement dans le code de votre installation (<span class="mono">{file}</span>), elles correspondent donc toujours à votre version.`,`Stable Diffusion、ComfyUI、Kohya_ss(トレーニング)。{n} 個のオプションはインストール先のコード(<span class="mono">{file}</span>)から直接読み取られるため、常にお使いのバージョンと一致します。`,`Stable Diffusion, ComfyUI e Kohya_ss (treinamento). As {n} opções são lidas diretamente do código da sua instalação (<span class="mono">{file}</span>), então sempre correspondem à sua versão.`],
+"btn.addOther":[`Agregar otra…`,`Add another…`,`Weitere hinzufügen…`,`Ajouter une autre…`,`別のものを追加…`,`Adicionar outra…`],
+"btn.rescan":[`Buscar de nuevo`,`Search again`,`Erneut suchen`,`Rechercher à nouveau`,`再検索`,`Buscar novamente`],
+"btn.deepSearch":[`Búsqueda profunda`,`Deep search`,`Tiefensuche`,`Recherche approfondie`,`詳細検索`,`Busca profunda`],
+"kv.folder":[`Carpeta`,`Folder`,`Ordner`,`Dossier`,`フォルダー`,`Pasta`],
+"kv.pyenv":[`Entorno Python`,`Python environment`,`Python-Umgebung`,`Environnement Python`,`Python 環境`,`Ambiente Python`],
+"sd.venvReady":[`venv listo`,`venv ready`,`venv bereit`,`venv prêt`,`venv 準備完了`,`venv pronto`],
+"sd.native":[`nativo`,`native`,`nativ`,`natif`,`ネイティブ`,`nativo`],
+"sd.noVenv":[`sin venv: la primera vez se instalan dependencias (tarda)`,`no venv: dependencies are installed the first time (takes a while)`,`kein venv: Beim ersten Start werden Abhängigkeiten installiert (dauert)`,`pas de venv : les dépendances seront installées au premier lancement (c'est long)`,`venv なし: 初回に依存関係がインストールされます(時間がかかります)`,`sem venv: na primeira vez as dependências são instaladas (demora)`],
+"kv.checkpoints":[`Checkpoints`,`Checkpoints`,`Checkpoints`,`Checkpoints`,`チェックポイント`,`Checkpoints`],
+"sd.detected":[`detectada`,`detected`,`erkannt`,`détectée`,`検出済み`,`detectada`],
+"sd.cmdTitle":[`Comando que se va a ejecutar`,`Command that will run`,`Befehl, der ausgeführt wird`,`Commande qui sera exécutée`,`実行されるコマンド`,`Comando que será executado`],
+"sd.alsoAdds":[`Además, <span class="mono">{f}</span> ya agrega: <span class="mono">{a}</span>`,`In addition, <span class="mono">{f}</span> already adds: <span class="mono">{a}</span>`,`Außerdem fügt <span class="mono">{f}</span> bereits hinzu: <span class="mono">{a}</span>`,`De plus, <span class="mono">{f}</span> ajoute déjà : <span class="mono">{a}</span>`,`さらに、<span class="mono">{f}</span> がすでに追加するもの: <span class="mono">{a}</span>`,`Além disso, <span class="mono">{f}</span> já adiciona: <span class="mono">{a}</span>`],
+"sd.extraLabel":[`Argumentos extra (para extensiones u opciones que no estén en la lista)`,`Extra arguments (for extensions or options not in the list)`,`Zusätzliche Argumente (für Erweiterungen oder Optionen, die nicht in der Liste stehen)`,`Arguments supplémentaires (pour les extensions ou les options absentes de la liste)`,`追加の引数(拡張機能や、一覧にないオプション用)`,`Argumentos extras (para extensões ou opções que não estejam na lista)`],
+"sd.extraPh":[`--mi-opcion valor`,`--my-option value`,`--meine-option wert`,`--mon-option valeur`,`--my-option 値`,`--minha-opcao valor`],
+
+// ---- logs
+"logs.title":[`📜 Logs`,`📜 Logs`,`📜 Protokolle`,`📜 Journaux`,`📜 ログ`,`📜 Logs`],
+"logs.follow":[`seguir el final`,`follow the end`,`Ende verfolgen`,`suivre la fin`,`末尾を追う`,`seguir o final`],
+"logs.empty":[`Todavía no hay logs. Aparecen cuando inicies algo desde acá.`,`There are no logs yet. They appear when you start something from here.`,`Noch keine Protokolle vorhanden. Sie erscheinen, sobald du hier etwas startest.`,`Il n'y a pas encore de journaux. Ils apparaissent lorsque vous démarrez quelque chose d'ici.`,`まだログはありません。ここから何かを起動すると表示されます。`,`Ainda não há logs. Eles aparecem quando você inicia algo por aqui.`],
+// ---- settings
+"set.title":[`⚙️ Ajustes`,`⚙️ Settings`,`⚙️ Einstellungen`,`⚙️ Réglages`,`⚙️ 設定`,`⚙️ Configurações`],
+"set.sub":[`AI Launcher vive {tray}. Cerrar esta ventana no detiene nada.`,`AI Launcher lives {tray}. Closing this window doesn't stop anything.`,`AI Launcher läuft {tray}. Das Schließen dieses Fensters stoppt nichts.`,`AI Launcher réside {tray}. Fermer cette fenêtre n'arrête rien.`,`AI Launcher は{tray}に常駐します。このウィンドウを閉じても何も停止しません。`,`O AI Launcher fica {tray}. Fechar esta janela não para nada.`],
+"set.language":[`Idioma`,`Language`,`Sprache`,`Langue`,`言語`,`Idioma`],
+"set.languageHelp":[`Idioma de la interfaz.`,`Interface language.`,`Sprache der Oberfläche.`,`Langue de l'interface.`,`インターフェースの言語です。`,`Idioma da interface.`],
+"set.login":[`Abrir al iniciar sesión`,`Open at login`,`Beim Anmelden öffnen`,`Ouvrir à l'ouverture de session`,`ログイン時に開く`,`Abrir ao iniciar a sessão`],
+"set.loginHelp":[`Arranca {tray} cuando iniciás sesión.`,`Starts {tray} when you log in.`,`Startet {tray}, wenn du dich anmeldest.`,`Démarre {tray} à l'ouverture de votre session.`,`ログイン時に{tray}で起動します。`,`Inicia {tray} quando você entra na sessão.`],
+"set.openWin":[`Abrir esta ventana al lanzar la app`,`Open this window when the app launches`,`Dieses Fenster beim Start der App öffnen`,`Ouvrir cette fenêtre au lancement de l'app`,`アプリの起動時にこのウィンドウを開く`,`Abrir esta janela ao iniciar o app`],
+"set.openWinHelp":[`Si está apagado, sólo aparece el ícono {tray}.`,`If off, only the icon appears {tray}.`,`Wenn deaktiviert, erscheint nur das Symbol {tray}.`,`Si désactivé, seule l'icône apparaît {tray}.`,`オフの場合、{tray}にアイコンだけが表示されます。`,`Se estiver desligado, só o ícone aparece {tray}.`],
+"set.stopQuit":[`Al salir de AI Launcher, detener lo que inició`,`When quitting AI Launcher, stop what it started`,`Beim Beenden von AI Launcher gestartete Programme stoppen`,`À la fermeture d'AI Launcher, arrêter ce qu'il a démarré`,`AI Launcher の終了時に、起動したものを停止する`,`Ao sair do AI Launcher, parar o que ele iniciou`],
+"set.stopQuitHelp":[`Si está apagado, Ollama y SD siguen corriendo aunque cierres el launcher.`,`If off, Ollama and SD keep running even if you close the launcher.`,`Wenn deaktiviert, laufen Ollama und SD weiter, auch wenn du den Launcher schließt.`,`Si désactivé, Ollama et SD continuent de tourner même si vous fermez le launcher.`,`オフの場合、ランチャーを閉じても Ollama と SD は動き続けます。`,`Se estiver desligado, o Ollama e o SD continuam em execução mesmo que você feche o launcher.`],
+"set.locations":[`Ubicaciones (caché)`,`Locations (cache)`,`Speicherorte (Cache)`,`Emplacements (cache)`,`場所(キャッシュ)`,`Locais (cache)`],
+"set.locDesc":[`En cada arranque se verifica que las rutas guardadas sigan existiendo. Si algo se movió o se borró, se vuelve a buscar (procesos en ejecución, {scan} y, si hace falta, recorriendo el disco). Además se buscan instalaciones nuevas en segundo plano.`,`On every launch, the saved paths are checked to make sure they still exist. If something was moved or deleted, it is searched for again (running processes, {scan} and, if needed, scanning the disk). New installations are also searched for in the background.`,`Bei jedem Start wird geprüft, ob die gespeicherten Pfade noch existieren. Wurde etwas verschoben oder gelöscht, wird erneut gesucht (laufende Prozesse, {scan} und bei Bedarf die Festplatte). Außerdem wird im Hintergrund nach neuen Installationen gesucht.`,`À chaque démarrage, on vérifie que les chemins enregistrés existent toujours. Si quelque chose a été déplacé ou supprimé, on le recherche à nouveau (processus en cours, {scan} et, si nécessaire, parcours du disque). De nouvelles installations sont aussi recherchées en arrière-plan.`,`起動のたびに、保存されたパスがまだ存在するかを確認します。移動または削除されている場合は、再検索します(実行中のプロセス、{scan}、必要に応じてディスクの走査)。新しいインストールもバックグラウンドで検索されます。`,`A cada inicialização, verifica-se se os caminhos salvos ainda existem. Se algo foi movido ou apagado, a busca é refeita (processos em execução, {scan} e, se necessário, varredura do disco). Novas instalações também são procuradas em segundo plano.`],
+"set.scan.mac":[`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`],
+"set.scan.win":[`registro de Windows`,`the Windows registry`,`die Windows-Registrierung`,`le registre Windows`,`Windows レジストリ`,`o registro do Windows`],
+"kv.lastCheck":[`Última verificación`,`Last check`,`Letzte Prüfung`,`Dernière vérification`,`最終確認`,`Última verificação`],
+"set.notFound":[`no encontrado`,`not found`,`nicht gefunden`,`introuvable`,`見つかりません`,`não encontrado`],
+"kv.imageApps":[`Apps de imagen`,`Image apps`,`Bilder-Apps`,`Apps d'images`,`画像アプリ`,`Apps de imagem`],
+"glossary.title":[`📖 Glosario`,`📖 Glossary`,`📖 Glossar`,`📖 Glossaire`,`📖 用語集`,`📖 Glossário`],
+"files.title":[`Archivos`,`Files`,`Dateien`,`Fichiers`,`ファイル`,`Arquivos`],
+"kv.config":[`Configuración`,`Configuration`,`Konfiguration`,`Configuration`,`設定ファイル`,`Configuração`],
+"kv.logs":[`Logs`,`Logs`,`Protokolle`,`Journaux`,`ログ`,`Logs`],
+"toast.saved":[`Guardado`,`Saved`,`Gespeichert`,`Enregistré`,`保存しました`,`Salvo`],
+
+// ---- install view
+"inst.title":[`＋ Instalar apps`,`＋ Install apps`,`＋ Apps installieren`,`＋ Installer des apps`,`＋ アプリをインストール`,`＋ Instalar apps`],
+"inst.loadFail":[`No se pudo cargar`,`Couldn't load`,`Laden fehlgeschlagen`,`Chargement impossible`,`読み込めませんでした`,`Não foi possível carregar`],
+"inst.loadFailText":[`No pudimos obtener la lista de apps para instalar. ({err})`,`We couldn't get the list of apps to install. ({err})`,`Die Liste der installierbaren Apps konnte nicht abgerufen werden. ({err})`,`Nous n'avons pas pu obtenir la liste des apps à installer. ({err})`,`インストール可能なアプリの一覧を取得できませんでした。({err})`,`Não conseguimos obter a lista de apps para instalar. ({err})`],
+"inst.sub":[`Instalá las apps de inteligencia artificial sin tocar la terminal.`,`Install AI apps without touching the terminal.`,`Installiere KI-Apps, ohne das Terminal zu benutzen.`,`Installez des apps d'intelligence artificielle sans toucher au terminal.`,`ターミナルを使わずに AI アプリをインストールできます。`,`Instale apps de inteligência artificial sem usar o terminal.`],
+"inst.whatTitle":[`¿Qué puedo instalar?`,`What can I install?`,`Was kann ich installieren?`,`Que puis-je installer ?`,`何をインストールできますか?`,`O que posso instalar?`],
+"inst.li1":[`🦙 <b>Ollama</b>: para chatear con una IA que corre en tu compu, sin internet.`,`🦙 <b>Ollama</b>: to chat with an AI that runs on your computer, without internet.`,`🦙 <b>Ollama</b>: zum Chatten mit einer KI, die auf deinem Computer läuft, ohne Internet.`,`🦙 <b>Ollama</b> : pour discuter avec une IA qui tourne sur votre ordinateur, sans internet.`,`🦙 <b>Ollama</b>: インターネットなしで、コンピューター上で動く AI とチャットできます。`,`🦙 <b>Ollama</b>: para conversar com uma IA que roda no seu computador, sem internet.`],
+"inst.li2":[`🎨 <b>Stable Diffusion, Forge y ComfyUI</b>: para crear imágenes a partir de lo que escribas. Elegí una; Stable Diffusion es la más conocida.`,`🎨 <b>Stable Diffusion, Forge and ComfyUI</b>: to create images from what you write. Pick one; Stable Diffusion is the best known.`,`🎨 <b>Stable Diffusion, Forge und ComfyUI</b>: zum Erstellen von Bildern aus dem, was du schreibst. Wähle eine; Stable Diffusion ist die bekannteste.`,`🎨 <b>Stable Diffusion, Forge et ComfyUI</b> : pour créer des images à partir de ce que vous écrivez. Choisissez-en une ; Stable Diffusion est la plus connue.`,`🎨 <b>Stable Diffusion、Forge、ComfyUI</b>: 入力した文章から画像を作成します。どれか 1 つを選んでください。Stable Diffusion が最も有名です。`,`🎨 <b>Stable Diffusion, Forge e ComfyUI</b>: para criar imagens a partir do que você escrever. Escolha uma; o Stable Diffusion é a mais conhecida.`],
+"inst.li3":[`🏋️ <b>Kohya_ss</b>: para entrenar tus propios estilos o personajes (es para usuarios más avanzados).`,`🏋️ <b>Kohya_ss</b>: to train your own styles or characters (for more advanced users).`,`🏋️ <b>Kohya_ss</b>: zum Trainieren eigener Stile oder Figuren (für fortgeschrittene Nutzer).`,`🏋️ <b>Kohya_ss</b> : pour entraîner vos propres styles ou personnages (pour utilisateurs plus avancés).`,`🏋️ <b>Kohya_ss</b>: 独自のスタイルやキャラクターをトレーニングします(上級者向けです)。`,`🏋️ <b>Kohya_ss</b>: para treinar seus próprios estilos ou personagens (é para usuários mais avançados).`],
+"inst.note":[`Instalar descarga varios GB desde las páginas oficiales de cada programa y puede tardar un buen rato. Si preferís hacerlo a mano, cada app tiene su guía paso a paso.`,`Installing downloads several GB from each program's official sites and can take a while. If you prefer to do it by hand, each app has its own step-by-step guide.`,`Die Installation lädt mehrere GB von den offiziellen Seiten der jeweiligen Programme herunter und kann eine Weile dauern. Wenn du es lieber von Hand machst, hat jede App ihre eigene Schritt-für-Schritt-Anleitung.`,`L'installation télécharge plusieurs Go depuis les sites officiels de chaque programme et peut prendre un certain temps. Si vous préférez le faire à la main, chaque app a son guide pas à pas.`,`インストールでは各プログラムの公式サイトから数 GB をダウンロードするため、時間がかかることがあります。手動で行いたい場合は、各アプリのステップバイステップガイドをご覧ください。`,`A instalação baixa vários GB dos sites oficiais de cada programa e pode demorar um bom tempo. Se preferir fazer manualmente, cada app tem seu guia passo a passo.`],
+"app.kind.ollama":[`Chatear con inteligencia artificial`,`Chat with artificial intelligence`,`Mit künstlicher Intelligenz chatten`,`Discuter avec une intelligence artificielle`,`人工知能とチャットする`,`Conversar com inteligência artificial`],
+"app.kind.a1111":[`Crear imágenes a partir de texto`,`Create images from text`,`Bilder aus Text erstellen`,`Créer des images à partir de texte`,`テキストから画像を作成する`,`Criar imagens a partir de texto`],
+"app.kind.forge":[`Crear imágenes (versión más liviana)`,`Create images (lighter version)`,`Bilder erstellen (leichtere Version)`,`Créer des images (version plus légère)`,`画像を作成する(軽量版)`,`Criar imagens (versão mais leve)`],
+"app.kind.comfyui":[`Crear imágenes con bloques conectados`,`Create images with connected blocks`,`Bilder mit verbundenen Blöcken erstellen`,`Créer des images avec des blocs connectés`,`つなげたブロックで画像を作成する`,`Criar imagens com blocos conectados`],
+"app.kind.kohya":[`Entrenar tus propios estilos (LoRA)`,`Train your own styles (LoRA)`,`Eigene Stile trainieren (LoRA)`,`Entraîner vos propres styles (LoRA)`,`独自のスタイルをトレーニングする(LoRA)`,`Treinar seus próprios estilos (LoRA)`],
+"inst.autoUnavailable":[`La instalación automática no está disponible en tu sistema.`,`Automatic installation isn't available on your system.`,`Die automatische Installation ist auf deinem System nicht verfügbar.`,`L'installation automatique n'est pas disponible sur votre système.`,`お使いのシステムでは自動インストールを利用できません。`,`A instalação automática não está disponível no seu sistema.`],
+"inst.resolveFirst":[`Primero hay que resolver: {list}.`,`First you need to resolve: {list}.`,`Zuerst muss Folgendes erledigt werden: {list}.`,`Il faut d'abord régler : {list}.`,`先に次を解決してください: {list}。`,`Primeiro é preciso resolver: {list}.`],
+"chip.installed":[`Instalado ✓`,`Installed ✓`,`Installiert ✓`,`Installé ✓`,`インストール済み ✓`,`Instalado ✓`],
+"inst.alreadyHave":[`Ya la tenés instalada.`,`You already have it installed.`,`Du hast es bereits installiert.`,`Elle est déjà installée.`,`すでにインストールされています。`,`Você já a tem instalada.`],
+"btn.goToApp":[`Ir a la app`,`Go to the app`,`Zur App`,`Aller à l'app`,`アプリへ移動`,`Ir para o app`],
+"btn.hide":[`Ocultar`,`Hide`,`Ausblenden`,`Masquer`,`隠す`,`Ocultar`],
+"btn.installCopy":[`Instalar otra copia…`,`Install another copy…`,`Weitere Kopie installieren…`,`Installer une autre copie…`,`別のコピーをインストール…`,`Instalar outra cópia…`],
+"req.disk":[`💾 Espacio en disco: <b>{v} GB</b>`,`💾 Disk space: <b>{v} GB</b>`,`💾 Speicherplatz: <b>{v} GB</b>`,`💾 Espace disque : <b>{v} Go</b>`,`💾 ディスク容量: <b>{v} GB</b>`,`💾 Espaço em disco: <b>{v} GB</b>`],
+"req.ram":[`🧠 Memoria recomendada: <b>{v} GB</b>`,`🧠 Recommended memory: <b>{v} GB</b>`,`🧠 Empfohlener Speicher: <b>{v} GB</b>`,`🧠 Mémoire recommandée : <b>{v} Go</b>`,`🧠 推奨メモリ: <b>{v} GB</b>`,`🧠 Memória recomendada: <b>{v} GB</b>`],
+"req.download":[`⬇️ Descarga: <b>{v} GB</b>`,`⬇️ Download: <b>{v} GB</b>`,`⬇️ Download: <b>{v} GB</b>`,`⬇️ Téléchargement : <b>{v} Go</b>`,`⬇️ ダウンロード: <b>{v} GB</b>`,`⬇️ Download: <b>{v} GB</b>`],
+"req.time":[`⏱️ Tiempo estimado: <b>{v} min</b>`,`⏱️ Estimated time: <b>{v} min</b>`,`⏱️ Geschätzte Dauer: <b>{v} Min.</b>`,`⏱️ Durée estimée : <b>{v} min</b>`,`⏱️ 所要時間の目安: <b>{v} 分</b>`,`⏱️ Tempo estimado: <b>{v} min</b>`],
+"inst.lowMem":[`Tu compu tiene {mem} de memoria, menos de lo recomendado ({ram} GB). Puede funcionar lento o fallar.`,`Your computer has {mem} of memory, less than recommended ({ram} GB). It may run slowly or fail.`,`Dein Computer hat {mem} Speicher, weniger als empfohlen ({ram} GB). Es kann langsam laufen oder fehlschlagen.`,`Votre ordinateur dispose de {mem} de mémoire, moins que la valeur recommandée ({ram} Go). Il peut être lent ou échouer.`,`お使いのコンピューターのメモリは {mem} で、推奨({ram} GB)を下回っています。動作が遅くなったり、失敗したりする可能性があります。`,`Seu computador tem {mem} de memória, menos que o recomendado ({ram} GB). Pode ficar lento ou falhar.`],
+"inst.prereqs":[`Requisitos previos`,`Prerequisites`,`Voraussetzungen`,`Prérequis`,`前提条件`,`Pré-requisitos`],
+"btn.openTerminal":[`Abrir Terminal con el comando`,`Open Terminal with the command`,`Terminal mit dem Befehl öffnen`,`Ouvrir le Terminal avec la commande`,`コマンドを入力した状態でターミナルを開く`,`Abrir o Terminal com o comando`],
+"inst.where":[`Dónde se instala`,`Install location`,`Installationsort`,`Emplacement d'installation`,`インストール先`,`Onde será instalado`],
+"inst.alsoPrereq":[`Instalar también lo que falte ({pm})`,`Also install anything missing ({pm})`,`Fehlendes ebenfalls installieren ({pm})`,`Installer aussi ce qui manque ({pm})`,`不足しているものも一緒にインストール({pm})`,`Instalar também o que estiver faltando ({pm})`],
+"btn.autoInstall":[`Instalar automáticamente`,`Install automatically`,`Automatisch installieren`,`Installer automatiquement`,`自動でインストール`,`Instalar automaticamente`],
+"btn.hideGuide":[`Ocultar guía`,`Hide guide`,`Anleitung ausblenden`,`Masquer le guide`,`ガイドを隠す`,`Ocultar guia`],
+"btn.showGuide":[`Ver guía paso a paso`,`View step-by-step guide`,`Schritt-für-Schritt-Anleitung ansehen`,`Voir le guide pas à pas`,`ステップバイステップガイドを見る`,`Ver guia passo a passo`],
+"btn.official":[`Página oficial ↗`,`Official website ↗`,`Offizielle Website ↗`,`Site officiel ↗`,`公式サイト ↗`,`Site oficial ↗`],
+"inst.manual":[`Instalación manual en {os}`,`Manual installation on {os}`,`Manuelle Installation unter {os}`,`Installation manuelle sur {os}`,`{os} での手動インストール`,`Instalação manual no {os}`],
+"job.installing":[`Instalando {name}…`,`Installing {name}…`,`{name} wird installiert…`,`Installation de {name}…`,`{name} をインストール中…`,`Instalando {name}…`],
+"job.done":[`¡Listo! Ya podés usarla.`,`Done! You can use it now.`,`Fertig! Du kannst es jetzt verwenden.`,`Terminé ! Vous pouvez l'utiliser.`,`完了しました!すぐに使えます。`,`Pronto! Você já pode usá-lo.`],
+"btn.openApp":[`Abrir {name}`,`Open {name}`,`{name} öffnen`,`Ouvrir {name}`,`{name} を開く`,`Abrir {name}`],
+"job.failedDefault":[`La instalación no se pudo completar.`,`The installation couldn't be completed.`,`Die Installation konnte nicht abgeschlossen werden.`,`L'installation n'a pas pu être terminée.`,`インストールを完了できませんでした。`,`Não foi possível concluir a instalação.`],
+"job.cancelled":[`Instalación cancelada.`,`Installation cancelled.`,`Installation abgebrochen.`,`Installation annulée.`,`インストールをキャンセルしました。`,`Instalação cancelada.`],
+"toast.terminalOpened":[`Se abrió la Terminal. Cuando termine, tocá “Buscar de nuevo” en Ajustes o volvé a esta pantalla.`,`Terminal opened. When it finishes, click “Search again” in Settings or come back to this screen.`,`Terminal geöffnet. Wenn es fertig ist, klicke in den Einstellungen auf „Erneut suchen“ oder kehre zu diesem Bildschirm zurück.`,`Terminal ouvert. Une fois terminé, cliquez sur « Rechercher à nouveau » dans les Réglages ou revenez à cet écran.`,`ターミナルを開きました。完了したら、設定で「再検索」をクリックするか、この画面に戻ってください。`,`Terminal aberto. Quando terminar, clique em “Buscar novamente” em Configurações ou volte a esta tela.`],
+"toast.copyManual":[`Copiá el texto seleccionado con Ctrl/Cmd+C`,`Copy the selected text with Ctrl/Cmd+C`,`Kopiere den markierten Text mit Strg/Cmd+C`,`Copiez le texte sélectionné avec Ctrl/Cmd+C`,`選択したテキストを Ctrl/Cmd+C でコピーしてください`,`Copie o texto selecionado com Ctrl/Cmd+C`],
+"dlg.install.title":[`Instalar {name}`,`Install {name}`,`{name} installieren`,`Installer {name}`,`{name} をインストール`,`Instalar {name}`],
+"dlg.install.intro":[`Se va a descargar e instalar <b>{name}</b> desde las fuentes oficiales.`,`<b>{name}</b> will be downloaded and installed from the official sources.`,`<b>{name}</b> wird von den offiziellen Quellen heruntergeladen und installiert.`,`<b>{name}</b> sera téléchargé et installé depuis les sources officielles.`,`<b>{name}</b> を公式ソースからダウンロードしてインストールします。`,`<b>{name}</b> será baixado e instalado a partir das fontes oficiais.`],
+"dlg.install.download":[`<b>Descarga:</b> unos {v} GB`,`<b>Download:</b> about {v} GB`,`<b>Download:</b> etwa {v} GB`,`<b>Téléchargement :</b> environ {v} Go`,`<b>ダウンロード:</b> 約 {v} GB`,`<b>Download:</b> cerca de {v} GB`],
+"dlg.install.where":[`<b>Dónde:</b> <span class="mono">{path}</span>`,`<b>Where:</b> <span class="mono">{path}</span>`,`<b>Wohin:</b> <span class="mono">{path}</span>`,`<b>Où :</b> <span class="mono">{path}</span>`,`<b>場所:</b> <span class="mono">{path}</span>`,`<b>Onde:</b> <span class="mono">{path}</span>`],
+"dlg.install.disk":[`<b>Espacio en disco:</b> {v} GB`,`<b>Disk space:</b> {v} GB`,`<b>Speicherplatz:</b> {v} GB`,`<b>Espace disque :</b> {v} Go`,`<b>ディスク容量:</b> {v} GB`,`<b>Espaço em disco:</b> {v} GB`],
+"dlg.install.time":[`<b>Tiempo estimado:</b> {v} minutos`,`<b>Estimated time:</b> {v} minutes`,`<b>Geschätzte Dauer:</b> {v} Minuten`,`<b>Durée estimée :</b> {v} minutes`,`<b>所要時間の目安:</b> {v} 分`,`<b>Tempo estimado:</b> {v} minutos`],
+"dlg.install.alsoPrereq":[`También se instalará lo que falte ({pm}).`,`Anything missing will also be installed ({pm}).`,`Fehlendes wird ebenfalls installiert ({pm}).`,`Ce qui manque sera aussi installé ({pm}).`,`不足しているものも一緒にインストールされます({pm})。`,`O que estiver faltando também será instalado ({pm}).`],
+"dlg.install.note":[`Podés seguir usando la compu mientras tanto. Si la cerrás, la instalación se interrumpe.`,`You can keep using the computer in the meantime. If you shut it down, the installation is interrupted.`,`Du kannst den Computer in der Zwischenzeit weiter benutzen. Wenn du ihn herunterfährst, wird die Installation unterbrochen.`,`Vous pouvez continuer à utiliser l'ordinateur pendant ce temps. Si vous l'éteignez, l'installation sera interrompue.`,`その間もコンピューターを使い続けられます。電源を切るとインストールは中断されます。`,`Você pode continuar usando o computador enquanto isso. Se desligá-lo, a instalação será interrompida.`],
+"btn.install":[`Instalar`,`Install`,`Installieren`,`Installer`,`インストール`,`Instalar`],
+"dlg.cancelInst.title":[`Cancelar la instalación`,`Cancel the installation`,`Installation abbrechen`,`Annuler l'installation`,`インストールをキャンセル`,`Cancelar a instalação`],
+"dlg.cancelInst.text":[`Se frena la instalación. Lo que ya se descargó puede quedar a medias.`,`The installation is stopped. What was already downloaded may be left incomplete.`,`Die Installation wird gestoppt. Bereits Heruntergeladenes kann unvollständig bleiben.`,`L'installation est arrêtée. Ce qui a déjà été téléchargé peut rester incomplet.`,`インストールを中止します。ダウンロード済みのものは不完全な状態で残ることがあります。`,`A instalação é interrompida. O que já foi baixado pode ficar incompleto.`],
+"btn.cancelInst":[`Cancelar instalación`,`Cancel installation`,`Installation abbrechen`,`Annuler l'installation`,`インストールをキャンセル`,`Cancelar instalação`],
+"toast.cancelling":[`Cancelando…`,`Cancelling…`,`Wird abgebrochen…`,`Annulation…`,`キャンセル中…`,`Cancelando…`],
+
+  };
+  const dict = {}; LANGS.forEach(l => dict[l] = {});
+  Object.keys(D).forEach(k => D[k].forEach((s, i) => { if (s != null && s !== "") dict[LANGS[i]][k] = s; }));
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
+  function detect() {
+    const saved = lsGet("ai_launcher_lang");
+    if (saved && LANGS.includes(saved)) return saved;
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "";
+    const p = String(nav).toLowerCase().slice(0, 2);
+    return LANGS.includes(p) ? p : "en";
+  }
+  function interp(s, vars) { return vars ? s.replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? vars[k] : m) : s; }
+  const api = {
+    LANGS, NAMES, dict, lang: "en",
+    detect,
+    has: k => k in dict.en,
+    t(key, vars) {
+      const s = dict[api.lang]?.[key] ?? dict.en[key] ?? dict.es[key];
+      return s == null ? key : interp(s, vars);
+    },
+    tn(key, n, vars) { return api.t(key + (n === 1 ? ".one" : ".other"), { n, ...(vars || {}) }); },
+    setLang(l) {
+      if (!LANGS.includes(l)) return;
+      api.lang = l; lsSet("ai_launcher_lang", l);
+      document.documentElement.lang = l;
+      if (api.onChange) api.onChange();
+    },
+    onChange: null,
+  };
+  api.lang = detect();
+  document.documentElement.lang = api.lang;
+  return api;
+})();
+</script>
 <script src="help.js?t=__TOKEN__"></script>
 <script>
 const H = window.HELP || null;
 const TOKEN = "__TOKEN__";
-const OS = { mac: { tray: "la barra de menú", files: "Finder", device: "la Mac" }, windows: { tray: "la bandeja del sistema", files: "el Explorador", device: "la PC" }, linux: { tray: "la bandeja", files: "el gestor de archivos", device: "la PC" } };
-const os_ = () => OS[S.state?.platform] || OS.mac;
+const t = (k, v) => I18N.t(k, v);
+const tn = (k, n, v) => I18N.tn(k, n, v);
+const pk = () => ["mac", "windows", "linux"].includes(S.state?.platform) ? S.state.platform : "mac";
+const os_ = () => ({ tray: t("os." + pk() + ".tray"), files: t("btn.showIn." + pk()), device: t("os." + pk() + ".device") });
+function applyStatic() { document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); }); }
+const catLabel = c => { const k = "cat." + c; return I18N.has(k) ? t(k) : c; };
 const S = { view: "monitor", state: null, mon: null, logPath: null, logOffset: null, sdFilter: "", expanded: new Set() };
 
 // ---------------------------------------------------------------- helpers
@@ -197,15 +566,15 @@ function choiceBox(title, html, buttons, width) {
     (bg.querySelector(".primary, .solid") || bg.querySelector("button"))?.focus();
   });
 }
-async function confirmBox(title, text, okLabel = "Confirmar", danger = true) {
-  const r = await choiceBox(title, `<p>${esc(text)}</p>`, [{ id: "0", label: "Cancelar" }, { id: "1", label: okLabel, cls: danger ? "danger solid" : "primary" }]);
+async function confirmBox(title, text, okLabel = t("btn.confirm"), danger = true) {
+  const r = await choiceBox(title, `<p>${esc(text)}</p>`, [{ id: "0", label: t("btn.cancel") }, { id: "1", label: okLabel, cls: danger ? "danger solid" : "primary" }]);
   return r === "1";
 }
 function promptBox(title, placeholder) {
   return new Promise(res => {
     const bg = document.createElement("div"); bg.className = "modal-bg";
     bg.innerHTML = `<div class="modal"><div class="title">${esc(title)}</div><p><input type="text" placeholder="${esc(placeholder || "")}"></p>
-      <div class="row" style="justify-content:flex-end"><button class="b" data-a="0">Cancelar</button><button class="b primary" data-a="1">Guardar</button></div></div>`;
+      <div class="row" style="justify-content:flex-end"><button class="b" data-a="0">${esc(t("btn.cancel"))}</button><button class="b primary" data-a="1">${esc(t("btn.save"))}</button></div></div>`;
     const inp = bg.querySelector("input");
     const done = ok => { bg.remove(); res(ok ? inp.value.trim() : null); };
     bg.addEventListener("click", e => { const a = e.target.dataset.a; if (a !== undefined) done(a === "1"); else if (e.target === bg) done(false); });
@@ -249,7 +618,7 @@ async function refreshMonitor() {
 }
 function renderNavMem() {
   const m = S.mon.memory, pct = m.total ? m.used / m.total * 100 : 0;
-  $("#navMem").innerHTML = `Memoria ${bytes(m.used)} / ${bytes(m.total)}
+  $("#navMem").innerHTML = `${esc(t("nav.memory", { used: bytes(m.used), total: bytes(m.total) }))}
     <div class="bar ${pct > 90 ? "crit" : pct > 75 ? "hi" : ""}"><div style="width:${pct.toFixed(0)}%"></div></div>`;
 }
 // actualiza las partes "en vivo" de otras vistas sin re-renderizar los formularios
@@ -263,25 +632,25 @@ function updateLive() {
 // ---------------------------------------------------------------- monitor
 function ollamaStatus() {
   const o = S.mon?.ollama; if (!o) return ["", "…"];
-  if (o.up) return ["on", "Corriendo · " + o.url.replace("http://", "")];
-  if (o.running) return ["mid", "Iniciando…"];
-  if (o.failure) return ["bad", "No pudo iniciar"];
-  return ["", "Detenido"];
+  if (o.up) return ["on", t("status.running", { url: o.url.replace("http://", "") })];
+  if (o.running) return ["mid", t("status.starting")];
+  if (o.failure) return ["bad", t("status.failed")];
+  return ["", t("status.stopped")];
 }
 const kindIcon = k => k === "kohya" ? "🏋️" : k === "comfyui" ? "🧩" : "🎨";
 function sdStatus(s) {
-  if (s.running && s.training) return ["mid", "Entrenando un LoRA…"];
-  if (s.up) return ["on", "Corriendo · " + s.url.replace("http://", "")];
-  if (s.running) return ["mid", "Iniciando… (puede tardar un minuto)"];
-  if (s.failure) return ["bad", "No pudo iniciar"];
-  return ["", "Detenido"];
+  if (s.running && s.training) return ["mid", t("status.training")];
+  if (s.up) return ["on", t("status.running", { url: s.url.replace("http://", "") })];
+  if (s.running) return ["mid", t("status.startingSd")];
+  if (s.failure) return ["bad", t("status.failed")];
+  return ["", t("status.stopped")];
 }
 function errBox(f, key) {
   if (!f) return "";
   return `<div class="err-box"><b>${esc(f.hint)}</b>
-    <details><summary>Ver detalle</summary><pre class="mono selectable">${esc(f.tail || "(el log está vacío)")}</pre></details>
-    <div class="row"><button class="b" onclick="S.logPath=${esc(JSON.stringify(f.log))};go('logs')">Ver log completo</button>
-      <button class="b" onclick="clearFailure(${esc(JSON.stringify(key))})">Descartar</button></div></div>`;
+    <details><summary>${esc(t("err.detail"))}</summary><pre class="mono selectable">${esc(f.tail || t("err.logEmpty"))}</pre></details>
+    <div class="row"><button class="b" onclick="S.logPath=${esc(JSON.stringify(f.log))};go('logs')">${esc(t("btn.viewLog"))}</button>
+      <button class="b" onclick="clearFailure(${esc(JSON.stringify(key))})">${esc(t("err.dismiss"))}</button></div></div>`;
 }
 async function clearFailure(key) {
   try { await api("/api/failures/clear", { key }); } catch (e) {}
@@ -304,56 +673,56 @@ function ollamaButtons() {
   const o = S.mon?.ollama || {};
   const running = o.running || o.up;
   return running
-    ? `<button class="b danger" onclick="stopOllama()">Detener</button>`
-    : `<button class="b primary" onclick="act(()=>api('/api/ollama/start',{}),'Iniciando Ollama…')">Iniciar</button>`;
+    ? `<button class="b danger" onclick="stopOllama()">${esc(t("btn.stop"))}</button>`
+    : `<button class="b primary" onclick="startOllama()">${esc(t("btn.start"))}</button>`;
 }
+function startOllama() { act(() => api("/api/ollama/start", {}), t("toast.startingOllama")); }
 function sdButtons(path) {
   const s = S.mon?.sd.find(x => x.path === path) || {};
   let h = "";
   if (s.running) {
-    h += `<button class="b danger" onclick="stopSD('${esc(path)}')">Detener</button>`;
-    if (s.up) h += ` <button class="b" onclick="openUrl('${s.url}')">Abrir en el navegador ↗</button>`;
+    h += `<button class="b danger" onclick="stopSD('${esc(path)}')">${esc(t("btn.stop"))}</button>`;
+    if (s.up) h += ` <button class="b" onclick="openUrl('${s.url}')">${esc(t("btn.openBrowser"))}</button>`;
   } else {
-    h += `<button class="b primary" onclick="startSD('${esc(path)}')">Iniciar</button>`;
+    h += `<button class="b primary" onclick="startSD('${esc(path)}')">${esc(t("btn.start"))}</button>`;
   }
   return h;
 }
 async function stopOllama() {
   const procs = (S.mon?.processes || []).filter(p => p.service === "ollama");
-  if (await confirmBox("Detener Ollama", `Se van a cerrar ${procs.length} proceso(s) de Ollama (${procs.map(p => p.label).join(", ")}). Los modelos cargados se liberan de memoria.`, "Detener"))
-    act(() => api("/api/ollama/stop", {}), "Ollama detenido");
+  if (await confirmBox(t("dlg.stopOllama.title"), t("dlg.stopOllama.text", { n: procs.length, list: procs.map(p => p.label).join(", ") }), t("btn.stop")))
+    act(() => api("/api/ollama/stop", {}), t("toast.ollamaStopped"));
 }
 async function stopSD(path) {
   const s = S.mon?.sd.find(x => x.path === path) || {};
-  const name = s.label || "la app de imagen";
-  const txt = s.training ? `${name} está entrenando un LoRA. Si la detenés ahora, el entrenamiento se pierde y vas a tener que empezar de nuevo.`
-    : "Se cierra la app y se libera la memoria del modelo. Si estás generando una imagen, se pierde.";
-  if (await confirmBox("Detener " + name, txt, s.training ? "Detener y perder el entrenamiento" : "Detener"))
-    act(() => api("/api/sd/stop", { path }), name + " detenido");
+  const name = s.label || t("sd.defaultName");
+  const txt = s.training ? t("dlg.stopSD.training", { name }) : t("dlg.stopSD.idle");
+  if (await confirmBox(t("dlg.stopSD.title", { name }), txt, s.training ? t("btn.stopLoseTraining") : t("btn.stop")))
+    act(() => api("/api/sd/stop", { path }), t("toast.nameStopped", { name }));
 }
-function sdStarted(r) { toast("Iniciando… se abrirá en " + (r.url || ("http://127.0.0.1:" + r.port)) + " (puede tardar un minuto)"); refreshMonitor(); }
+function sdStarted(r) { toast(t("toast.sdStarting", { url: r.url || ("http://127.0.0.1:" + r.port) })); refreshMonitor(); }
 function conflictBox(r) {
   const run = r.running || [], m = r.memory || {};
   const training = run.some(x => x.training);
   let h = "";
   if (run.length) {
-    h += `<div class="warn-box"><b>No es recomendable tener los dos abiertos.</b><br>Los dos programas compiten por la misma memoria (en Mac, la memoria RAM y la de video son lo mismo). Todo puede ponerse muy lento, la generación puede fallar o la compu puede trabarse.</div>`;
-    h += `<div class="small" style="margin:6px 0"><b>Memoria en uso ahora:</b> ${bytes(m.used)} de ${bytes(m.total)}</div>
-      <ul class="small">${run.map(x => `<li>${kindIcon(x.kind)} <b>${esc(x.label)}</b> — usa ${bytes(x.rss)}${x.training ? " (entrenando)" : ""}${(x.ports || []).length ? " · puerto " + esc(x.ports.join(", ")) : ""}</li>`).join("")}</ul>`;
+    h += `<div class="warn-box">${t("conflict.warn")}</div>`;
+    h += `<div class="small" style="margin:6px 0"><b>${esc(t("conflict.memNow"))}</b> ${esc(t("conflict.memOf", { used: bytes(m.used), total: bytes(m.total) }))}</div>
+      <ul class="small">${run.map(x => `<li>${kindIcon(x.kind)} <b>${esc(x.label)}</b> — ${esc(t("conflict.uses", { rss: bytes(x.rss) }))}${x.training ? " " + esc(t("conflict.training")) : ""}${(x.ports || []).length ? " · " + esc(t("conflict.port", { ports: x.ports.join(", ") })) : ""}</li>`).join("")}</ul>`;
   }
-  if (training) h += `<div class="warn-box bad"><b>Kohya está entrenando un LoRA:</b> si te quedás sin memoria, el entrenamiento puede fallar y perder el progreso.</div>`;
-  if (r.port_taken) h += `<p class="small" style="margin:8px 0 14px">El puerto ${esc(r.port)} ya está en uso, así que se abrirá en el puerto ${esc(r.suggested_port)}.</p>`;
+  if (training) h += `<div class="warn-box bad">${t("conflict.kohya")}</div>`;
+  if (r.port_taken) h += `<p class="small" style="margin:8px 0 14px">${esc(t("conflict.portTaken", { port: r.port, suggested: r.suggested_port }))}</p>`;
   else h += `<div style="height:8px"></div>`;
   const btns = [];
-  if (run.length) btns.push({ id: "stop", label: run.length > 1 ? "Detener las apps abiertas y abrir " + r.label : "Detener " + run[0].label + " y abrir", cls: "primary" });
-  btns.push({ id: "force", label: "Abrir igual en el puerto " + r.suggested_port });
-  btns.push({ id: "cancel", label: "Cancelar" });
-  return choiceBox("Iniciar " + r.label, h, btns, 460);
+  if (run.length) btns.push({ id: "stop", label: run.length > 1 ? t("conflict.stopMany", { label: r.label }) : t("conflict.stopOne", { name: run[0].label }), cls: "primary" });
+  btns.push({ id: "force", label: t("conflict.force", { port: r.suggested_port }) });
+  btns.push({ id: "cancel", label: t("btn.cancel") });
+  return choiceBox(t("conflict.title", { label: r.label }), h, btns, 460);
 }
 async function stopConflicting(r) {
   const pids = (r.running || []).map(x => x.pid);
   for (const pid of pids) { try { await api("/api/kill", { pid }); } catch (e) { toast(e.message, true); } }
-  toast("Esperando que se cierre…");
+  toast(t("toast.waitClose"));
   const end = Date.now() + 15000;
   while (Date.now() < end) {
     await new Promise(res => setTimeout(res, 1000));
@@ -363,7 +732,7 @@ async function stopConflicting(r) {
       if (!pids.some(p => alive.has(p))) return true;
     } catch (e) { }
   }
-  toast("Tardó más de lo esperado en cerrarse.", true);
+  toast(t("toast.closeSlow"), true);
   return false;
 }
 async function startSD(path) {
@@ -382,39 +751,40 @@ async function startSD(path) {
 async function killProc(pid, label, force) {
   const pr = (S.mon?.processes || []).find(p => p.pid === pid);
   const training = pr?.training || (pr?.children || []).some(c => /entrenamiento/i.test(c.label));
-  const ok = await confirmBox(force ? "Forzar cierre" : "Detener proceso",
-    `${label} (PID ${pid})${force ? " se cierra de inmediato (SIGKILL), sin darle tiempo a guardar." : " y sus subprocesos reciben la señal para cerrarse."}` +
-    (training ? " ⚠️ Está entrenando un LoRA: si lo detenés, el entrenamiento se pierde." : ""),
-    force ? "Forzar" : "Detener");
-  if (ok) act(() => api("/api/kill", { pid, force }), "Señal enviada a PID " + pid);
+  const ok = await confirmBox(force ? t("dlg.kill.titleForce") : t("dlg.kill.title"),
+    t(force ? "kill.force" : "kill.soft", { label, pid }) + (training ? t("kill.training") : ""),
+    force ? t("btn.force") : t("btn.stop"));
+  if (ok) act(() => api("/api/kill", { pid, force }), t("toast.signalSent", { pid }));
 }
-async function unloadModel(model) { act(() => api("/api/ollama/unload", { model }), model + " descargado de memoria"); }
+async function unloadModel(model) { act(() => api("/api/ollama/unload", { model }), t("toast.unloaded", { model })); }
+function loadModel(name) { act(() => api("/api/ollama/load", { model: name }), t("toast.loadingModel", { name })); }
+function sdCall(path, action) { act(() => api("/api/sd/call", { path, action }), t(action === "unload" ? "toast.ckptUnloaded" : "toast.ckptLoading")); }
 
 function ollamaModelsTable() {
   const o = S.mon?.ollama;
-  if (!o?.up) return `<div class="empty">Ollama no está corriendo.</div>`;
-  if (!o.loaded.length) return `<div class="empty">No hay modelos cargados en memoria. Se cargan solos cuando les hacés un pedido.</div>`;
-  return `<table><tr><th>Modelo</th><th class="num">Tamaño</th><th class="num">En GPU</th><th>Se libera</th><th></th></tr>` +
+  if (!o?.up) return `<div class="empty">${esc(t("models.ollamaDown"))}</div>`;
+  if (!o.loaded.length) return `<div class="empty">${esc(t("models.noneLoaded"))}</div>`;
+  return `<table><tr><th>${esc(t("th.model"))}</th><th class="num">${esc(t("th.size"))}</th><th class="num">${esc(t("th.gpu"))}</th><th>${esc(t("th.frees"))}</th><th></th></tr>` +
     o.loaded.map(m => `<tr><td><b>${esc(m.name)}</b></td><td class="num">${bytes(m.size)}</td>
       <td class="num">${m.size ? Math.round((m.size_vram || 0) / m.size * 100) : 0}%</td>
       <td class="small muted">${m.expires_at ? timeLeft(m.expires_at) : ""}</td>
-      <td class="num"><button class="b" onclick="unloadModel('${esc(m.name)}')">Descargar de memoria</button></td></tr>`).join("") + `</table>`;
+      <td class="num"><button class="b" onclick="unloadModel('${esc(m.name)}')">${esc(t("btn.unload"))}</button></td></tr>`).join("") + `</table>`;
 }
 function timeLeft(iso) {
   const d = (new Date(iso) - Date.now()) / 1000;
   if (!isFinite(d)) return "";
-  if (d > 1e7) return "nunca (keep_alive -1)";
-  if (d < 0) return "ahora";
-  return d > 3600 ? "en " + (d / 3600).toFixed(1) + " h" : d > 60 ? "en " + Math.round(d / 60) + " min" : "en " + Math.round(d) + " s";
+  if (d > 1e7) return t("time.never");
+  if (d < 0) return t("time.now");
+  return d > 3600 ? t("time.inH", { n: (d / 3600).toFixed(1) }) : d > 60 ? t("time.inMin", { n: Math.round(d / 60) }) : t("time.inS", { n: Math.round(d) });
 }
 function sdApiHtml(path) {
   const s = S.mon?.sd.find(x => x.path === path);
   if (!s?.up) return "";
   if (!s.api) return "";
-  if (!s.api.api) return `<div class="small muted" style="margin-top:8px">Para ver y descargar el checkpoint desde acá, iniciá con <span class="mono">--api</span>.</div>`;
-  return `<div class="row small" style="margin-top:8px">Checkpoint en memoria: <b>${esc(s.api.checkpoint || "ninguno")}</b>
-    ${s.api.checkpoint ? `<button class="b" onclick="act(()=>api('/api/sd/call',{path:'${esc(path)}',action:'unload'}),'Checkpoint descargado de memoria')">Descargar de memoria</button>`
-      : `<button class="b" onclick="act(()=>api('/api/sd/call',{path:'${esc(path)}',action:'reload'}),'Cargando checkpoint…')">Cargar</button>`}</div>`;
+  if (!s.api.api) return `<div class="small muted" style="margin-top:8px">${t("sdapi.needApi")}</div>`;
+  return `<div class="row small" style="margin-top:8px">${esc(t("sdapi.ckpt"))} <b>${esc(s.api.checkpoint || t("general.none"))}</b>
+    ${s.api.checkpoint ? `<button class="b" onclick="sdCall('${esc(path)}','unload')">${esc(t("btn.unload"))}</button>`
+      : `<button class="b" onclick="sdCall('${esc(path)}','reload')">${esc(t("btn.load"))}</button>`}</div>`;
 }
 
 let pointerDown = false;
@@ -422,12 +792,12 @@ document.addEventListener("pointerdown", () => pointerDown = true, true);
 document.addEventListener("pointerup", () => setTimeout(() => pointerDown = false, 150), true);
 let lastMonitorHtml = "";
 function purposeLine(kind) {
-  const t = window.HELP && HELP.purpose && HELP.purpose[kind];
-  return t ? `<div class="purpose">${t}</div>` : "";
+  const p = H?.purposeOf?.(kind);
+  return p ? `<div class="purpose">${p}</div>` : "";
 }
 function renderMonitor() {
   const m = S.mon;
-  if (!m) { $("#main").innerHTML = `<h2>Monitor</h2><div class="sub">Cargando…</div>`; return; }
+  if (!m) { $("#main").innerHTML = `<h2>${esc(t("mon.title"))}</h2><div class="sub">${esc(t("general.loading"))}</div>`; return; }
   const [oc, ot] = ollamaStatus();
   const procs = m.processes;
   const sdCards = m.sd.map(s => {
@@ -435,47 +805,47 @@ function renderMonitor() {
     return `<div class="card"><div class="row between"><div class="title">${kindIcon(s.kind)} ${esc(s.label)}</div><span class="chip">${esc(s.name)}</span></div>${purposeLine(s.kind)}
       <div class="row" style="margin:8px 0 10px"><span class="dot ${c}"></span> ${esc(t)}</div>
       <div class="row">${sdButtons(s.path)}</div>${sdFailBox(s.path)}${sdApiHtml(s.path)}</div>`;
-  }).join("") || `<div class="card"><div class="title">🎨 Apps de imagen</div><div class="muted" style="margin-top:6px">No encontré ninguna instalación. <button class="link" onclick="go('sd')">Buscar o agregar…</button></div></div>`;
+  }).join("") || `<div class="card"><div class="title">${esc(t("mon.imageApps"))}</div><div class="muted" style="margin-top:6px">${esc(t("mon.noInstall"))} <button class="link" onclick="go('sd')">${esc(t("mon.searchAdd"))}</button></div></div>`;
 
   const rows = procs.map(p => {
     const open = S.expanded.has(p.pid);
     const kids = p.children.length;
     let h = `<tr><td><div class="row" style="gap:6px">${kids ? `<button class="link" onclick="toggleExp(${p.pid})">${open ? "▾" : "▸"}</button>` : `<span style="width:9px"></span>`}
         <span>${p.service === "ollama" ? "🦙" : kindIcon(p.kind || m.sd.find(x => x.path === p.install)?.kind)}</span><b>${esc(p.label)}</b>
-        ${p.training ? `<span class="chip warn">entrenando</span>` : ""}
-        ${p.started_here ? `<span class="chip">iniciado aquí</span>` : `<span class="chip warn">externo</span>`}</div>
+        ${p.training ? `<span class="chip warn">${esc(t("chip.training"))}</span>` : ""}
+        ${p.started_here ? `<span class="chip">${esc(t("chip.here"))}</span>` : `<span class="chip warn">${esc(t("chip.external"))}</span>`}</div>
         <div class="small muted mono" style="margin:2px 0 0 33px" title="${esc(p.cmd)}">${esc(p.cmd.length > 90 ? p.cmd.slice(0, 90) + "…" : p.cmd)}</div></td>
       <td class="num mono">${p.pid}</td><td class="num">${p.cpu.toFixed(1)}%</td><td class="num">${bytes(p.rss)}</td>
       <td class="num">${esc(p.etime)}</td>
       <td>${p.ports.map(x => `<button class="link mono" onclick="openUrl('http://127.0.0.1:${x}')">:${x}</button>`).join(" ")}</td>
-      <td class="num" style="white-space:nowrap"><button class="b danger" onclick="killProc(${p.pid}, '${esc(p.label)}', false)">Detener</button>
-        <button class="b danger" title="SIGKILL" onclick="killProc(${p.pid}, '${esc(p.label)}', true)">Forzar</button></td></tr>`;
+      <td class="num" style="white-space:nowrap"><button class="b danger" onclick="killProc(${p.pid}, '${esc(p.label)}', false)">${esc(t("btn.stop"))}</button>
+        <button class="b danger" title="SIGKILL" onclick="killProc(${p.pid}, '${esc(p.label)}', true)">${esc(t("btn.force"))}</button></td></tr>`;
     if (open) h += p.children.map(c => `<tr class="child"><td><span class="mono">${esc(c.label)}</span> <span class="small" title="${esc(c.cmd)}">${esc(c.cmd.slice(0, 70))}</span></td>
       <td class="num mono">${c.pid}</td><td class="num">${c.cpu.toFixed(1)}%</td><td class="num">${bytes(c.rss)}</td><td></td>
       <td>${c.ports.map(x => ":" + x).join(" ")}</td>
-      <td class="num"><button class="b danger" onclick="killProc(${c.pid}, '${esc(c.label)}', false)">Detener</button></td></tr>`).join("");
+      <td class="num"><button class="b danger" onclick="killProc(${c.pid}, '${esc(c.label)}', false)">${esc(t("btn.stop"))}</button></td></tr>`).join("");
     return h;
   }).join("");
   const totalRss = procs.reduce((a, p) => a + p.rss, 0);
   const loadedVram = (m.ollama.loaded || []).reduce((a, x) => a + (x.size || 0), 0);
 
   const html = `
-    <h2>Monitor</h2>
+    <h2>${esc(t("mon.title"))}</h2>
     ${guideCard("monitor")}
-    <div class="sub">Qué está corriendo ahora mismo, cuánto consume, y botones para cerrar lo que no uses. Se actualiza solo.</div>
+    <div class="sub">${esc(t("mon.sub"))}</div>
     <div class="grid2">
       <div class="card"><div class="row between"><div class="title">🦙 Ollama</div>${S.state?.ollama?.version ? `<span class="chip">v${esc(S.state.ollama.version)}</span>` : ""}</div>${purposeLine("ollama")}
         <div class="row" style="margin:8px 0 10px"><span class="dot ${oc}"></span> ${esc(ot)}
-          ${m.ollama.up ? `<span class="muted">· ${m.ollama.loaded.length} modelo(s) en memoria${loadedVram ? " (" + bytes(loadedVram) + ")" : ""}</span>` : ""}</div>
-        <div class="row">${ollamaButtons()} <button class="b" onclick="go('ollama')">Opciones…</button></div>${ollamaFailBox()}</div>
+          ${m.ollama.up ? `<span class="muted">${esc(tn("mon.models", m.ollama.loaded.length))}${loadedVram ? " (" + bytes(loadedVram) + ")" : ""}</span>` : ""}</div>
+        <div class="row">${ollamaButtons()} <button class="b" onclick="go('ollama')">${esc(t("btn.options"))}</button></div>${ollamaFailBox()}</div>
       ${sdCards}
     </div>
-    ${(!S.state?.ollama?.found || !S.state?.installs?.length) ? `<div class="card row between"><div><b>¿Te falta alguna app?</b><div class="small muted">Podés instalar Ollama, Stable Diffusion y otras sin usar la terminal.</div></div><button class="b primary" onclick="go('install')">Instalar apps</button></div>` : ""}
-    <h3>Procesos detectados ${procs.length ? `<span class="muted small" style="font-weight:400">· ${bytes(totalRss)} de memoria en total</span>` : ""}</h3>
-    <div class="card" style="padding:4px 8px">${procs.length ? `<table><tr><th>Proceso</th><th class="num">PID</th><th class="num">CPU</th><th class="num">Memoria</th><th class="num">Hace</th><th>Puertos</th><th></th></tr>${rows}</table>`
-      : `<div class="empty">Nada corriendo: ni Ollama ni apps de imagen.</div>`}</div>
-    ${procs.length ? `<div class="small muted" style="margin:-4px 4px 8px">¿La compu anda lenta? Mirá qué proceso usa más memoria y detené lo que no estés usando.</div>` : ""}
-    <h3>Modelos de Ollama en memoria</h3>
+    ${(!S.state?.ollama?.found || !S.state?.installs?.length) ? `<div class="card row between"><div><b>${esc(t("mon.missing.title"))}</b><div class="small muted">${esc(t("mon.missing.sub"))}</div></div><button class="b primary" onclick="go('install')">${esc(t("btn.installApps"))}</button></div>` : ""}
+    <h3>${esc(t("mon.procs"))} ${procs.length ? `<span class="muted small" style="font-weight:400">${esc(t("mon.totalMem", { mem: bytes(totalRss) }))}</span>` : ""}</h3>
+    <div class="card" style="padding:4px 8px">${procs.length ? `<table><tr><th>${esc(t("th.process"))}</th><th class="num">PID</th><th class="num">CPU</th><th class="num">${esc(t("th.mem"))}</th><th class="num">${esc(t("th.since"))}</th><th>${esc(t("th.ports"))}</th><th></th></tr>${rows}</table>`
+      : `<div class="empty">${esc(t("mon.noProcs"))}</div>`}</div>
+    ${procs.length ? `<div class="small muted" style="margin:-4px 4px 8px">${esc(t("mon.slowTip"))}</div>` : ""}
+    <h3>${esc(t("mon.loadedModels"))}</h3>
     <div class="card" style="padding:4px 8px">${ollamaModelsTable()}</div>`;
   if (html === lastMonitorHtml && $("#main").dataset.view === "monitor") return;
   if (pointerDown && $("#main").dataset.view === "monitor") return;
@@ -489,33 +859,33 @@ function toggleExp(pid) { S.expanded.has(pid) ? S.expanded.delete(pid) : S.expan
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
 function guideCard(key) {
-  const html = H?.sections?.[key]; if (!html) return "";
-  return `<details class="guide" ${lsGet("guide_" + key, "1") === "1" ? "open" : ""} ontoggle="lsSet('guide_${key}', this.open ? '1' : '0')"><summary>💡 ¿Qué es esto y cómo se usa?</summary><div>${html}</div></details>`;
+  const html = H?.section?.(key); if (!html) return "";
+  return `<details class="guide" ${lsGet("guide_" + key, "1") === "1" ? "open" : ""} ontoggle="lsSet('guide_${key}', this.open ? '1' : '0')"><summary>${esc(t("guide.summary"))}</summary><div>${html}</div></details>`;
 }
 const advMode = () => !H || lsGet("opt_mode", "simple") === "advanced";
 function setOptMode(m) { lsSet("opt_mode", m); render(); }
 function modeBar() {
   if (!H) return "";
   const adv = advMode();
-  return `<div class="card row between"><div class="row"><span class="title">Opciones</span>
-    <div class="seg"><button class="${adv ? "" : "on"}" onclick="setOptMode('simple')">Simple</button><button class="${adv ? "on" : ""}" onclick="setOptMode('advanced')">Avanzado</button></div></div>
-    <span class="small muted">${adv ? "Todas las opciones, ordenadas por tema." : "Sólo lo más útil. Si no sabés qué tocar, dejá todo como está."}</span></div>`;
+  return `<div class="card row between"><div class="row"><span class="title">${esc(t("opt.options"))}</span>
+    <div class="seg"><button class="${adv ? "" : "on"}" onclick="setOptMode('simple')">${esc(t("opt.simple"))}</button><button class="${adv ? "on" : ""}" onclick="setOptMode('advanced')">${esc(t("opt.advanced"))}</button></div></div>
+    <span class="small muted">${esc(adv ? t("opt.advDesc") : t("opt.simpleDesc"))}</span></div>`;
 }
 function optRow(o, key, help, isSet, val, fn, search) {
   const adv = advMode();
   let h = `<div class="opt ${isSet ? "set" : ""}" id="row_${esc(key)}" ${search ? `data-search="${esc((key + " " + (help?.text || "") + " " + o.help).toLowerCase())}"` : ""}>
-    <div><div class="name">${esc(key)}${help?.tip && /Recomendado/.test(help.tip) ? `<span class="badge">recomendado</span>` : ""}</div></div>
+    <div><div class="name">${esc(key)}${help?.rec ? `<span class="badge">${esc(t("badge.recommended"))}</span>` : ""}</div></div>
     <div><div class="ctl">${optControl(o, val, fn)}</div>`;
   if (help) {
     h += `<div class="help">${help.text}</div>`;
     if (help.tip) h += `<div class="tip">💡 ${help.tip}</div>`;
-    if (adv) h += `<div class="help orig">Original: ${esc(o.help)}</div>`;
+    if (adv) h += `<div class="help orig">${esc(t("opt.original", { text: o.help }))}</div>`;
   } else h += `<div class="help">${esc(o.help)}</div>`;
   return h + `</div></div>`;
 }
 function simpleList(opts, shownRows) {
-  return `<div class="card"><div class="title">Opciones principales</div>
-    <div class="small muted" style="margin:2px 0 6px">Mostrando ${shownRows.length} de ${opts} opciones. Cambiá a Avanzado para ver todas.</div>${shownRows.join("") || `<div class="empty">No hay opciones principales para mostrar.</div>`}</div>`;
+  return `<div class="card"><div class="title">${esc(t("opt.main"))}</div>
+    <div class="small muted" style="margin:2px 0 6px">${esc(t("opt.showing", { n: shownRows.length, total: opts }))}</div>${shownRows.join("") || `<div class="empty">${esc(t("opt.noneMain"))}</div>`}</div>`;
 }
 
 // ---------------------------------------------------------------- Ollama
@@ -527,17 +897,17 @@ function optControl(o, val, onChangeName) {
     return `<input type="checkbox" class="toggle" id="${id}" ${val === true ? "checked" : ""} onchange="${onChangeName}('${key}', this.checked)">`;
   if (o.kind === "choice") {
     const choices = o.choices || [];
-    return `<select id="${id}" onchange="${onChangeName}('${key}', this.value)"><option value="">(por defecto${o.default ? ": " + esc(o.default) : ""})</option>
+    return `<select id="${id}" onchange="${onChangeName}('${key}', this.value)"><option value="">${esc(t("opt.default", { d: o.default ? ": " + o.default : "" }))}</option>
       ${choices.map(c => `<option ${String(val) === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`;
   }
   if (o.kind === "flagvalue") {
     const v = val || {};
     return `<input type="checkbox" class="toggle" ${v.on ? "checked" : ""} onchange="${onChangeName}('${key}', {...(cur('${key}')||{}), on:this.checked})">
-      <input type="text" placeholder="valor opcional" value="${esc(v.value || "")}" oninput="${onChangeName}('${key}', {...(cur('${key}')||{}), value:this.value})">`;
+      <input type="text" placeholder="${esc(t("opt.valuePh"))}" value="${esc(v.value || "")}" oninput="${onChangeName}('${key}', {...(cur('${key}')||{}), value:this.value})">`;
   }
-  const ph = o.default ? "por defecto: " + o.default : "";
+  const ph = o.default ? t("opt.defaultPh", { v: o.default }) : "";
   let h = `<input type="${o.kind === "number" ? "number" : "text"}" id="${id}" placeholder="${esc(ph)}" value="${esc(val ?? "")}" oninput="${onChangeName}('${key}', this.value)">`;
-  if (o.kind === "path") h += `<button class="b" onclick="pickPath('${key}', '${onChangeName}', '${/file|ckpt|config|\.|keyfile|certfile/i.test(o.name || o.flag) && !/dir/i.test(o.name || o.flag) ? "file" : "folder"}')">Elegir…</button>`;
+  if (o.kind === "path") h += `<button class="b" onclick="pickPath('${key}', '${onChangeName}', '${/file|ckpt|config|\.|keyfile|certfile/i.test(o.name || o.flag) && !/dir/i.test(o.name || o.flag) ? "file" : "folder"}')">${esc(t("btn.choose"))}</button>`;
   return h;
 }
 async function pickPath(key, fnName, kind) {
@@ -567,7 +937,7 @@ async function setOllamaMode(mode) { S.state.config.ollama.mode = mode; await ap
 function renderOllama() {
   const st = S.state, o = st.ollama, env = st.config.ollama.env, mode = st.config.ollama.mode;
   if (!o.found) {
-    $("#main").innerHTML = `<h2>Ollama</h2><div class="card">No encontré Ollama en ${os_().device}. Instalalo desde <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> y tocá <b>Buscar de nuevo</b> en Ajustes.</div>`;
+    $("#main").innerHTML = `<h2>Ollama</h2><div class="card">${t("ollama.notFound", { device: os_().device })}</div>`;
     return;
   }
   const cats = {};
@@ -575,43 +945,43 @@ function renderOllama() {
   const order = ["Red", "Memoria y rendimiento", "Almacenamiento", "Otros"];
   const presets = Object.keys(st.config.ollama.presets || {});
   $("#main").innerHTML = `
-    <h2>🦙 Ollama</h2>
+    <h2>${esc(t("ollama.title"))}</h2>
     ${guideCard("ollama")}
-    <div class="sub">Las opciones se leen de <span class="mono">ollama serve --help</span> de tu versión instalada.</div>
+    <div class="sub">${t("ollama.sub")}</div>
     <div class="card">
       ${purposeLine("ollama")}
       <div class="row between"><div class="row" data-live="ollamaStatus">${LIVE.ollamaStatus()}</div><div class="row" data-live="ollamaButtons">${ollamaButtons()}</div></div>
       <div data-live="ollamaFail">${ollamaFailBox()}</div>
       <div class="kv small" style="margin-top:12px">
-        <div>Ejecutable</div><div class="mono selectable">${esc(o.binary || "—")}</div>
-        <div>App</div><div class="mono selectable">${esc(o.app || "—")}</div>
-        <div>Versión</div><div>${esc(o.version || "?")}</div>
-        <div>Modelos</div><div class="mono selectable">${esc(o.models_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(o.models_dir)}'})">abrir</button></div>
-        <div>Ubicación</div><div>${o.source === "cache" ? `<span class="chip ok">verificada desde la caché</span>` : `<span class="chip">${esc(o.source)}</span>`}</div>
+        <div>${esc(t("kv.exe"))}</div><div class="mono selectable">${esc(o.binary || "—")}</div>
+        <div>${esc(t("kv.app"))}</div><div class="mono selectable">${esc(o.app || "—")}</div>
+        <div>${esc(t("kv.version"))}</div><div>${esc(o.version || "?")}</div>
+        <div>${esc(t("kv.models"))}</div><div class="mono selectable">${esc(o.models_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(o.models_dir)}'})">${esc(t("btn.open"))}</button></div>
+        <div>${esc(t("kv.location"))}</div><div>${o.source === "cache" ? `<span class="chip ok">${esc(t("chip.verifiedCache"))}</span>` : `<span class="chip">${esc(o.source)}</span>`}</div>
       </div>
     </div>
     <div class="card">
-      <div class="row between"><div><div class="title">Cómo iniciarlo</div><div class="small muted">Las dos formas usan las opciones de abajo.</div></div>
-      <div class="seg"><button class="${mode === "cli" ? "on" : ""}" onclick="setOllamaMode('cli')">ollama serve</button><button class="${mode === "app" ? "on" : ""}" onclick="setOllamaMode('app')" ${o.app ? "" : "disabled"}>App de Ollama</button></div></div>
-      <div class="small muted" style="margin-top:8px">${mode === "cli" ? "Corre el servidor en segundo plano, con logs en la pestaña Logs. Sin el ícono propio de Ollama." : (S.state.platform === "mac" ? "Abre Ollama.app. Las opciones se pasan con <span class='mono'>launchctl setenv</span> (quedan hasta reiniciar la Mac)." : "Abre la app de Ollama (ícono en " + os_().tray + ") con estas opciones como variables de entorno.")}</div>
+      <div class="row between"><div><div class="title">${esc(t("ollama.howStart"))}</div><div class="small muted">${esc(t("ollama.howSub"))}</div></div>
+      <div class="seg"><button class="${mode === "cli" ? "on" : ""}" onclick="setOllamaMode('cli')">ollama serve</button><button class="${mode === "app" ? "on" : ""}" onclick="setOllamaMode('app')" ${o.app ? "" : "disabled"}>${esc(t("ollama.appBtn"))}</button></div></div>
+      <div class="small muted" style="margin-top:8px">${mode === "cli" ? esc(t("ollama.mode.cli")) : (S.state.platform === "mac" ? t("ollama.mode.appMac") : esc(t("ollama.mode.appOther", { tray: os_().tray })))}</div>
       <div class="cmd" id="ollamaEnvPreview" style="margin-top:10px">${esc(ollamaEnvPreview())}</div>
     </div>
 
     ${presetBar("ollama", presets)}
 
     ${modeBar()}
-    ${advMode() ? order.filter(c => cats[c]).map(c => `<details class="cat" open><summary><span>${c}</span><span class="muted small">${cats[c].filter(x => x.name in env).length}/${cats[c].length} configuradas</span></summary><div>
-      ${cats[c].map(op => optRow(op, op.name, H?.ollama?.[op.name], op.name in env, env[op.name], "setOllamaEnv", false)).join("")}
+    ${advMode() ? order.filter(c => cats[c]).map(c => `<details class="cat" open><summary><span>${esc(catLabel(c))}</span><span class="muted small">${esc(t("cat.count", { n: cats[c].filter(x => x.name in env).length, total: cats[c].length }))}</span></summary><div>
+      ${cats[c].map(op => optRow(op, op.name, H?.ollamaOpt?.(op.name), op.name in env, env[op.name], "setOllamaEnv", false)).join("")}
     </div></details>`).join("")
-    : simpleList(st.ollama_options.length, st.ollama_options.filter(op => H.ollama[op.name]?.simple || op.name in env).map(op => optRow(op, op.name, H.ollama[op.name], op.name in env, env[op.name], "setOllamaEnv", false)))}
+    : simpleList(st.ollama_options.length, st.ollama_options.filter(op => H.ollamaOpt(op.name)?.simple || op.name in env).map(op => optRow(op, op.name, H.ollamaOpt(op.name), op.name in env, env[op.name], "setOllamaEnv", false)))}
 
-    <h3>Modelos instalados</h3>
+    <h3>${esc(t("models.installed"))}</h3>
     <div class="card" style="padding:4px 8px" data-live="ollamaInstalled">${ollamaInstalled()}</div>
     <div class="card">
-      <div class="title" style="margin-bottom:8px">Descargar un modelo</div>
-      <div class="row"><input type="text" id="pullName" placeholder="por ej. llama3.2, qwen3:8b, gemma3:4b" style="max-width:340px" onkeydown="if(event.key==='Enter')pull()">
-        <button class="b primary" onclick="pull()">Descargar</button>
-        <button class="link" onclick="openUrl('https://ollama.com/search')">Ver catálogo ↗</button></div>
+      <div class="title" style="margin-bottom:8px">${esc(t("pull.title"))}</div>
+      <div class="row"><input type="text" id="pullName" placeholder="${esc(t("pull.ph"))}" style="max-width:340px" onkeydown="if(event.key==='Enter')pull()">
+        <button class="b primary" onclick="pull()">${esc(t("btn.download"))}</button>
+        <button class="link" onclick="openUrl('https://ollama.com/search')">${esc(t("btn.catalog"))}</button></div>
       ${suggestHtml()}
       <div data-live="pulls">${pullsHtml()}</div>
     </div>`;
@@ -620,28 +990,28 @@ function renderOllama() {
 function suggestHtml() {
   const sg = H?.suggestions ? H.suggestions(S.mon?.memory?.total || 0) : [];
   if (!sg.length) return "";
-  return `<div class="small" style="margin-top:10px"><b>Sugeridos para tu compu:</b> <span class="muted">(tocá uno para completar el nombre)</span>
+  return `<div class="small" style="margin-top:10px"><b>${esc(t("pull.suggested"))}</b> <span class="muted">${esc(t("pull.suggestedHint"))}</span>
     ${sg.map(([n, d]) => `<div class="row" style="margin-top:4px;gap:8px"><button class="chip btn" title="${esc(d)}" onclick="$('#pullName').value='${esc(n)}'">${esc(n)}</button><span class="muted">${esc(d)}</span></div>`).join("")}</div>`;
 }
 function ollamaInstalled() {
   const o = S.mon?.ollama;
-  if (!o?.up) return `<div class="empty">Iniciá Ollama para ver y administrar los modelos.</div>`;
-  if (!o.installed.length) return `<div class="empty">No hay modelos instalados.</div>`;
+  if (!o?.up) return `<div class="empty">${esc(t("models.startToSee"))}</div>`;
+  if (!o.installed.length) return `<div class="empty">${esc(t("models.noneInstalled"))}</div>`;
   const loaded = new Set(o.loaded.map(m => m.name));
-  return `<table><tr><th>Modelo</th><th>Parámetros</th><th class="num">Tamaño</th><th>Modificado</th><th></th></tr>` +
-    o.installed.map(m => `<tr><td><b>${esc(m.name)}</b> ${loaded.has(m.name) ? `<span class="chip ok">en memoria</span>` : ""}
+  return `<table><tr><th>${esc(t("th.model"))}</th><th>${esc(t("th.params"))}</th><th class="num">${esc(t("th.size"))}</th><th>${esc(t("th.modified"))}</th><th></th></tr>` +
+    o.installed.map(m => `<tr><td><b>${esc(m.name)}</b> ${loaded.has(m.name) ? `<span class="chip ok">${esc(t("chip.inMemory"))}</span>` : ""}
         ${H?.ollamaModel ? `<div class="small muted" style="margin-top:2px;white-space:normal;max-width:420px">${H.ollamaModel(m, S.mon?.memory?.total || 0)}</div>` : ""}</td>
       <td class="small muted">${esc([m.details?.parameter_size, m.details?.quantization_level].filter(Boolean).join(" · "))}</td>
       <td class="num">${bytes(m.size)}</td><td class="small muted">${esc((m.modified_at || "").slice(0, 10))}</td>
       <td class="num" style="white-space:nowrap">
-        ${loaded.has(m.name) ? `<button class="b" onclick="unloadModel('${esc(m.name)}')">Descargar de memoria</button>`
-          : `<button class="b" onclick="act(()=>api('/api/ollama/load',{model:'${esc(m.name)}'}),'Cargando ${esc(m.name)}…')">Cargar</button>`}
-        <button class="b" onclick="api('/api/ollama/chat',{model:'${esc(m.name)}'})">Chat en terminal</button>
-        <button class="b danger" onclick="delModel('${esc(m.name)}', ${m.size})">Borrar</button></td></tr>`).join("") + `</table>`;
+        ${loaded.has(m.name) ? `<button class="b" onclick="unloadModel('${esc(m.name)}')">${esc(t("btn.unload"))}</button>`
+          : `<button class="b" onclick="loadModel('${esc(m.name)}')">${esc(t("btn.load"))}</button>`}
+        <button class="b" onclick="api('/api/ollama/chat',{model:'${esc(m.name)}'})">${esc(t("btn.chat"))}</button>
+        <button class="b danger" onclick="delModel('${esc(m.name)}', ${m.size})">${esc(t("btn.delete"))}</button></td></tr>`).join("") + `</table>`;
 }
 async function delModel(name, size) {
-  if (await confirmBox("Borrar " + name, `Se elimina del disco y se liberan ${bytes(size)}. Para volver a usarlo hay que descargarlo de nuevo.`, "Borrar"))
-    act(() => api("/api/ollama/delete", { model: name }), name + " borrado");
+  if (await confirmBox(t("dlg.delModel.title", { name }), t("dlg.delModel.text", { size: bytes(size) }), t("btn.delete")))
+    act(() => api("/api/ollama/delete", { model: name }), t("toast.deleted", { name }));
 }
 async function pull() {
   const name = $("#pullName").value.trim(); if (!name) return;
@@ -656,26 +1026,26 @@ function pullsHtml() {
     return `<tr><td><b>${esc(k)}</b></td><td class="small ${x.error ? "" : "muted"}" style="${x.error ? "color:var(--bad)" : ""}">${esc(x.error || x.status)}</td>
       <td>${x.total && !x.done ? `<div class="progress"><div style="width:${pct.toFixed(1)}%"></div></div>` : ""}</td>
       <td class="num small">${x.total && !x.done ? bytes(x.completed) + " / " + bytes(x.total) : ""}</td>
-      <td class="num">${x.done ? `<button class="link" onclick="api('/api/ollama/pull_clear',{model:'${esc(k)}'}).then(refreshMonitor)">quitar</button>` : ""}</td></tr>`;
+      <td class="num">${x.done ? `<button class="link" onclick="api('/api/ollama/pull_clear',{model:'${esc(k)}'}).then(refreshMonitor)">${esc(t("btn.remove"))}</button>` : ""}</td></tr>`;
   }).join("") + `</table>`;
 }
 
 // ---------------------------------------------------------------- presets
 function presetBar(service, names) {
-  return `<div class="card row between"><div class="row"><span class="title" style="margin-right:6px">Perfiles</span>
+  return `<div class="card row between"><div class="row"><span class="title" style="margin-right:6px">${esc(t("preset.title"))}</span>
     ${names.length ? names.map(n => `<span class="chip" style="padding:3px 4px 3px 8px">${esc(n)}
-      <button class="link" onclick="applyPreset('${service}','${esc(n)}')">usar</button>
+      <button class="link" onclick="applyPreset('${service}','${esc(n)}')">${esc(t("btn.use"))}</button>
       <button class="link" style="color:var(--muted)" onclick="delPreset('${service}','${esc(n)}')">×</button></span>`).join(" ")
-      : `<span class="muted small">Guardá la configuración actual para reusarla (por ej. “Rápido”, “Red local”).</span>`}</div>
-    <button class="b" onclick="savePreset('${service}')">Guardar como perfil…</button></div>`;
+      : `<span class="muted small">${esc(t("preset.empty"))}</span>`}</div>
+    <button class="b" onclick="savePreset('${service}')">${esc(t("btn.saveProfile"))}</button></div>`;
 }
 async function savePreset(service) {
-  const name = await promptBox("Nombre del perfil", "por ej. Rápido, Red local"); if (!name) return;
+  const name = await promptBox(t("preset.nameTitle"), t("preset.namePh")); if (!name) return;
   let values;
   if (service === "ollama") values = { env: S.state.config.ollama.env, mode: S.state.config.ollama.mode };
   else { const p = curInstall().path; values = { path: p, args: S.state.config.sd.args[p] || {}, extra: S.state.config.sd.extra[p] || "" }; }
   await api("/api/preset/save", { service, name, values });
-  S.state.config[service].presets[name] = values; render(); toast("Perfil guardado");
+  S.state.config[service].presets[name] = values; render(); toast(t("toast.profileSaved"));
 }
 async function applyPreset(service, name) {
   const v = S.state.config[service].presets[name];
@@ -688,10 +1058,10 @@ async function applyPreset(service, name) {
     const r = await api("/api/config", { sd_path: p, sd_values: v.args, sd_extra: v.extra || "" });
     curInstall().preview = r.preview;
   }
-  render(); toast("Perfil “" + name + "” aplicado");
+  render(); toast(t("toast.profileApplied", { name }));
 }
 async function delPreset(service, name) {
-  if (!await confirmBox("Borrar perfil", "Se borra el perfil “" + name + "”.", "Borrar")) return;
+  if (!await confirmBox(t("dlg.delProfile.title"), t("dlg.delProfile.text", { name }), t("btn.delete"))) return;
   await api("/api/preset/delete", { service, name }); delete S.state.config[service].presets[name]; render();
 }
 
@@ -716,16 +1086,16 @@ function setSD(flag, val) {
 }
 function setExtra(v) { S.state.config.sd.extra[curInstall().path] = v; saveSD(); }
 async function selectInstall(path) { S.state.config.sd.selected = path; await api("/api/config", { sd_selected: path }); renderSD(); }
-async function addInstall() { try { const st = await api("/api/add_install", {}); if (st.installs) { S.state = st; renderSD(); toast("Instalación agregada"); } } catch (e) { toast(e.message, true); } }
+async function addInstall() { try { const st = await api("/api/add_install", {}); if (st.installs) { S.state = st; renderSD(); toast(t("toast.installAdded")); } } catch (e) { toast(e.message, true); } }
 async function rescan(deep) {
-  toast(deep ? "Buscando en toda tu carpeta personal…" : "Buscando…");
-  try { S.state = await api("/api/rescan", { deep }); render(); toast("Listo: " + S.state.installs.length + " instalación(es) de SD encontradas"); } catch (e) { toast(e.message, true); }
+  toast(deep ? t("toast.searchingDeep") : t("toast.searching"));
+  try { S.state = await api("/api/rescan", { deep }); render(); toast(tn("toast.searchDone", S.state.installs.length)); } catch (e) { toast(e.message, true); }
 }
 function updateCatCounts() {
   const i = curInstall(), vals = S.state.config.sd.args[i.path] || {};
   document.querySelectorAll("[data-catcount]").forEach(el => {
     const flags = el.dataset.catcount.split(" ");
-    el.textContent = flags.filter(f => f in vals).length + "/" + flags.length + " configuradas";
+    el.textContent = t("cat.count", { n: flags.filter(f => f in vals).length, total: flags.length });
   });
 }
 function filterSD(q) {
@@ -737,16 +1107,12 @@ function filterSD(q) {
   });
 }
 const CAT_ORDER = ["Más usadas", "Red y API", "Memoria y rendimiento", "Rutas", "Interfaz", "Arranque e instalación", "Otros"];
-const CAT_HINT = {
-  "Más usadas": "Las opciones que más se suelen tocar. El resto está agrupado abajo, o usá el buscador.",
-  "Red y API": "Para acceder desde otros dispositivos (--listen), usar la API (--api) o cambiar el puerto.",
-  "Memoria y rendimiento": "Con poca memoria probá --medvram-sdxl o --lowvram. En Mac con Apple Silicon, --no-half suele hacer falta para modelos SD 1.5.",
-};
+const CAT_HINT = { "Más usadas": "cathint.top", "Red y API": "cathint.net", "Memoria y rendimiento": "cathint.mem" };
 function renderSD() {
   const st = S.state;
   if (!st.installs.length) {
-    $("#main").innerHTML = `<h2>🎨 Imagen</h2><div class="card"><p>No encontré ninguna instalación de AUTOMATIC1111, Forge, ComfyUI ni Kohya_ss.</p>
-      <div class="row"><button class="b primary" onclick="rescan(true)">Buscar en todo el disco</button><button class="b" onclick="addInstall()">Elegir carpeta…</button></div></div>`;
+    $("#main").innerHTML = `<h2>${esc(t("sd.titleEmpty"))}</h2><div class="card"><p>${esc(t("sd.none"))}</p>
+      <div class="row"><button class="b primary" onclick="rescan(true)">${esc(t("btn.searchDisk"))}</button><button class="b" onclick="addInstall()">${esc(t("btn.chooseFolder"))}</button></div></div>`;
     return;
   }
   const i = curInstall(), vals = st.config.sd.args[i.path] || {};
@@ -759,20 +1125,20 @@ function renderSD() {
   const presets = Object.keys(st.config.sd.presets || {});
   const pre = Object.entries(i.preset_args || {});
   $("#main").innerHTML = `
-    <h2>🎨 Apps de imagen</h2>
-    <div class="sub">Stable Diffusion, ComfyUI y Kohya_ss (entrenamiento). Las ${i.options.length} opciones se leen directo del código de tu instalación (<span class="mono">${esc(i.args_file.replace(i.path + "/", ""))}</span>), así que siempre coinciden con tu versión.</div>
+    <h2>${esc(t("sd.title"))}</h2>
+    <div class="sub">${t("sd.sub", { n: i.options.length, file: esc(i.args_file.replace(i.path + "/", "")) })}</div>
     ${guideCard(i.kind)}
     <div class="card">
       <div class="row between">
         <div class="row">${st.installs.length > 1 ? `<select style="width:auto" onchange="selectInstall(this.value)">${st.installs.map(x => `<option value="${esc(x.path)}" ${x.path === i.path ? "selected" : ""}>${kindIcon(x.kind)} ${esc(x.label)} — ${esc(x.name)}</option>`).join("")}</select>` : `<span class="title">${kindIcon(i.kind)} ${esc(i.label)}</span>`}</div>
-        <div class="row"><button class="b" onclick="addInstall()">Agregar otra…</button><button class="b" onclick="rescan(false)">Buscar de nuevo</button></div>
+        <div class="row"><button class="b" onclick="addInstall()">${esc(t("btn.addOther"))}</button><button class="b" onclick="rescan(false)">${esc(t("btn.rescan"))}</button></div>
       </div>
       ${purposeLine(i.kind)}
       <div class="kv small" style="margin-top:12px">
-        <div>Carpeta</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:'${esc(i.path)}'})">abrir</button></div>
-        <div>Entorno Python</div><div>${i.has_venv ? "venv listo" + (i.arch ? ` <span class="chip">${esc(i.arch)} (${i.arch_native ? "nativo" : "Rosetta"})</span>` : "") : `<span class="chip warn">sin venv: la primera vez se instalan dependencias (tarda)</span>`}</div>
-        ${i.kind === "kohya" ? "" : `<div>Checkpoints</div><div>${i.checkpoints.length ? i.checkpoints.map(c => `<div class="ckpt"><span class="chip">${esc(c.name)} · ${bytes(c.size)}</span>${H?.checkpoint ? `<div class="small muted" style="margin-top:2px">${H.checkpoint(c.name, c.size)}</div>` : ""}</div>`).join("") : "ninguno"}</div>`}
-        <div>Ubicación</div><div>${i.source === "cache" ? `<span class="chip ok">verificada desde la caché</span>` : `<span class="chip">${esc(i.source || "detectada")}</span>`}</div>
+        <div>${esc(t("kv.folder"))}</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:'${esc(i.path)}'})">${esc(t("btn.open"))}</button></div>
+        <div>${esc(t("kv.pyenv"))}</div><div>${i.has_venv ? esc(t("sd.venvReady")) + (i.arch ? ` <span class="chip">${esc(i.arch)} (${i.arch_native ? esc(t("sd.native")) : "Rosetta"})</span>` : "") : `<span class="chip warn">${esc(t("sd.noVenv"))}</span>`}</div>
+        ${i.kind === "kohya" ? "" : `<div>${esc(t("kv.checkpoints"))}</div><div>${i.checkpoints.length ? i.checkpoints.map(c => `<div class="ckpt"><span class="chip">${esc(c.name)} · ${bytes(c.size)}</span>${H?.checkpoint ? `<div class="small muted" style="margin-top:2px">${H.checkpoint(c.name, c.size)}</div>` : ""}</div>`).join("") : esc(t("general.none"))}</div>`}
+        <div>${esc(t("kv.location"))}</div><div>${i.source === "cache" ? `<span class="chip ok">${esc(t("chip.verifiedCache"))}</span>` : `<span class="chip">${esc(i.source || t("sd.detected"))}</span>`}</div>
       </div>
       <div class="row between" style="margin-top:14px"><div class="row" data-live="sdStatus" data-path="${esc(i.path)}">${LIVE.sdStatus({ path: i.path })}</div>
         <div class="row" data-live="sdButtons" data-path="${esc(i.path)}">${sdButtons(i.path)}</div></div>
@@ -781,25 +1147,25 @@ function renderSD() {
     </div>
 
     <div class="card">
-      <div class="title" style="margin-bottom:6px">Comando que se va a ejecutar</div>
+      <div class="title" style="margin-bottom:6px">${esc(t("sd.cmdTitle"))}</div>
       <div class="cmd" id="sdPreview">${esc(i.preview)}</div>
-      ${pre.length ? `<div class="small muted" style="margin-top:8px">${pre.map(([f, a]) => `Además, <span class="mono">${esc(f)}</span> ya agrega: <span class="mono">${esc(a)}</span>`).join("<br>")}</div>` : ""}
-      <div style="margin-top:10px"><div class="small muted" style="margin-bottom:4px">Argumentos extra (para extensiones u opciones que no estén en la lista)</div>
-        <input type="text" class="mono" value="${esc(st.config.sd.extra[i.path] || "")}" placeholder="--mi-opcion valor" oninput="setExtra(this.value)"></div>
+      ${pre.length ? `<div class="small muted" style="margin-top:8px">${pre.map(([f, a]) => t("sd.alsoAdds", { f: esc(f), a: esc(a) })).join("<br>")}</div>` : ""}
+      <div style="margin-top:10px"><div class="small muted" style="margin-bottom:4px">${esc(t("sd.extraLabel"))}</div>
+        <input type="text" class="mono" value="${esc(st.config.sd.extra[i.path] || "")}" placeholder="${esc(t("sd.extraPh"))}" oninput="setExtra(this.value)"></div>
     </div>
 
     ${presetBar("sd", presets)}
 
     ${modeBar()}
-    ${advMode() ? `<div class="sticky"><input type="text" placeholder="🔍  Buscar opción (por ej. vram, port, api, theme)…" value="${esc(S.sdFilter)}" oninput="filterSD(this.value)"></div>
+    ${advMode() ? `<div class="sticky"><input type="text" placeholder="${esc(t("sd.searchPh"))}" value="${esc(S.sdFilter)}" oninput="filterSD(this.value)"></div>
     <div id="sdOpts">
     ${CAT_ORDER.filter(c => cats[c]).map(c => `<details class="cat" ${c === "Más usadas" ? "open" : ""}>
-      <summary><span>${c}</span><span class="muted small" data-catcount="${cats[c].map(o => o.flag).join(" ")}">${cats[c].filter(o => o.flag in vals).length}/${cats[c].length} configuradas</span></summary><div>
-      ${CAT_HINT[c] ? `<div class="small muted" style="padding:2px 0 6px">${CAT_HINT[c]}</div>` : ""}
-      ${cats[c].map(o => optRow(o, o.flag, H?.sd?.[o.flag], o.flag in vals, vals[o.flag], "setSD", true)).join("")}
+      <summary><span>${esc(catLabel(c))}</span><span class="muted small" data-catcount="${cats[c].map(o => o.flag).join(" ")}">${esc(t("cat.count", { n: cats[c].filter(o => o.flag in vals).length, total: cats[c].length }))}</span></summary><div>
+      ${CAT_HINT[c] ? `<div class="small muted" style="padding:2px 0 6px">${esc(t(CAT_HINT[c]))}</div>` : ""}
+      ${cats[c].map(o => optRow(o, o.flag, H?.sdOpt?.(o.flag), o.flag in vals, vals[o.flag], "setSD", true)).join("")}
     </div></details>`).join("")}
     </div>`
-    : `<div id="sdOpts">${simpleList(i.options.length, CAT_ORDER.filter(c => cats[c]).flatMap(c => cats[c]).filter(o => H.sd[o.flag]?.simple || o.flag in vals).map(o => optRow(o, o.flag, H.sd[o.flag], o.flag in vals, vals[o.flag], "setSD", true)))}</div>`}`;
+    : `<div id="sdOpts">${simpleList(i.options.length, CAT_ORDER.filter(c => cats[c]).flatMap(c => cats[c]).filter(o => H.sdOpt(o.flag)?.simple || o.flag in vals).map(o => optRow(o, o.flag, H.sdOpt(o.flag), o.flag in vals, vals[o.flag], "setSD", true)))}</div>`}`;
   if (S.sdFilter && advMode()) filterSD(S.sdFilter);
 }
 
@@ -808,12 +1174,12 @@ let logTimer = null;
 async function renderLogs() {
   const { sources } = await api("/api/logs");
   if (!S.logPath || !sources.find(s => s.id === S.logPath)) S.logPath = sources[0]?.id || null;
-  $("#main").innerHTML = `<h2>📜 Logs</h2>
+  $("#main").innerHTML = `<h2>${esc(t("logs.title"))}</h2>
     <div class="row" style="margin:10px 0"><select style="width:auto" onchange="S.logPath=this.value;S.logOffset=null;renderLogs()">
       ${sources.map(s => `<option value="${esc(s.id)}" ${s.id === S.logPath ? "selected" : ""}>${esc(s.label)}</option>`).join("")}</select>
-      ${S.logPath ? `<button class="b" onclick="api('/api/open',{path:S.logPath,reveal:true})">Mostrar en ${os_().files}</button>` : ""}
-      <label class="row small muted"><input type="checkbox" id="logFollow" checked> seguir el final</label></div>
-    ${S.logPath ? `<pre class="log selectable" id="logBox"></pre>` : `<div class="card empty">Todavía no hay logs. Aparecen cuando inicies algo desde acá.</div>`}`;
+      ${S.logPath ? `<button class="b" onclick="api('/api/open',{path:S.logPath,reveal:true})">${esc(os_().files)}</button>` : ""}
+      <label class="row small muted"><input type="checkbox" id="logFollow" checked> ${esc(t("logs.follow"))}</label></div>
+    ${S.logPath ? `<pre class="log selectable" id="logBox"></pre>` : `<div class="card empty">${esc(t("logs.empty"))}</div>`}`;
   S.logOffset = null;
   pollLog();
 }
@@ -836,33 +1202,36 @@ async function pollLog() {
 // ---------------------------------------------------------------- ajustes
 function renderSettings() {
   const st = S.state, c = st.config, rep = st.detect_report || {};
-  $("#main").innerHTML = `<h2>⚙️ Ajustes</h2><div class="sub">AI Launcher vive en ${os_().tray}. Cerrar esta ventana no detiene nada.</div>
+  const tray = os_().tray;
+  $("#main").innerHTML = `<h2>${esc(t("set.title"))}</h2><div class="sub">${esc(t("set.sub", { tray }))}</div>
     <div class="card">
-      <div class="opt"><div><b>Abrir al iniciar sesión</b><div class="help">Arranca en ${os_().tray} cuando iniciás sesión.</div></div>
+      <div class="opt"><div><b>${esc(t("set.language"))}</b><div class="help">${esc(t("set.languageHelp"))}</div></div>
+        <div class="ctl"><div class="seg" id="langSeg">${I18N.LANGS.map(l => `<button class="${l === I18N.lang ? "on" : ""}" lang="${l}" onclick="I18N.setLang('${l}')">${esc(I18N.NAMES[l])}</button>`).join("")}</div></div></div>
+      <div class="opt"><div><b>${esc(t("set.login"))}</b><div class="help">${esc(t("set.loginHelp", { tray }))}</div></div>
         <div class="ctl"><input type="checkbox" class="toggle" ${st.login_item ? "checked" : ""} onchange="setSetting('login_item', this.checked)"></div></div>
-      <div class="opt"><div><b>Abrir esta ventana al lanzar la app</b><div class="help">Si está apagado, sólo aparece el ícono en ${os_().tray}.</div></div>
+      <div class="opt"><div><b>${esc(t("set.openWin"))}</b><div class="help">${esc(t("set.openWinHelp", { tray }))}</div></div>
         <div class="ctl"><input type="checkbox" class="toggle" ${c.open_window_on_launch ? "checked" : ""} onchange="setSetting('open_window_on_launch', this.checked)"></div></div>
-      <div class="opt"><div><b>Al salir de AI Launcher, detener lo que inició</b><div class="help">Si está apagado, Ollama y SD siguen corriendo aunque cierres el launcher.</div></div>
+      <div class="opt"><div><b>${esc(t("set.stopQuit"))}</b><div class="help">${esc(t("set.stopQuitHelp"))}</div></div>
         <div class="ctl"><input type="checkbox" class="toggle" ${c.stop_on_quit ? "checked" : ""} onchange="setSetting('stop_on_quit', this.checked)"></div></div>
     </div>
-    <h3>Ubicaciones (caché)</h3>
+    <h3>${esc(t("set.locations"))}</h3>
     <div class="card">
-      <div class="small muted" style="margin-bottom:10px">En cada arranque se verifica que las rutas guardadas sigan existiendo. Si algo se movió o se borró, se vuelve a buscar (procesos en ejecución, ${S.state.platform === "mac" ? "Spotlight" : "registro de Windows"} y, si hace falta, recorriendo el disco). Además se buscan instalaciones nuevas en segundo plano.</div>
+      <div class="small muted" style="margin-bottom:10px">${esc(t("set.locDesc", { scan: t(S.state.platform === "mac" ? "set.scan.mac" : "set.scan.win") }))}</div>
       <div class="kv small">
-        <div>Última verificación</div><div>${esc(c.cache?.verified_at || "—")}</div>
-        <div>Ollama</div><div><span class="mono selectable">${esc(c.cache?.ollama?.binary || "no encontrado")}</span> <span class="chip ${rep.ollama === "cache" ? "ok" : ""}">${esc(rep.ollama || "")}</span></div>
-        <div>Apps de imagen</div><div>${(c.cache?.sd || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || "ninguna"} <span class="chip ${rep.sd === "cache" ? "ok" : ""}">${esc(rep.sd || "")}</span></div>
+        <div>${esc(t("kv.lastCheck"))}</div><div>${esc(c.cache?.verified_at || "—")}</div>
+        <div>Ollama</div><div><span class="mono selectable">${esc(c.cache?.ollama?.binary || t("set.notFound"))}</span> <span class="chip ${rep.ollama === "cache" ? "ok" : ""}">${esc(rep.ollama || "")}</span></div>
+        <div>${esc(t("kv.imageApps"))}</div><div>${(c.cache?.sd || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || esc(t("general.noneF"))} <span class="chip ${rep.sd === "cache" ? "ok" : ""}">${esc(rep.sd || "")}</span></div>
       </div>
-      <div class="row" style="margin-top:12px"><button class="b" onclick="rescan(false)">Buscar de nuevo</button><button class="b" onclick="rescan(true)">Búsqueda profunda</button></div>
+      <div class="row" style="margin-top:12px"><button class="b" onclick="rescan(false)">${esc(t("btn.rescan"))}</button><button class="b" onclick="rescan(true)">${esc(t("btn.deepSearch"))}</button></div>
     </div>
-    ${H?.glossary ? `<h3>📖 Glosario</h3><div class="card">${Object.entries(H.glossary).map(([t, d]) => `<div style="margin-bottom:8px"><b>${esc(t)}</b><div class="muted">${esc(d)}</div></div>`).join("")}</div>` : ""}
-    <h3>Archivos</h3>
+    ${H?.glossaryList ? `<h3>${esc(t("glossary.title"))}</h3><div class="card">${H.glossaryList().map(([t, d]) => `<div style="margin-bottom:8px"><b>${esc(t)}</b><div class="muted">${esc(d)}</div></div>`).join("")}</div>` : ""}
+    <h3>${esc(t("files.title"))}</h3>
     <div class="card kv small">
-      <div>Configuración</div><div class="mono selectable">${esc(st.config_file)} <button class="link" onclick="api('/api/open',{path:'${esc(st.config_file)}',reveal:true})">mostrar</button></div>
-      <div>Logs</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(st.log_dir)}'})">abrir</button></div>
+      <div>${esc(t("kv.config"))}</div><div class="mono selectable">${esc(st.config_file)} <button class="link" onclick="api('/api/open',{path:'${esc(st.config_file)}',reveal:true})">${esc(t("btn.show"))}</button></div>
+      <div>${esc(t("kv.logs"))}</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(st.log_dir)}'})">${esc(t("btn.open"))}</button></div>
     </div>`;
 }
-async function setSetting(k, v) { try { await api("/api/config", { [k]: v }); S.state.config[k] = v; if (k === "login_item") S.state.login_item = v; toast("Guardado"); } catch (e) { toast(e.message, true); render(); } }
+async function setSetting(k, v) { try { await api("/api/config", { [k]: v }); S.state.config[k] = v; if (k === "login_item") S.state.login_item = v; toast(t("toast.saved")); } catch (e) { toast(e.message, true); render(); } }
 
 
 // ---------------------------------------------------------------- instalar apps
@@ -870,7 +1239,7 @@ S.inst = { data: null, err: null, jobs: {}, parent: {}, pre: {}, more: {}, guide
 const APP_ICON = { ollama: "🦙", a1111: "🎨", forge: "🎨", comfyui: "🧩", kohya: "🏋️" };
 const APP_ORDER = ["ollama", "a1111", "forge", "comfyui", "kohya"];
 const APP_DIR = { a1111: "stable-diffusion-webui", forge: "stable-diffusion-webui-forge", comfyui: "ComfyUI", kohya: "kohya_ss" };
-const APP_KIND_LABEL = { ollama: "Chatear con inteligencia artificial", a1111: "Crear imágenes a partir de texto", forge: "Crear imágenes (versión más liviana)", comfyui: "Crear imágenes con bloques conectados", kohya: "Entrenar tus propios estilos (LoRA)" };
+const appKindLabel = id => I18N.has("app.kind." + id) ? t("app.kind." + id) : "";
 async function loadInstallers() {
   S.inst.loading = true;
   try {
@@ -889,27 +1258,27 @@ function instHasAutoPrereq(a) { return (a.prereqs || []).some(p => p.auto && !p.
 async function renderInstall() {
   const m = $("#main");
   if (!S.inst.data && !S.inst.err) {
-    m.innerHTML = `<h2>＋ Instalar apps</h2><div class="sub">Cargando…</div>`;
+    m.innerHTML = `<h2>${esc(t("inst.title"))}</h2><div class="sub">${esc(t("general.loading"))}</div>`;
     if (!S.inst.loading) await loadInstallers();
     if (S.view !== "install") return;
   }
   if (S.inst.err) {
-    m.innerHTML = `<h2>＋ Instalar apps</h2><div class="card"><div class="title">No se pudo cargar</div>
-      <div class="muted" style="margin:6px 0 10px">No pudimos obtener la lista de apps para instalar. (${esc(S.inst.err)})</div>
-      <button class="b primary" onclick="S.inst.err=null;S.inst.data=null;renderInstall()">Reintentar</button></div>`;
+    m.innerHTML = `<h2>${esc(t("inst.title"))}</h2><div class="card"><div class="title">${esc(t("inst.loadFail"))}</div>
+      <div class="muted" style="margin:6px 0 10px">${esc(t("inst.loadFailText", { err: S.inst.err }))}</div>
+      <button class="b primary" onclick="S.inst.err=null;S.inst.data=null;renderInstall()">${esc(t("btn.retry"))}</button></div>`;
     return;
   }
   const d = S.inst.data, win = d.platform === "windows" || S.state?.platform === "windows";
   const osName = win ? "Windows" : "Mac";
-  m.innerHTML = `<h2>＋ Instalar apps</h2>
-    <div class="sub">Instalá las apps de inteligencia artificial sin tocar la terminal.</div>
-    <div class="card"><div class="title">¿Qué puedo instalar?</div>
+  m.innerHTML = `<h2>${esc(t("inst.title"))}</h2>
+    <div class="sub">${esc(t("inst.sub"))}</div>
+    <div class="card"><div class="title">${esc(t("inst.whatTitle"))}</div>
       <ul class="small" style="margin:6px 0 8px;padding-left:18px">
-        <li>🦙 <b>Ollama</b>: para chatear con una IA que corre en tu compu, sin internet.</li>
-        <li>🎨 <b>Stable Diffusion, Forge y ComfyUI</b>: para crear imágenes a partir de lo que escribas. Elegí una; Stable Diffusion es la más conocida.</li>
-        <li>🏋️ <b>Kohya_ss</b>: para entrenar tus propios estilos o personajes (es para usuarios más avanzados).</li>
+        <li>${t("inst.li1")}</li>
+        <li>${t("inst.li2")}</li>
+        <li>${t("inst.li3")}</li>
       </ul>
-      <div class="small muted">Instalar descarga varios GB desde las páginas oficiales de cada programa y puede tardar un buen rato. Si preferís hacerlo a mano, cada app tiene su guía paso a paso.</div></div>
+      <div class="small muted">${esc(t("inst.note"))}</div></div>
     ${instApps().map(a => instCard(a, osName)).join("")}`;
   Object.keys(S.inst.logOff).forEach(k => S.inst.logOff[k] = null);
   instApps().forEach(a => tailInstLog(a.id));
@@ -923,45 +1292,45 @@ function instCard(a, osName) {
   const missingManual = instMissingManual(a);
   const hasAuto = instHasAutoPrereq(a);
   const canAuto = a.auto_supported && !missingManual.length;
-  const why = !a.auto_supported ? (a.auto_note || "La instalación automática no está disponible en tu sistema.") : missingManual.length ? "Primero hay que resolver: " + missingManual.map(p => p.name).join(", ") + "." : "";
+  const why = !a.auto_supported ? (a.auto_note || t("inst.autoUnavailable")) : missingManual.length ? t("inst.resolveFirst", { list: missingManual.map(p => p.name).join(", ") }) : "";
   let h = `<div class="card" id="inst_${esc(id)}"><div class="row between"><div class="title">${APP_ICON[id] || "📦"} ${esc(a.name)}</div>
-      ${a.installed ? `<span class="chip ok">Instalado ✓</span>` : ""}</div>
-    <div class="purpose">${esc(a.purpose || APP_KIND_LABEL[id] || "")}</div>`;
+      ${a.installed ? `<span class="chip ok">${esc(t("chip.installed"))}</span>` : ""}</div>
+    <div class="purpose">${esc(appKindLabel(id) || a.purpose || "")}</div>`;
   if (a.installed) {
-    h += `<div class="small muted" style="margin-top:6px">${(a.installed_paths || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || "Ya la tenés instalada."}</div>
-      <div class="row" style="margin-top:8px"><button class="b primary" onclick="goToApp('${esc(id)}')">Ir a la app</button>
-      ${running ? "" : `<button class="b" onclick="S.inst.more['${esc(id)}']=!S.inst.more['${esc(id)}'];renderInstall()">${S.inst.more[id] ? "Ocultar" : "Instalar otra copia…"}</button>`}</div>`;
+    h += `<div class="small muted" style="margin-top:6px">${(a.installed_paths || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || esc(t("inst.alreadyHave"))}</div>
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="goToApp('${esc(id)}')">${esc(t("btn.goToApp"))}</button>
+      ${running ? "" : `<button class="b" onclick="S.inst.more['${esc(id)}']=!S.inst.more['${esc(id)}'];renderInstall()">${esc(S.inst.more[id] ? t("btn.hide") : t("btn.installCopy"))}</button>`}</div>`;
   }
   if (showInstall || running || j) {
     h += `<div style="${a.installed ? "margin-top:12px;border-top:1px solid var(--line);padding-top:10px" : "margin-top:6px"}">`;
     if (showInstall && !running) {
       h += `<div class="reqs small">
-        <span>💾 Espacio en disco: <b>${esc(r.disk_gb)} GB</b></span>
-        <span class="${lowMem ? "" : ""}" style="${lowMem ? "color:var(--warn)" : ""}">🧠 Memoria recomendada: <b>${esc(r.ram_gb)} GB</b></span>
-        <span>⬇️ Descarga: <b>${esc(r.download_gb)} GB</b></span>
-        <span>⏱️ Tiempo estimado: <b>${esc(r.est_minutes)} min</b></span></div>
-        ${lowMem ? `<div class="warn-box small">Tu compu tiene ${bytes(memTotal)} de memoria, menos de lo recomendado (${esc(r.ram_gb)} GB). Puede funcionar lento o fallar.</div>` : ""}`;
+        <span>${t("req.disk", { v: esc(r.disk_gb) })}</span>
+        <span style="${lowMem ? "color:var(--warn)" : ""}">${t("req.ram", { v: esc(r.ram_gb) })}</span>
+        <span>${t("req.download", { v: esc(r.download_gb) })}</span>
+        <span>${t("req.time", { v: esc(r.est_minutes) })}</span></div>
+        ${lowMem ? `<div class="warn-box small">${esc(t("inst.lowMem", { mem: bytes(memTotal), ram: r.ram_gb }))}</div>` : ""}`;
       if ((a.prereqs || []).length) {
-        h += `<div class="small"><b>Requisitos previos</b>` + a.prereqs.map(p => `<div class="prereq"><span style="color:var(--${p.ok ? "ok" : "bad"})">${p.ok ? "✓" : "✗"}</span><div><b>${esc(p.name)}</b> <span class="muted">${esc(p.detail || "")}</span>
+        h += `<div class="small"><b>${esc(t("inst.prereqs"))}</b>` + a.prereqs.map(p => `<div class="prereq"><span style="color:var(--${p.ok ? "ok" : "bad"})">${p.ok ? "✓" : "✗"}</span><div><b>${esc(p.name)}</b> <span class="muted">${esc(p.detail || "")}</span>
           ${!p.ok && p.how ? `<div class="muted">${esc(p.how)}</div>` : ""}
-          ${!p.ok && !p.auto && p.terminal_cmd ? `<div class="codeblock"><code class="selectable">${esc(p.terminal_cmd)}</code><button class="b" onclick="copyCmd(this)">Copiar</button></div>
-            <div style="margin-top:6px"><button class="b" onclick="instOpenTerminal('${esc(id)}','${esc(p.id)}')">Abrir Terminal con el comando</button></div>` : ""}
+          ${!p.ok && !p.auto && p.terminal_cmd ? `<div class="codeblock"><code class="selectable">${esc(p.terminal_cmd)}</code><button class="b" onclick="copyCmd(this)">${esc(t("btn.copy"))}</button></div>
+            <div style="margin-top:6px"><button class="b" onclick="instOpenTerminal('${esc(id)}','${esc(p.id)}')">${esc(t("btn.openTerminal"))}</button></div>` : ""}
           </div></div>`).join("") + `</div>`;
       }
       if (id !== "ollama") {
-        h += `<div class="small" style="margin-top:10px"><b>Dónde se instala</b><div class="row" style="margin-top:3px"><span class="mono selectable">${esc(instFinalPath(a))}</span>
-          <button class="b" onclick="instChoose('${esc(id)}')">Cambiar…</button></div></div>`;
+        h += `<div class="small" style="margin-top:10px"><b>${esc(t("inst.where"))}</b><div class="row" style="margin-top:3px"><span class="mono selectable">${esc(instFinalPath(a))}</span>
+          <button class="b" onclick="instChoose('${esc(id)}')">${esc(t("btn.change"))}</button></div></div>`;
       }
       if (hasAuto) {
         const chk = S.inst.pre[id] !== false;
-        h += `<label class="row small" style="margin-top:10px"><input type="checkbox" ${chk ? "checked" : ""} onchange="S.inst.pre['${esc(id)}']=this.checked"> Instalar también lo que falte (${win_() ? "winget" : "Homebrew"})</label>`;
+        h += `<label class="row small" style="margin-top:10px"><input type="checkbox" ${chk ? "checked" : ""} onchange="S.inst.pre['${esc(id)}']=this.checked"> ${esc(t("inst.alsoPrereq", { pm: win_() ? "winget" : "Homebrew" }))}</label>`;
       }
     }
     if (!running) {
       h += `<div class="row" style="margin-top:12px">
-        ${showInstall ? `<button class="b primary" ${canAuto ? "" : "disabled"} onclick="startInstall('${esc(id)}')">Instalar automáticamente</button>` : ""}
-        <button class="b" onclick="S.inst.guide['${esc(id)}']=!S.inst.guide['${esc(id)}'];renderInstall()">${S.inst.guide[id] ? "Ocultar guía" : "Ver guía paso a paso"}</button>
-        <button class="link" onclick="openUrl(${esc(JSON.stringify(a.official_url || ""))})">Página oficial ↗</button></div>
+        ${showInstall ? `<button class="b primary" ${canAuto ? "" : "disabled"} onclick="startInstall('${esc(id)}')">${esc(t("btn.autoInstall"))}</button>` : ""}
+        <button class="b" onclick="S.inst.guide['${esc(id)}']=!S.inst.guide['${esc(id)}'];renderInstall()">${esc(S.inst.guide[id] ? t("btn.hideGuide") : t("btn.showGuide"))}</button>
+        <button class="link" onclick="openUrl(${esc(JSON.stringify(a.official_url || ""))})">${esc(t("btn.official"))}</button></div>
         ${showInstall && why ? `<div class="small muted" style="margin-top:6px">${esc(why)}</div>` : ""}
         ${showInstall && canAuto && a.auto_note ? `<div class="small muted" style="margin-top:6px">${esc(a.auto_note)}</div>` : ""}`;
     }
@@ -970,8 +1339,8 @@ function instCard(a, osName) {
     h += `</div>`;
   }
   if (S.inst.guide[id] && !running) {
-    h += `<div style="margin-top:12px"><div class="title">Instalación manual en ${osName}</div>` + (a.guide || []).map((g, n) => `<div class="guide-step"><div class="n">${n + 1}</div><div class="tx"><b>${esc(g.title)}</b><div>${g.text || ""}</div>
-      ${g.cmd ? `<div class="codeblock"><code class="selectable">${esc(g.cmd)}</code><button class="b" onclick="copyCmd(this)">Copiar</button></div>` : ""}</div></div>`).join("") + `</div>`;
+    h += `<div style="margin-top:12px"><div class="title">${esc(t("inst.manual", { os: osName }))}</div>` + (a.guide || []).map((g, n) => `<div class="guide-step"><div class="n">${n + 1}</div><div class="tx"><b>${esc(g.title)}</b><div>${g.text || ""}</div>
+      ${g.cmd ? `<div class="codeblock"><code class="selectable">${esc(g.cmd)}</code><button class="b" onclick="copyCmd(this)">${esc(t("btn.copy"))}</button></div>` : ""}</div></div>`).join("") + `</div>`;
   }
   return h + `</div>`;
 }
@@ -982,42 +1351,42 @@ function jobHtml(id) {
   const pct = Math.round((j.progress || 0) * 100);
   const icon = { running: "◌", done: "✓", failed: "✗", skipped: "–", pending: "·" };
   let h = "";
-  if (j.state === "running") h += `<div class="row between" style="margin-top:12px"><b>Instalando ${esc(a.name)}…</b><span class="small muted">${pct}%</span></div><div class="bar"><div style="width:${pct}%"></div></div>`;
+  if (j.state === "running") h += `<div class="row between" style="margin-top:12px"><b>${esc(t("job.installing", { name: a.name }))}</b><span class="small muted">${pct}%</span></div><div class="bar"><div style="width:${pct}%"></div></div>`;
   h += `<div class="steps small">` + (j.steps || []).map(s => `<div class="step ${esc(s.state)}"><span class="ic">${icon[s.state] || "·"}</span><div>${esc(s.title)}${s.detail ? ` <span class="muted">${esc(s.detail)}</span>` : ""}</div></div>`).join("") + `</div>`;
-  if (j.state === "running") h += `<button class="b danger" onclick="cancelInstall('${esc(id)}')">Cancelar</button>`;
-  if (j.state === "done") h += `<div class="warn-box" style="background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:var(--ok)"><b>¡Listo! Ya podés usarla.</b>
-      <div class="row" style="margin-top:8px"><button class="b primary" onclick="openInstalled('${esc(id)}')">Abrir ${esc(a.name)}</button></div></div>`;
-  if (j.state === "failed") h += `<div class="err-box"><b>${esc(j.hint || "La instalación no se pudo completar.")}</b>
+  if (j.state === "running") h += `<button class="b danger" onclick="cancelInstall('${esc(id)}')">${esc(t("btn.cancel"))}</button>`;
+  if (j.state === "done") h += `<div class="warn-box" style="background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:var(--ok)"><b>${esc(t("job.done"))}</b>
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="openInstalled('${esc(id)}')">${esc(t("btn.openApp", { name: a.name }))}</button></div></div>`;
+  if (j.state === "failed") h += `<div class="err-box"><b>${esc(j.hint || t("job.failedDefault"))}</b>
       ${j.error ? `<div class="small muted" style="margin:6px 0">${esc(j.error)}</div>` : ""}
-      <div class="row">${j.log ? `<button class="b" onclick="S.logPath=${esc(JSON.stringify(j.log))};go('logs')">Ver log completo</button>` : ""}
-      <button class="b primary" onclick="startInstall('${esc(id)}')">Reintentar</button></div></div>`;
-  if (j.state === "cancelled") h += `<div class="warn-box">Instalación cancelada. <button class="link" onclick="startInstall('${esc(id)}')">Reintentar</button></div>`;
+      <div class="row">${j.log ? `<button class="b" onclick="S.logPath=${esc(JSON.stringify(j.log))};go('logs')">${esc(t("btn.viewLog"))}</button>` : ""}
+      <button class="b primary" onclick="startInstall('${esc(id)}')">${esc(t("btn.retry"))}</button></div></div>`;
+  if (j.state === "cancelled") h += `<div class="warn-box">${esc(t("job.cancelled"))} <button class="link" onclick="startInstall('${esc(id)}')">${esc(t("btn.retry"))}</button></div>`;
   return h;
 }
 LIVE.instJob = d => jobHtml(d.app);
 async function instChoose(id) {
   try { const r = await api("/api/choose", { kind: "folder" }); if (r.path) { S.inst.parent[id] = r.path; renderInstall(); } } catch (e) { toast(e.message, true); }
 }
-async function instOpenTerminal(app, prereq) { try { await api("/api/install/open_terminal", { app, prereq }); toast("Se abrió la Terminal. Cuando termine, tocá “Buscar de nuevo” en Ajustes o volvé a esta pantalla."); } catch (e) { toast(e.message, true); } }
+async function instOpenTerminal(app, prereq) { try { await api("/api/install/open_terminal", { app, prereq }); toast(t("toast.terminalOpened")); } catch (e) { toast(e.message, true); } }
 function copyCmd(btn) {
-  const el = btn.closest(".codeblock").querySelector("code"), t = el.textContent;
-  const done = () => { btn.textContent = "¡Copiado!"; setTimeout(() => btn.textContent = "Copiar", 1500); };
+  const el = btn.closest(".codeblock").querySelector("code"), txt = el.textContent;
+  const done = () => { btn.textContent = t("btn.copied"); setTimeout(() => btn.textContent = t("btn.copy"), 1500); };
   const fb = () => {
     const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-    try { document.execCommand("copy") ? done() : toast("Copiá el texto seleccionado con Ctrl/Cmd+C", true); } catch (e) { toast("Copiá el texto seleccionado con Ctrl/Cmd+C", true); }
+    try { document.execCommand("copy") ? done() : toast(t("toast.copyManual"), true); } catch (e) { toast(t("toast.copyManual"), true); }
   };
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done, fb); else fb();
 }
 async function startInstall(id) {
   const a = (S.inst.data?.apps || []).find(x => x.id === id); if (!a) return;
   const r = a.requirements || {};
-  const dest = id === "ollama" ? "" : `<li><b>Dónde:</b> <span class="mono">${esc(instFinalPath(a))}</span></li>`;
+  const dest = id === "ollama" ? "" : `<li>${t("dlg.install.where", { path: esc(instFinalPath(a)) })}</li>`;
   const withPre = instHasAutoPrereq(a) && S.inst.pre[id] !== false;
-  const c = await choiceBox("Instalar " + a.name, `<p>Se va a descargar e instalar <b>${esc(a.name)}</b> desde las fuentes oficiales.</p>
-    <ul class="small"><li><b>Descarga:</b> unos ${esc(r.download_gb)} GB</li>${dest}<li><b>Espacio en disco:</b> ${esc(r.disk_gb)} GB</li><li><b>Tiempo estimado:</b> ${esc(r.est_minutes)} minutos</li>
-    ${withPre ? `<li>También se instalará lo que falte (${win_() ? "winget" : "Homebrew"}).</li>` : ""}</ul>
-    <p class="small">Podés seguir usando la compu mientras tanto. Si la cerrás, la instalación se interrumpe.</p>`,
-    [{ id: "0", label: "Cancelar" }, { id: "1", label: "Instalar", cls: "primary" }], 440);
+  const c = await choiceBox(t("dlg.install.title", { name: a.name }), `<p>${t("dlg.install.intro", { name: esc(a.name) })}</p>
+    <ul class="small"><li>${t("dlg.install.download", { v: esc(r.download_gb) })}</li>${dest}<li>${t("dlg.install.disk", { v: esc(r.disk_gb) })}</li><li>${t("dlg.install.time", { v: esc(r.est_minutes) })}</li>
+    ${withPre ? `<li>${esc(t("dlg.install.alsoPrereq", { pm: win_() ? "winget" : "Homebrew" }))}</li>` : ""}</ul>
+    <p class="small">${esc(t("dlg.install.note"))}</p>`,
+    [{ id: "0", label: t("btn.cancel") }, { id: "1", label: t("btn.install"), cls: "primary" }], 440);
   if (c !== "1") return;
   try {
     const res = await api("/api/install/start", { app: id, parent: instParent(a), install_prereqs: withPre });
@@ -1027,8 +1396,8 @@ async function startInstall(id) {
   } catch (e) { toast(e.message, true); }
 }
 async function cancelInstall(id) {
-  if (!await confirmBox("Cancelar la instalación", "Se frena la instalación. Lo que ya se descargó puede quedar a medias.", "Cancelar instalación")) return;
-  try { await api("/api/install/cancel", { app: id }); toast("Cancelando…"); } catch (e) { toast(e.message, true); }
+  if (!await confirmBox(t("dlg.cancelInst.title"), t("dlg.cancelInst.text"), t("btn.cancelInst"))) return;
+  try { await api("/api/install/cancel", { app: id }); toast(t("toast.cancelling")); } catch (e) { toast(e.message, true); }
 }
 async function reloadAfterInstall() {
   try { await loadState(); } catch (e) { }
@@ -1085,6 +1454,8 @@ async function pollInstall() {
 }
 
 // ---------------------------------------------------------------- inicio
+applyStatic();
+I18N.onChange = () => { applyStatic(); lastMonitorHtml = ""; if (S.mon) renderNavMem(); if (S.state) render(); };
 (async () => {
   await loadState();
   const v = location.hash.slice(1); if (v) go(v); else render();
