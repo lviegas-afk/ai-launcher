@@ -687,10 +687,10 @@ function sdButtons(path) {
   const s = S.mon?.sd.find(x => x.path === path) || {};
   let h = "";
   if (s.running) {
-    h += `<button class="b danger" onclick="stopSD('${esc(path)}')">${esc(t("btn.stop"))}</button>`;
-    if (s.up) h += ` <button class="b" onclick="openUrl('${s.url}')">${esc(t("btn.openBrowser"))}</button>`;
+    h += `<button class="b danger" onclick="stopSD(${esc(JSON.stringify(path))})">${esc(t("btn.stop"))}</button>`;
+    if (s.up) h += ` <button class="b" onclick="openUrl(${esc(JSON.stringify(s.url))})">${esc(t("btn.openBrowser"))}</button>`;
   } else {
-    h += `<button class="b primary" onclick="startSD('${esc(path)}')">${esc(t("btn.start"))}</button>`;
+    h += `<button class="b primary" onclick="startSD(${esc(JSON.stringify(path))})">${esc(t("btn.start"))}</button>`;
   }
   return h;
 }
@@ -774,7 +774,7 @@ function ollamaModelsTable() {
     o.loaded.map(m => `<tr><td><b>${esc(m.name)}</b></td><td class="num">${bytes(m.size)}</td>
       <td class="num">${m.size ? Math.round((m.size_vram || 0) / m.size * 100) : 0}%</td>
       <td class="small muted">${m.expires_at ? timeLeft(m.expires_at) : ""}</td>
-      <td class="num"><button class="b" onclick="unloadModel('${esc(m.name)}')">${esc(t("btn.unload"))}</button></td></tr>`).join("") + `</table>`;
+      <td class="num"><button class="b" onclick="unloadModel(${esc(JSON.stringify(m.name))})">${esc(t("btn.unload"))}</button></td></tr>`).join("") + `</table>`;
 }
 function timeLeft(iso) {
   const d = (new Date(iso) - Date.now()) / 1000;
@@ -789,8 +789,8 @@ function sdApiHtml(path) {
   if (!s.api) return "";
   if (!s.api.api) return `<div class="small muted" style="margin-top:8px">${t("sdapi.needApi")}</div>`;
   return `<div class="row small" style="margin-top:8px">${esc(t("sdapi.ckpt"))} <b>${esc(s.api.checkpoint || t("general.none"))}</b>
-    ${s.api.checkpoint ? `<button class="b" onclick="sdCall('${esc(path)}','unload')">${esc(t("btn.unload"))}</button>`
-      : `<button class="b" onclick="sdCall('${esc(path)}','reload')">${esc(t("btn.load"))}</button>`}</div>`;
+    ${s.api.checkpoint ? `<button class="b" onclick="sdCall(${esc(JSON.stringify(path))},'unload')">${esc(t("btn.unload"))}</button>`
+      : `<button class="b" onclick="sdCall(${esc(JSON.stringify(path))},'reload')">${esc(t("btn.load"))}</button>`}</div>`;
 }
 
 let pointerDown = false;
@@ -816,20 +816,20 @@ function renderMonitor() {
   const rows = procs.map(p => {
     const open = S.expanded.has(p.pid);
     const kids = p.children.length;
-    let h = `<tr><td><div class="row" style="gap:6px">${kids ? `<button class="link" onclick="toggleExp(${p.pid})">${open ? "▾" : "▸"}</button>` : `<span style="width:9px"></span>`}
+    let h = `<tr><td><div class="row" style="gap:6px">${kids ? `<button class="link" onclick="toggleExp(${+p.pid})">${open ? "▾" : "▸"}</button>` : `<span style="width:9px"></span>`}
         <span>${p.service === "ollama" ? "🦙" : kindIcon(p.kind || m.sd.find(x => x.path === p.install)?.kind)}</span><b>${esc(p.label)}</b>
         ${p.training ? `<span class="chip warn">${esc(t("chip.training"))}</span>` : ""}
         ${p.started_here ? `<span class="chip">${esc(t("chip.here"))}</span>` : `<span class="chip warn">${esc(t("chip.external"))}</span>`}</div>
         <div class="small muted mono" style="margin:2px 0 0 33px" title="${esc(p.cmd)}">${esc(p.cmd.length > 90 ? p.cmd.slice(0, 90) + "…" : p.cmd)}</div></td>
       <td class="num mono">${p.pid}</td><td class="num">${p.cpu.toFixed(1)}%</td><td class="num">${bytes(p.rss)}</td>
       <td class="num">${esc(p.etime)}</td>
-      <td>${p.ports.map(x => `<button class="link mono" onclick="openUrl('http://127.0.0.1:${x}')">:${x}</button>`).join(" ")}</td>
-      <td class="num" style="white-space:nowrap"><button class="b danger" onclick="killProc(${p.pid}, '${esc(p.label)}', false)">${esc(t("btn.stop"))}</button>
-        <button class="b danger" title="SIGKILL" onclick="killProc(${p.pid}, '${esc(p.label)}', true)">${esc(t("btn.force"))}</button></td></tr>`;
+      <td>${p.ports.map(x => `<button class="link mono" onclick="openUrl('http://127.0.0.1:${+x}')">:${esc(x)}</button>`).join(" ")}</td>
+      <td class="num" style="white-space:nowrap"><button class="b danger" onclick="killProc(${+p.pid}, ${esc(JSON.stringify(p.label))}, false)">${esc(t("btn.stop"))}</button>
+        <button class="b danger" title="SIGKILL" onclick="killProc(${+p.pid}, ${esc(JSON.stringify(p.label))}, true)">${esc(t("btn.force"))}</button></td></tr>`;
     if (open) h += p.children.map(c => `<tr class="child"><td><span class="mono">${esc(c.label)}</span> <span class="small" title="${esc(c.cmd)}">${esc(c.cmd.slice(0, 70))}</span></td>
       <td class="num mono">${c.pid}</td><td class="num">${c.cpu.toFixed(1)}%</td><td class="num">${bytes(c.rss)}</td><td></td>
-      <td>${c.ports.map(x => ":" + x).join(" ")}</td>
-      <td class="num"><button class="b danger" onclick="killProc(${c.pid}, '${esc(c.label)}', false)">${esc(t("btn.stop"))}</button></td></tr>`).join("");
+      <td>${c.ports.map(x => ":" + esc(x)).join(" ")}</td>
+      <td class="num"><button class="b danger" onclick="killProc(${+c.pid}, ${esc(JSON.stringify(c.label))}, false)">${esc(t("btn.stop"))}</button></td></tr>`).join("");
     return h;
   }).join("");
   const totalRss = procs.reduce((a, p) => a + p.rss, 0);
@@ -898,22 +898,22 @@ function simpleList(opts, shownRows) {
 const saveOllamaEnv = debounce(() => api("/api/config", { ollama_env: S.state.config.ollama.env }).catch(e => toast(e.message, true)), 400);
 function optControl(o, val, onChangeName) {
   const id = "o_" + (o.name || o.flag).replace(/[^a-zA-Z0-9]/g, "_");
-  const key = esc(o.name || o.flag);
+  const key = esc(JSON.stringify(o.name || o.flag));
   if (o.kind === "bool")
-    return `<input type="checkbox" class="toggle" id="${id}" ${val === true ? "checked" : ""} onchange="${onChangeName}('${key}', this.checked)">`;
+    return `<input type="checkbox" class="toggle" id="${id}" ${val === true ? "checked" : ""} onchange="${onChangeName}(${key}, this.checked)">`;
   if (o.kind === "choice") {
     const choices = o.choices || [];
-    return `<select id="${id}" onchange="${onChangeName}('${key}', this.value)"><option value="">${esc(t("opt.default", { d: o.default ? ": " + o.default : "" }))}</option>
+    return `<select id="${id}" onchange="${onChangeName}(${key}, this.value)"><option value="">${esc(t("opt.default", { d: o.default ? ": " + o.default : "" }))}</option>
       ${choices.map(c => `<option ${String(val) === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`;
   }
   if (o.kind === "flagvalue") {
     const v = val || {};
-    return `<input type="checkbox" class="toggle" ${v.on ? "checked" : ""} onchange="${onChangeName}('${key}', {...(cur('${key}')||{}), on:this.checked})">
-      <input type="text" placeholder="${esc(t("opt.valuePh"))}" value="${esc(v.value || "")}" oninput="${onChangeName}('${key}', {...(cur('${key}')||{}), value:this.value})">`;
+    return `<input type="checkbox" class="toggle" ${v.on ? "checked" : ""} onchange="${onChangeName}(${key}, {...(cur(${key})||{}), on:this.checked})">
+      <input type="text" placeholder="${esc(t("opt.valuePh"))}" value="${esc(v.value || "")}" oninput="${onChangeName}(${key}, {...(cur(${key})||{}), value:this.value})">`;
   }
   const ph = o.default ? t("opt.defaultPh", { v: o.default }) : "";
-  let h = `<input type="${o.kind === "number" ? "number" : "text"}" id="${id}" placeholder="${esc(ph)}" value="${esc(val ?? "")}" oninput="${onChangeName}('${key}', this.value)">`;
-  if (o.kind === "path") h += `<button class="b" onclick="pickPath('${key}', '${onChangeName}', '${/file|ckpt|config|\.|keyfile|certfile/i.test(o.name || o.flag) && !/dir/i.test(o.name || o.flag) ? "file" : "folder"}')">${esc(t("btn.choose"))}</button>`;
+  let h = `<input type="${o.kind === "number" ? "number" : "text"}" id="${id}" placeholder="${esc(ph)}" value="${esc(val ?? "")}" oninput="${onChangeName}(${key}, this.value)">`;
+  if (o.kind === "path") h += `<button class="b" onclick="pickPath(${key}, '${esc(onChangeName)}', '${/file|ckpt|config|\.|keyfile|certfile/i.test(o.name || o.flag) && !/dir/i.test(o.name || o.flag) ? "file" : "folder"}')">${esc(t("btn.choose"))}</button>`;
   return h;
 }
 async function pickPath(key, fnName, kind) {
@@ -962,7 +962,7 @@ function renderOllama() {
         <div>${esc(t("kv.exe"))}</div><div class="mono selectable">${esc(o.binary || "—")}</div>
         <div>${esc(t("kv.app"))}</div><div class="mono selectable">${esc(o.app || "—")}</div>
         <div>${esc(t("kv.version"))}</div><div>${esc(o.version || "?")}</div>
-        <div>${esc(t("kv.models"))}</div><div class="mono selectable">${esc(o.models_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(o.models_dir)}'})">${esc(t("btn.open"))}</button></div>
+        <div>${esc(t("kv.models"))}</div><div class="mono selectable">${esc(o.models_dir)} <button class="link" onclick="api('/api/open',{path:${esc(JSON.stringify(o.models_dir))}})">${esc(t("btn.open"))}</button></div>
         <div>${esc(t("kv.location"))}</div><div>${o.source === "cache" ? `<span class="chip ok">${esc(t("chip.verifiedCache"))}</span>` : `<span class="chip">${esc(o.source)}</span>`}</div>
       </div>
     </div>
@@ -997,7 +997,7 @@ function suggestHtml() {
   const sg = H?.suggestions ? H.suggestions(S.mon?.memory?.total || 0) : [];
   if (!sg.length) return "";
   return `<div class="small" style="margin-top:10px"><b>${esc(t("pull.suggested"))}</b> <span class="muted">${esc(t("pull.suggestedHint"))}</span>
-    ${sg.map(([n, d]) => `<div class="row" style="margin-top:4px;gap:8px"><button class="chip btn" title="${esc(d)}" onclick="$('#pullName').value='${esc(n)}'">${esc(n)}</button><span class="muted">${esc(d)}</span></div>`).join("")}</div>`;
+    ${sg.map(([n, d]) => `<div class="row" style="margin-top:4px;gap:8px"><button class="chip btn" title="${esc(d)}" onclick="$('#pullName').value=${esc(JSON.stringify(n))}">${esc(n)}</button><span class="muted">${esc(d)}</span></div>`).join("")}</div>`;
 }
 function ollamaInstalled() {
   const o = S.mon?.ollama;
@@ -1010,10 +1010,10 @@ function ollamaInstalled() {
       <td class="small muted">${esc([m.details?.parameter_size, m.details?.quantization_level].filter(Boolean).join(" · "))}</td>
       <td class="num">${bytes(m.size)}</td><td class="small muted">${esc((m.modified_at || "").slice(0, 10))}</td>
       <td class="num" style="white-space:nowrap">
-        ${loaded.has(m.name) ? `<button class="b" onclick="unloadModel('${esc(m.name)}')">${esc(t("btn.unload"))}</button>`
-          : `<button class="b" onclick="loadModel('${esc(m.name)}')">${esc(t("btn.load"))}</button>`}
-        <button class="b" onclick="api('/api/ollama/chat',{model:'${esc(m.name)}'})">${esc(t("btn.chat"))}</button>
-        <button class="b danger" onclick="delModel('${esc(m.name)}', ${m.size})">${esc(t("btn.delete"))}</button></td></tr>`).join("") + `</table>`;
+        ${loaded.has(m.name) ? `<button class="b" onclick="unloadModel(${esc(JSON.stringify(m.name))})">${esc(t("btn.unload"))}</button>`
+          : `<button class="b" onclick="loadModel(${esc(JSON.stringify(m.name))})">${esc(t("btn.load"))}</button>`}
+        <button class="b" onclick="api('/api/ollama/chat',{model:${esc(JSON.stringify(m.name))}})">${esc(t("btn.chat"))}</button>
+        <button class="b danger" onclick="delModel(${esc(JSON.stringify(m.name))}, ${+m.size||0})">${esc(t("btn.delete"))}</button></td></tr>`).join("") + `</table>`;
 }
 async function delModel(name, size) {
   if (await confirmBox(t("dlg.delModel.title", { name }), t("dlg.delModel.text", { size: bytes(size) }), t("btn.delete")))
@@ -1032,7 +1032,7 @@ function pullsHtml() {
     return `<tr><td><b>${esc(k)}</b></td><td class="small ${x.error ? "" : "muted"}" style="${x.error ? "color:var(--bad)" : ""}">${esc(x.error || x.status)}</td>
       <td>${x.total && !x.done ? `<div class="progress"><div style="width:${pct.toFixed(1)}%"></div></div>` : ""}</td>
       <td class="num small">${x.total && !x.done ? bytes(x.completed) + " / " + bytes(x.total) : ""}</td>
-      <td class="num">${x.done ? `<button class="link" onclick="api('/api/ollama/pull_clear',{model:'${esc(k)}'}).then(refreshMonitor)">${esc(t("btn.remove"))}</button>` : ""}</td></tr>`;
+      <td class="num">${x.done ? `<button class="link" onclick="api('/api/ollama/pull_clear',{model:${esc(JSON.stringify(k))}}).then(refreshMonitor)">${esc(t("btn.remove"))}</button>` : ""}</td></tr>`;
   }).join("") + `</table>`;
 }
 
@@ -1040,10 +1040,10 @@ function pullsHtml() {
 function presetBar(service, names) {
   return `<div class="card row between"><div class="row"><span class="title" style="margin-right:6px">${esc(t("preset.title"))}</span>
     ${names.length ? names.map(n => `<span class="chip" style="padding:3px 4px 3px 8px">${esc(n)}
-      <button class="link" onclick="applyPreset('${service}','${esc(n)}')">${esc(t("btn.use"))}</button>
-      <button class="link" style="color:var(--muted)" onclick="delPreset('${service}','${esc(n)}')">×</button></span>`).join(" ")
+      <button class="link" onclick="applyPreset(${esc(JSON.stringify(service))},${esc(JSON.stringify(n))})">${esc(t("btn.use"))}</button>
+      <button class="link" style="color:var(--muted)" onclick="delPreset(${esc(JSON.stringify(service))},${esc(JSON.stringify(n))})">×</button></span>`).join(" ")
       : `<span class="muted small">${esc(t("preset.empty"))}</span>`}</div>
-    <button class="b" onclick="savePreset('${service}')">${esc(t("btn.saveProfile"))}</button></div>`;
+    <button class="b" onclick="savePreset(${esc(JSON.stringify(service))})">${esc(t("btn.saveProfile"))}</button></div>`;
 }
 async function savePreset(service) {
   const name = await promptBox(t("preset.nameTitle"), t("preset.namePh")); if (!name) return;
@@ -1141,7 +1141,7 @@ function renderSD() {
       </div>
       ${purposeLine(i.kind)}
       <div class="kv small" style="margin-top:12px">
-        <div>${esc(t("kv.folder"))}</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:'${esc(i.path)}'})">${esc(t("btn.open"))}</button></div>
+        <div>${esc(t("kv.folder"))}</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:${esc(JSON.stringify(i.path))}})">${esc(t("btn.open"))}</button></div>
         <div>${esc(t("kv.pyenv"))}</div><div>${i.has_venv ? esc(t("sd.venvReady")) + (i.arch ? ` <span class="chip">${esc(i.arch)} (${i.arch_native ? esc(t("sd.native")) : "Rosetta"})</span>` : "") : `<span class="chip warn">${esc(t("sd.noVenv"))}</span>`}</div>
         ${i.kind === "kohya" ? "" : `<div>${esc(t("kv.checkpoints"))}</div><div>${i.checkpoints.length ? i.checkpoints.map(c => `<div class="ckpt"><span class="chip">${esc(c.name)} · ${bytes(c.size)}</span>${H?.checkpoint ? `<div class="small muted" style="margin-top:2px">${H.checkpoint(c.name, c.size)}</div>` : ""}</div>`).join("") : esc(t("general.none"))}</div>`}
         <div>${esc(t("kv.location"))}</div><div>${i.source === "cache" ? `<span class="chip ok">${esc(t("chip.verifiedCache"))}</span>` : `<span class="chip">${esc(i.source || t("sd.detected"))}</span>`}</div>
@@ -1166,7 +1166,7 @@ function renderSD() {
     ${advMode() ? `<div class="sticky"><input type="text" placeholder="${esc(t("sd.searchPh"))}" value="${esc(S.sdFilter)}" oninput="filterSD(this.value)"></div>
     <div id="sdOpts">
     ${CAT_ORDER.filter(c => cats[c]).map(c => `<details class="cat" ${c === "Más usadas" ? "open" : ""}>
-      <summary><span>${esc(catLabel(c))}</span><span class="muted small" data-catcount="${cats[c].map(o => o.flag).join(" ")}">${esc(t("cat.count", { n: cats[c].filter(o => o.flag in vals).length, total: cats[c].length }))}</span></summary><div>
+      <summary><span>${esc(catLabel(c))}</span><span class="muted small" data-catcount="${esc(cats[c].map(o => o.flag).join(" "))}">${esc(t("cat.count", { n: cats[c].filter(o => o.flag in vals).length, total: cats[c].length }))}</span></summary><div>
       ${CAT_HINT[c] ? `<div class="small muted" style="padding:2px 0 6px">${esc(t(CAT_HINT[c]))}</div>` : ""}
       ${cats[c].map(o => optRow(o, o.flag, H?.sdOpt?.(o.flag), o.flag in vals, vals[o.flag], "setSD", true)).join("")}
     </div></details>`).join("")}
@@ -1241,8 +1241,8 @@ function renderSettings() {
     ${H?.glossaryList ? `<h3>${esc(t("glossary.title"))}</h3><div class="card">${H.glossaryList().map(([t, d]) => `<div style="margin-bottom:8px"><b>${esc(t)}</b><div class="muted">${esc(d)}</div></div>`).join("")}</div>` : ""}
     <h3>${esc(t("files.title"))}</h3>
     <div class="card kv small">
-      <div>${esc(t("kv.config"))}</div><div class="mono selectable">${esc(st.config_file)} <button class="link" onclick="api('/api/open',{path:'${esc(st.config_file)}',reveal:true})">${esc(t("btn.show"))}</button></div>
-      <div>${esc(t("kv.logs"))}</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(st.log_dir)}'})">${esc(t("btn.open"))}</button></div>
+      <div>${esc(t("kv.config"))}</div><div class="mono selectable">${esc(st.config_file)} <button class="link" onclick="api('/api/open',{path:${esc(JSON.stringify(st.config_file))},reveal:true})">${esc(t("btn.show"))}</button></div>
+      <div>${esc(t("kv.logs"))}</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:${esc(JSON.stringify(st.log_dir))}})">${esc(t("btn.open"))}</button></div>
     </div>`;
 }
 async function setInstallParent(v) {
@@ -1321,8 +1321,8 @@ function instCard(a, osName) {
     <div class="purpose">${esc(appKindLabel(id) || a.purpose || "")}</div>`;
   if (a.installed) {
     h += `<div class="small muted" style="margin-top:6px">${(a.installed_paths || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || esc(t("inst.alreadyHave"))}</div>
-      <div class="row" style="margin-top:8px"><button class="b primary" onclick="goToApp('${esc(id)}')">${esc(t("btn.goToApp"))}</button>
-      ${running ? "" : `<button class="b" onclick="S.inst.more['${esc(id)}']=!S.inst.more['${esc(id)}'];renderInstall()">${esc(S.inst.more[id] ? t("btn.hide") : t("btn.installCopy"))}</button>`}</div>`;
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="goToApp(${esc(JSON.stringify(id))})">${esc(t("btn.goToApp"))}</button>
+      ${running ? "" : `<button class="b" onclick="S.inst.more[${esc(JSON.stringify(id))}]=!S.inst.more[${esc(JSON.stringify(id))}];renderInstall()">${esc(S.inst.more[id] ? t("btn.hide") : t("btn.installCopy"))}</button>`}</div>`;
   }
   if (showInstall || running || j) {
     h += `<div style="${a.installed ? "margin-top:12px;border-top:1px solid var(--line);padding-top:10px" : "margin-top:6px"}">`;
@@ -1337,22 +1337,22 @@ function instCard(a, osName) {
         h += `<div class="small"><b>${esc(t("inst.prereqs"))}</b>` + a.prereqs.map(p => `<div class="prereq"><span style="color:var(--${p.ok ? "ok" : "bad"})">${p.ok ? "✓" : "✗"}</span><div><b>${esc(p.name)}</b> <span class="muted">${esc(p.detail || "")}</span>
           ${!p.ok && p.how ? `<div class="muted">${esc(p.how)}</div>` : ""}
           ${!p.ok && !p.auto && p.terminal_cmd ? `<div class="codeblock"><code class="selectable">${esc(p.terminal_cmd)}</code><button class="b" onclick="copyCmd(this)">${esc(t("btn.copy"))}</button></div>
-            <div style="margin-top:6px"><button class="b" onclick="instOpenTerminal('${esc(id)}','${esc(p.id)}')">${esc(t("btn.openTerminal"))}</button></div>` : ""}
+            <div style="margin-top:6px"><button class="b" onclick="instOpenTerminal(${esc(JSON.stringify(id))},${esc(JSON.stringify(p.id))})">${esc(t("btn.openTerminal"))}</button></div>` : ""}
           </div></div>`).join("") + `</div>`;
       }
       if (id !== "ollama") {
         h += `<div class="small" style="margin-top:10px"><b>${esc(t("inst.where"))}</b><div class="row" style="margin-top:3px"><span class="mono selectable">${esc(instFinalPath(a))}</span>
-          <button class="b" onclick="instChoose('${esc(id)}')">${esc(t("btn.change"))}</button></div></div>`;
+          <button class="b" onclick="instChoose(${esc(JSON.stringify(id))})">${esc(t("btn.change"))}</button></div></div>`;
       }
       if (hasAuto) {
         const chk = S.inst.pre[id] !== false;
-        h += `<label class="row small" style="margin-top:10px"><input type="checkbox" ${chk ? "checked" : ""} onchange="S.inst.pre['${esc(id)}']=this.checked"> ${esc(t("inst.alsoPrereq", { pm: win_() ? "winget" : "Homebrew" }))}</label>`;
+        h += `<label class="row small" style="margin-top:10px"><input type="checkbox" ${chk ? "checked" : ""} onchange="S.inst.pre[${esc(JSON.stringify(id))}]=this.checked"> ${esc(t("inst.alsoPrereq", { pm: win_() ? "winget" : "Homebrew" }))}</label>`;
       }
     }
     if (!running) {
       h += `<div class="row" style="margin-top:12px">
-        ${showInstall ? `<button class="b primary" ${canAuto ? "" : "disabled"} onclick="startInstall('${esc(id)}')">${esc(t("btn.autoInstall"))}</button>` : ""}
-        <button class="b" onclick="S.inst.guide['${esc(id)}']=!S.inst.guide['${esc(id)}'];renderInstall()">${esc(S.inst.guide[id] ? t("btn.hideGuide") : t("btn.showGuide"))}</button>
+        ${showInstall ? `<button class="b primary" ${canAuto ? "" : "disabled"} onclick="startInstall(${esc(JSON.stringify(id))})">${esc(t("btn.autoInstall"))}</button>` : ""}
+        <button class="b" onclick="S.inst.guide[${esc(JSON.stringify(id))}]=!S.inst.guide[${esc(JSON.stringify(id))}];renderInstall()">${esc(S.inst.guide[id] ? t("btn.hideGuide") : t("btn.showGuide"))}</button>
         <button class="link" onclick="openUrl(${esc(JSON.stringify(a.official_url || ""))})">${esc(t("btn.official"))}</button></div>
         ${showInstall && why ? `<div class="small muted" style="margin-top:6px">${esc(why)}</div>` : ""}
         ${showInstall && canAuto && a.auto_note ? `<div class="small muted" style="margin-top:6px">${esc(a.auto_note)}</div>` : ""}`;
@@ -1376,14 +1376,14 @@ function jobHtml(id) {
   let h = "";
   if (j.state === "running") h += `<div class="row between" style="margin-top:12px"><b>${esc(t("job.installing", { name: a.name }))}</b><span class="small muted">${pct}%</span></div><div class="bar"><div style="width:${pct}%"></div></div>`;
   h += `<div class="steps small">` + (j.steps || []).map(s => `<div class="step ${esc(s.state)}"><span class="ic">${icon[s.state] || "·"}</span><div>${esc(s.title)}${s.detail ? ` <span class="muted">${esc(s.detail)}</span>` : ""}</div></div>`).join("") + `</div>`;
-  if (j.state === "running") h += `<button class="b danger" onclick="cancelInstall('${esc(id)}')">${esc(t("btn.cancel"))}</button>`;
+  if (j.state === "running") h += `<button class="b danger" onclick="cancelInstall(${esc(JSON.stringify(id))})">${esc(t("btn.cancel"))}</button>`;
   if (j.state === "done") h += `<div class="warn-box" style="background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:var(--ok)"><b>${esc(t("job.done"))}</b>
-      <div class="row" style="margin-top:8px"><button class="b primary" onclick="openInstalled('${esc(id)}')">${esc(t("btn.openApp", { name: a.name }))}</button></div></div>`;
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="openInstalled(${esc(JSON.stringify(id))})">${esc(t("btn.openApp", { name: a.name }))}</button></div></div>`;
   if (j.state === "failed") h += `<div class="err-box"><b>${esc(j.hint || t("job.failedDefault"))}</b>
       ${j.error ? `<div class="small muted" style="margin:6px 0">${esc(j.error)}</div>` : ""}
       <div class="row">${j.log ? `<button class="b" onclick="S.logPath=${esc(JSON.stringify(j.log))};go('logs')">${esc(t("btn.viewLog"))}</button>` : ""}
-      <button class="b primary" onclick="startInstall('${esc(id)}')">${esc(t("btn.retry"))}</button></div></div>`;
-  if (j.state === "cancelled") h += `<div class="warn-box">${esc(t("job.cancelled"))} <button class="link" onclick="startInstall('${esc(id)}')">${esc(t("btn.retry"))}</button></div>`;
+      <button class="b primary" onclick="startInstall(${esc(JSON.stringify(id))})">${esc(t("btn.retry"))}</button></div></div>`;
+  if (j.state === "cancelled") h += `<div class="warn-box">${esc(t("job.cancelled"))} <button class="link" onclick="startInstall(${esc(JSON.stringify(id))})">${esc(t("btn.retry"))}</button></div>`;
   return h;
 }
 LIVE.instJob = d => jobHtml(d.app);
