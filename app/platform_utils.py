@@ -185,11 +185,27 @@ def detached_kwargs():
     return {"start_new_session": True}
 
 
+_HAS_ARM64 = None  # cache: el Mac tiene chip Apple Silicon (arm64)
+
+
+def _mac_has_arm64():
+    global _HAS_ARM64
+    if _HAS_ARM64 is None:
+        _HAS_ARM64 = run(["sysctl", "-n", "hw.optional.arm64"], 3).strip() == "1"
+    return _HAS_ARM64
+
+
 def shell_script_command(script_path, args):
     """Cómo ejecutar el script de arranque de A1111/Forge en este sistema."""
     if IS_WIN:
         return [os.environ.get("COMSPEC", "cmd.exe"), "/c", str(script_path)] + list(args)
-    return [shutil.which("bash") or "/bin/sh", str(script_path)] + list(args)
+    bash = shutil.which("bash") or "/bin/sh"
+    # En Apple Silicon, si la app se lanzó con preferencia Rosetta (x86_64), esa preferencia se
+    # hereda a los procesos que spawnea y `uname -m` devuelve x86_64: el script (kohya) elige
+    # dependencias de Intel. Forzamos arm64 para que el script y lo que lanza sean nativos.
+    if IS_MAC and _mac_has_arm64():
+        return ["/usr/bin/arch", "-arm64", bash, str(script_path)] + list(args)
+    return [bash, str(script_path)] + list(args)
 
 
 def webui_script_name():

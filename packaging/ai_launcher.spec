@@ -75,5 +75,6 @@ if IS_MAC:
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
             "LSApplicationCategoryType": "public.app-category.developer-tools",
+            "LSArchitecturePriority": ["arm64", "x86_64"],
         },
     )
