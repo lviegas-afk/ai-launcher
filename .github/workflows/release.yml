@@ -52,21 +52,21 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-      - name: Notas de la versión
+      - name: Release notes
         run: |
           cat > notes.md <<'NOTES'
-          ## Cómo instalar
+          ## How to install
 
-          **macOS** (elegí el `.dmg` según tu Mac: `arm64` = Apple Silicon M1/M2/M3/M4, `x86_64` = Intel)
-          1. Abrí el `.dmg` y arrastrá **AI Launcher** a la carpeta Aplicaciones.
-          2. La primera vez, hacé **clic derecho sobre la app → Abrir → Abrir** (la app no está firmada con un certificado de Apple, así que macOS pide confirmación). Si aun así la bloquea: Ajustes del Sistema → Privacidad y seguridad → "Abrir igualmente".
+          **macOS** (pick the `.dmg` for your Mac: `arm64` = Apple Silicon M1/M2/M3/M4, `x86_64` = Intel)
+          1. Open the `.dmg` and drag **AI Launcher** to the Applications folder.
+          2. The first time, **right-click the app → Open → Open** (the app isn't signed with an Apple certificate, so macOS asks for confirmation). If it still blocks it: System Settings → Privacy & Security → "Open Anyway".
 
           **Windows** (`Windows-x64.zip`)
-          1. Descomprimí el `.zip` en una carpeta cualquiera y ejecutá `AI Launcher.exe`.
-          2. Si aparece la pantalla azul de SmartScreen ("Windows protegió su PC"): **Más información → Ejecutar de todas formas** (la app no está firmada digitalmente).
-          3. En Windows 10 puede hacer falta el runtime WebView2 (en Windows 11 ya viene).
+          1. Unzip the `.zip` into any folder and run `AI Launcher.exe`.
+          2. If the blue SmartScreen appears ("Windows protected your PC"): **More info → Run anyway** (the app isn't code-signed).
+          3. On Windows 10 you may need the WebView2 runtime (it's already included on Windows 11).
 
-          No necesitás tener Python instalado. Todo corre en tu equipo, sin telemetría.
+          You don't need Python installed. Everything runs on your machine, with no telemetry.
           NOTES
       - uses: softprops/action-gh-release@v2
         with:
