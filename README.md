@@ -2,7 +2,7 @@
 
 **AI Launcher** es una app para macOS y Windows que te deja iniciar, vigilar y detener tus herramientas de inteligencia artificial locales (**Ollama**, **Stable Diffusion** con AUTOMATIC1111, Forge o ComfyUI, y **Kohya**) desde una ventana sencilla y desde un ícono en la barra de menú (macOS) o la bandeja del sistema (Windows). Si todavía no tenés alguna de esas herramientas, también te la instala desde cero.
 
-> _Captura de pantalla: pendiente (agregar `docs/screenshot.png` y enlazarla acá)._
+![AI Launcher: monitor de Ollama, Stable Diffusion y Kohya](docs/screenshot.png)
 
 ## Descargar
 
