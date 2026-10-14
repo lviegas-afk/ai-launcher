@@ -521,6 +521,7 @@ window.I18N = (() => {
     setLang(l) {
       if (!LANGS.includes(l)) return;
       api.lang = l; lsSet("ai_launcher_lang", l);
+      try { window.api("/api/config", { lang: l }).catch(() => { }); } catch (e) { }
       document.documentElement.lang = l;
       if (api.onChange) api.onChange();
     },

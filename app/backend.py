@@ -22,6 +22,7 @@ import psutil
 
 import installers
 import platform_utils as pu
+from backend_i18n import LANGS, tr
 from platform_utils import HOME, IS_WIN, run
 
 SUPPORT = pu.data_dir()
@@ -87,6 +88,7 @@ DEFAULT_CONFIG = {
     "sd": {"selected": None, "manual": [], "args": {}, "extra": {}, "presets": {}},
     "stop_on_quit": False,
     "open_window_on_launch": True,
+    "lang": "",  # idioma de la interfaz ("" = detectar del sistema)
     "install_parent": "",  # carpeta donde instalar apps nuevas ("" = automática)
     "cache": {},  # ubicaciones detectadas: {"ollama": {...}, "sd": [...], "verified_at": ...}
 }
@@ -153,7 +155,7 @@ def find_ollama(cached=None):
             binary = os.path.realpath(c)
             break
     app = pu.ollama_app_for_binary(binary) if binary else next(iter(pu.ollama_app_candidates()), None)
-    return _ollama_info(binary, app, source="detectado")
+    return _ollama_info(binary, app, source=tr("detectado", "detected", "erkannt", "détecté", "検出済み", "detectado"))
 
 
 def _ollama_info(binary, app, source):
@@ -570,27 +572,68 @@ FAILURES = {}  # clave (ruta de instalación o "ollama") -> info del último arr
 KILLED = set()  # pids que cerramos a propósito (no cuentan como fallo)
 FAIL_WINDOW = 180  # segundos: una salida antes de esto se considera fallo de arranque
 
-_HINTS = [
-    (r"ModuleNotFoundError|No module named",
-     "La instalación está incompleta: faltan componentes de Python. Ejecutá el instalador del programa "
-     "(por ejemplo setup.sh / setup.bat en Kohya, o webui.sh una vez desde la terminal en A1111) y volvé a intentar."),
-    (r"address already in use|Cannot find empty port|Errno 98|Errno 48|WinError 10048|port.{0,40}(in use|already|busy)",
-     "El puerto está ocupado por otro programa. Cambiá la opción de puerto (o usá el puerto sugerido) y volvé a intentar."),
-    (r"out of memory|MPS backend out of memory|CUDA out of memory",
-     "Se quedó sin memoria. Cerrá otras aplicaciones, o activá opciones que gasten menos "
-     "memoria como --medvram-sdxl o --lowvram, y volvé a intentar."),
-    (r"requires Python|Unsupported Python|Python \d+\.\d+.{0,40}(not supported|required)|incompatible Python",
-     "La versión de Python no es la correcta para este programa. Instalá la versión que pide el programa y volvé a intentar."),
-    (r"Permission denied|PermissionError|Access is denied",
-     "Faltan permisos para ejecutar o escribir archivos. Revisá los permisos de la carpeta del programa y volvé a intentar."),
-]
+def _hints():
+    return [
+        (r"ModuleNotFoundError|No module named",
+         tr("La instalación está incompleta: faltan componentes de Python. Ejecutá el instalador del programa "
+            "(por ejemplo setup.sh / setup.bat en Kohya, o webui.sh una vez desde la terminal en A1111) y volvé a intentar.",
+            "The installation is incomplete: Python components are missing. Run the program's installer "
+            "(for example setup.sh / setup.bat in Kohya, or webui.sh once from the terminal in A1111) and try again.",
+            "Die Installation ist unvollständig: Python-Komponenten fehlen. Führe das Installationsprogramm der App aus "
+            "(z. B. setup.sh / setup.bat bei Kohya oder einmal webui.sh im Terminal bei A1111) und versuche es erneut.",
+            "L'installation est incomplète : des composants Python manquent. Lancez l'installateur du programme "
+            "(par exemple setup.sh / setup.bat pour Kohya, ou webui.sh une fois depuis le terminal pour A1111) puis réessayez.",
+            "インストールが不完全です。Python のコンポーネントが不足しています。プログラムのインストーラー"
+            "(Kohya なら setup.sh / setup.bat、A1111 ならターミナルから一度 webui.sh)を実行してから、もう一度お試しください。",
+            "A instalação está incompleta: faltam componentes do Python. Execute o instalador do programa "
+            "(por exemplo setup.sh / setup.bat no Kohya, ou webui.sh uma vez pelo terminal no A1111) e tente novamente.")),
+        (r"address already in use|Cannot find empty port|Errno 98|Errno 48|WinError 10048|port.{0,40}(in use|already|busy)",
+         tr("El puerto está ocupado por otro programa. Cambiá la opción de puerto (o usá el puerto sugerido) y volvé a intentar.",
+            "The port is in use by another program. Change the port option (or use the suggested port) and try again.",
+            "Der Port wird von einem anderen Programm verwendet. Ändere die Port-Option (oder nutze den vorgeschlagenen Port) und versuche es erneut.",
+            "Le port est utilisé par un autre programme. Modifiez l'option de port (ou utilisez le port suggéré) puis réessayez.",
+            "ポートが別のプログラムに使われています。ポートのオプションを変更する(または提案されたポートを使う)してから、もう一度お試しください。",
+            "A porta está ocupada por outro programa. Altere a opção de porta (ou use a porta sugerida) e tente novamente.")),
+        (r"out of memory|MPS backend out of memory|CUDA out of memory",
+         tr("Se quedó sin memoria. Cerrá otras aplicaciones, o activá opciones que gasten menos "
+            "memoria como --medvram-sdxl o --lowvram, y volvé a intentar.",
+            "It ran out of memory. Close other applications, or enable options that use less "
+            "memory such as --medvram-sdxl or --lowvram, and try again.",
+            "Der Speicher ist ausgegangen. Schließe andere Anwendungen oder aktiviere speicherschonende "
+            "Optionen wie --medvram-sdxl oder --lowvram und versuche es erneut.",
+            "La mémoire est épuisée. Fermez d'autres applications, ou activez des options moins gourmandes "
+            "en mémoire comme --medvram-sdxl ou --lowvram, puis réessayez.",
+            "メモリが不足しました。他のアプリを閉じるか、--medvram-sdxl や --lowvram など"
+            "メモリ使用量の少ないオプションを有効にして、もう一度お試しください。",
+            "Ficou sem memória. Feche outros aplicativos ou ative opções que usam menos "
+            "memória, como --medvram-sdxl ou --lowvram, e tente novamente.")),
+        (r"requires Python|Unsupported Python|Python \d+\.\d+.{0,40}(not supported|required)|incompatible Python",
+         tr("La versión de Python no es la correcta para este programa. Instalá la versión que pide el programa y volvé a intentar.",
+            "The Python version is not the right one for this program. Install the version the program asks for and try again.",
+            "Die Python-Version passt nicht zu diesem Programm. Installiere die vom Programm geforderte Version und versuche es erneut.",
+            "La version de Python ne convient pas à ce programme. Installez la version requise par le programme puis réessayez.",
+            "このプログラムに適した Python のバージョンではありません。プログラムが要求するバージョンをインストールして、もう一度お試しください。",
+            "A versão do Python não é a correta para este programa. Instale a versão que o programa pede e tente novamente.")),
+        (r"Permission denied|PermissionError|Access is denied",
+         tr("Faltan permisos para ejecutar o escribir archivos. Revisá los permisos de la carpeta del programa y volvé a intentar.",
+            "Permissions are missing to run or write files. Check the permissions of the program's folder and try again.",
+            "Es fehlen Berechtigungen zum Ausführen oder Schreiben von Dateien. Prüfe die Berechtigungen des Programmordners und versuche es erneut.",
+            "Les autorisations pour exécuter ou écrire des fichiers sont insuffisantes. Vérifiez les autorisations du dossier du programme puis réessayez.",
+            "ファイルの実行または書き込みの権限が不足しています。プログラムのフォルダーの権限を確認して、もう一度お試しください。",
+            "Faltam permissões para executar ou gravar arquivos. Verifique as permissões da pasta do programa e tente novamente.")),
+    ]
 
 
 def hint_for(tail, kind=None):
-    for pat, text in _HINTS:
+    for pat, text in _hints():
         if re.search(pat, tail or "", re.I):
             return text
-    return "Mirá las últimas líneas del log para ver qué pasó."
+    return tr("Mirá las últimas líneas del log para ver qué pasó.",
+              "Check the last lines of the log to see what happened.",
+              "Sieh dir die letzten Zeilen des Logs an, um zu sehen, was passiert ist.",
+              "Consultez les dernières lignes du journal pour voir ce qui s'est passé.",
+              "ログの最後の数行を確認して、何が起きたかを確かめてください。",
+              "Veja as últimas linhas do log para entender o que aconteceu.")
 
 
 def _log_tail(path, lines=40):
@@ -616,7 +659,7 @@ def _watch(proc, key, service, label, path, log_path, port, started):
         return
     if elapsed <= FAIL_WINDOW or (code != 0 and not reachable):
         tail = _log_tail(log_path)
-        FAILURES[key] = {"service": service, "label": label, "path": path, "time": time.time(), "code": code,
+        FAILURES[key] = {"service": service, "label": display_label(label), "path": path, "time": time.time(), "code": code,
                          "log": str(log_path), "tail": tail, "hint": hint_for(tail, service)}
 
 
@@ -724,6 +767,36 @@ _OWN_PIDS = {os.getpid()}
 _SD_SCRIPT = re.compile(r"\b(launch|webui|kohya_gui)\.py\b|\b(webui|gui)\.(sh|bat)\b")
 
 
+# Las etiquetas internas (label_key) son estables, en español, y se usan para comparar
+# (p. ej. "app" in label, igualdad con inst["label"]). Sólo se traducen al mostrarlas.
+_LABEL_TR = {
+    "Servidor Ollama": ("Servidor Ollama", "Ollama server", "Ollama-Server", "Serveur Ollama", "Ollama サーバー", "Servidor Ollama"),
+    "Ollama · modelo en ejecución": ("Ollama · modelo en ejecución", "Ollama · running model", "Ollama · laufendes Modell",
+                                     "Ollama · modèle en cours d'exécution", "Ollama · 実行中のモデル", "Ollama · modelo em execução"),
+    "Ollama · chat (ollama run)": ("Ollama · chat (ollama run)", "Ollama · chat (ollama run)", "Ollama · Chat (ollama run)",
+                                   "Ollama · chat (ollama run)", "Ollama · チャット (ollama run)", "Ollama · chat (ollama run)"),
+    "Ollama (app de la barra de menú)": ("Ollama (app de la barra de menú)", "Ollama (menu bar app)", "Ollama (Menüleisten-App)",
+                                         "Ollama (app de la barre des menus)", "Ollama(メニューバーアプリ)",
+                                         "Ollama (app da barra de menus)"),
+    "Ollama (app de la bandeja)": ("Ollama (app de la bandeja)", "Ollama (tray app)", "Ollama (Tray-App)",
+                                   "Ollama (app de la zone de notification)", "Ollama(トレイアプリ)",
+                                   "Ollama (app da bandeja)"),
+    "Kohya_ss (entrenamiento)": ("Kohya_ss (entrenamiento)", "Kohya_ss (training)", "Kohya_ss (Training)",
+                                 "Kohya_ss (entraînement)", "Kohya_ss(トレーニング)", "Kohya_ss (treinamento)"),
+}
+_TRAIN_LABEL = ("Entrenamiento ({s})", "Training ({s})", "Training ({s})", "Entraînement ({s})", "トレーニング ({s})",
+                "Treinamento ({s})")
+
+
+def display_label(label):
+    """Traduce una etiqueta interna para mostrarla; las desconocidas (nombres propios) pasan tal cual."""
+    if label in _LABEL_TR:
+        return tr(*_LABEL_TR[label])
+    if isinstance(label, str) and label.startswith("Entrenamiento (") and label.endswith(")"):
+        return tr(*_TRAIN_LABEL, s=label[15:-1])
+    return label
+
+
 def classify_proc(p, installs):
     if p["pid"] in _OWN_PIDS:
         return None
@@ -816,7 +889,7 @@ def scan_processes(installs, max_age=1.5):
                         inst_path = inst["path"]
                         break
             roots.append({
-                "pid": pid, "service": svc, "label": label,
+                "pid": pid, "service": svc, "label": display_label(label), "label_key": label,
                 "cmd": table[pid]["cmd"], "etime": _elapsed(table[pid]["create_time"]),
                 "cpu": round(sum(m["cpu"] for m in members), 1),
                 "rss": sum(m["rss"] for m in members),
@@ -826,8 +899,9 @@ def scan_processes(installs, max_age=1.5):
                 "launch_port": STARTED.get(pid, {}).get("port"),
                 "log": STARTED.get(pid, {}).get("log"),
                 "training": any(_TRAIN_RE.search(m["cmd"]) for m in members[1:]),
-                "children": [{"pid": m["pid"], "label": _child_label(m, matched),
-                              "cmd": m["cmd"], "cpu": round(m["cpu"], 1), "rss": m["rss"],
+                "children": [{"pid": m["pid"], "label": display_label(_child_label(m, matched)),
+                              "label_key": _child_label(m, matched),
+                              "training": bool(_TRAIN_RE.search(m["cmd"])), "cmd": m["cmd"], "cpu": round(m["cpu"], 1), "rss": m["rss"],
                               "ports": m["ports"]} for m in members[1:]],
             })
         roots.sort(key=lambda r: (r["service"], -r["rss"]))
@@ -877,7 +951,10 @@ def free_port(start, avoid=()):
             return port
         except OSError:
             continue
-    raise RuntimeError("No encontré un puerto libre cerca de %d" % start)
+    raise RuntimeError(tr("No encontré un puerto libre cerca de {p}", "I could not find a free port near {p}",
+                          "Ich habe keinen freien Port in der Nähe von {p} gefunden",
+                          "Je n'ai pas trouvé de port libre près de {p}", "{p} の近くに空いているポートが見つかりませんでした",
+                          "Não encontrei uma porta livre perto de {p}", p=start))
 
 
 def memory_info():
@@ -914,7 +991,11 @@ class Launcher:
                 report = {}
                 self.ollama = find_ollama(cache.get("ollama") if use_cache and not deep else None)
                 if use_cache and self.ollama["source"] != "cache" and cache.get("ollama"):
-                    self.ollama["source"] = "redetectado (la ruta guardada ya no existía)"
+                    self.ollama["source"] = tr("redetectado (la ruta guardada ya no existía)", "re-detected (the saved path no longer existed)",
+                                               "neu erkannt (der gespeicherte Pfad existierte nicht mehr)",
+                                               "redétecté (le chemin enregistré n'existait plus)",
+                                               "再検出(保存されたパスが存在しなくなりました)",
+                                               "redetectado (o caminho salvo não existia mais)")
                 report["ollama"] = self.ollama["source"]
 
                 sd_cached = verify_sd_cache(cache.get("sd")) if use_cache and not deep else None
@@ -922,9 +1003,13 @@ class Launcher:
                 if sd_cached is not None:
                     report["sd"] = "cache"
                 elif use_cache and cache.get("sd"):
-                    report["sd"] = "redetectado (alguna ruta guardada ya no existía)"
+                    report["sd"] = tr("redetectado (alguna ruta guardada ya no existía)", "re-detected (a saved path no longer existed)",
+                                      "neu erkannt (ein gespeicherter Pfad existierte nicht mehr)",
+                                      "redétecté (un chemin enregistré n'existait plus)",
+                                      "再検出(保存されたパスの一部が存在しなくなりました)",
+                                      "redetectado (um caminho salvo não existia mais)")
                 else:
-                    report["sd"] = "detectado"
+                    report["sd"] = tr("detectado", "detected", "erkannt", "détecté", "検出済み", "detectado")
                 for i in self.installs:
                     i["source"] = report["sd"]
 
@@ -956,7 +1041,9 @@ class Launcher:
             if new:
                 with self.detect_lock:
                     for i in new:
-                        i["source"] = "nueva (encontrada en segundo plano)"
+                        i["source"] = tr("nueva (encontrada en segundo plano)", "new (found in the background)",
+                                         "neu (im Hintergrund gefunden)", "nouvelle (trouvée en arrière-plan)",
+                                         "新規(バックグラウンドで検出)", "nova (encontrada em segundo plano)")
                         self.installs.append(i)
                         self.sd_opts[i["path"]] = parse_argparse_file(i["args_file"])
                         i["default_port"] = sd_default_port(i, self.sd_opts[i["path"]])
@@ -972,6 +1059,7 @@ class Launcher:
         out = []
         for i in self.installs:
             d = dict(i)
+            d["label"] = display_label(i["label"])
             d["options"] = self.sd_opts.get(i["path"], [])
             d["preset_args"] = sd_preset_args(i)
             d["values"] = CONFIG["sd"]["args"].get(i["path"], {})
@@ -1011,16 +1099,28 @@ class Launcher:
         mode = CONFIG["ollama"].get("mode", "cli")
         port = self.ollama_port()
         if port_open(port):
-            raise RuntimeError("Ya hay un Ollama escuchando en el puerto %d. Detenelo primero desde el Monitor." % port)
+            raise RuntimeError(tr("Ya hay un Ollama escuchando en el puerto {p}. Detenelo primero desde el Monitor.",
+                                  "There is already an Ollama listening on port {p}. Stop it first from the Monitor.",
+                                  "Auf Port {p} lauscht bereits ein Ollama. Beende es zuerst im Monitor.",
+                                  "Un Ollama écoute déjà sur le port {p}. Arrêtez-le d'abord depuis le Moniteur.",
+                                  "ポート {p} ではすでに Ollama が待ち受けています。先にモニターから停止してください。",
+                                  "Já há um Ollama escutando na porta {p}. Pare-o primeiro pelo Monitor.", p=port))
         if mode == "app":
             if not self.ollama["app"]:
-                raise RuntimeError("No encontré la app de Ollama")
+                raise RuntimeError(tr("No encontré la app de Ollama", "I could not find the Ollama app",
+                                      "Ich habe die Ollama-App nicht gefunden", "Je n'ai pas trouvé l'app Ollama",
+                                      "Ollama アプリが見つかりませんでした", "Não encontrei o app do Ollama"))
             env = {k: ("1" if v is True else str(v)) for k, v in CONFIG["ollama"]["env"].items()
                    if v not in (None, "", False)}
             pu.launch_ollama_app(self.ollama["app"], env, [o["name"] for o in self.ollama_opts])
-            return {"ok": True, "message": "Abriendo la app de Ollama"}
+            return {"ok": True, "message": tr("Abriendo la app de Ollama", "Opening the Ollama app",
+                                              "Ollama-App wird geöffnet", "Ouverture de l'app Ollama",
+                                              "Ollama アプリを開いています", "Abrindo o app do Ollama")}
         if not self.ollama["binary"]:
-            raise RuntimeError("No encontré el ejecutable de Ollama")
+            raise RuntimeError(tr("No encontré el ejecutable de Ollama", "I could not find the Ollama executable",
+                                  "Ich habe die ausführbare Ollama-Datei nicht gefunden",
+                                  "Je n'ai pas trouvé l'exécutable d'Ollama", "Ollama の実行ファイルが見つかりませんでした",
+                                  "Não encontrei o executável do Ollama"))
         pid = spawn("ollama", "Servidor Ollama", pu.arch_prefix(pu.preferred_arch_for_binary(self.ollama["binary"])) + [self.ollama["binary"], "serve"], str(HOME),
                     self.ollama_env(), "ollama.log", key="ollama")
         return {"ok": True, "pid": pid}
@@ -1029,10 +1129,10 @@ class Launcher:
         procs = scan_processes(self.installs, max_age=0)
         targets = [r for r in procs if r["service"] == service and (install is None or r["install"] in (None, install))]
         # primero la app de Ollama, que re-lanza el servidor si queda viva
-        targets.sort(key=lambda r: 0 if "app" in r["label"] else 1)
+        targets.sort(key=lambda r: 0 if "app" in r["label_key"] else 1)
         for r in targets:
             kill_tree(r["pid"])
-            if "app" in r["label"]:
+            if "app" in r["label_key"]:
                 time.sleep(0.5)
         return {"ok": True, "stopped": [r["pid"] for r in targets]}
 
@@ -1089,7 +1189,8 @@ class Launcher:
     def ollama_pull(self, model):
         model = model.strip()
         if not model:
-            raise RuntimeError("Escribí el nombre del modelo")
+            raise RuntimeError(tr("Escribí el nombre del modelo", "Enter the model name", "Gib den Modellnamen ein",
+                                  "Saisissez le nom du modèle", "モデル名を入力してください", "Digite o nome do modelo"))
         self.pulls[model] = {"status": "iniciando…", "completed": 0, "total": 0, "done": False}
 
         def worker():
@@ -1191,22 +1292,30 @@ class Launcher:
         """
         info = self.install(path)
         if not info:
-            raise RuntimeError("No hay ninguna instalación seleccionada")
+            raise RuntimeError(tr("No hay ninguna instalación seleccionada", "No installation is selected",
+                                  "Es ist keine Installation ausgewählt", "Aucune installation n'est sélectionnée",
+                                  "インストールが選択されていません", "Nenhuma instalação selecionada"))
         script = launch_script(info)
         if script is not None and not script.exists():
-            raise RuntimeError("No encontré %s en %s" % (script.name, info["path"]))
+            raise RuntimeError(tr("No encontré {f} en {d}", "I could not find {f} in {d}", "Ich habe {f} in {d} nicht gefunden",
+                                  "Je n'ai pas trouvé {f} dans {d}", "{d} に {f} が見つかりませんでした",
+                                  "Não encontrei {f} em {d}", f=script.name, d=info["path"]))
         procs = scan_processes(self.installs, max_age=0)
         if any(r["service"] == "sd" and r["install"] == info["path"] for r in procs):
-            raise RuntimeError("%s ya está corriendo" % info["label"])
+            raise RuntimeError(tr("{n} ya está corriendo", "{n} is already running", "{n} läuft bereits",
+                                  "{n} est déjà en cours d'exécution", "{n} はすでに実行中です", "{n} já está em execução",
+                                  n=display_label(info["label"])))
         plan = self.start_plan(path)
         if (plan["conflicts"] or plan["port_taken"]) and not force:
-            return {"ok": False, "conflict": True, "label": info["label"], "path": info["path"],
+            return {"ok": False, "conflict": True, "label": display_label(info["label"]), "path": info["path"],
                     "port": plan["port"], "port_taken": plan["port_taken"],
                     "suggested_port": plan["suggested_port"], "running": plan["conflicts"],
                     "memory": memory_info()}
         use_port = port or (plan["suggested_port"] if plan["port_taken"] else None)
         if use_port and port_open(use_port):
-            raise RuntimeError("El puerto %d también está ocupado" % use_port)
+            raise RuntimeError(tr("El puerto {p} también está ocupado", "Port {p} is also in use", "Port {p} ist ebenfalls belegt",
+                                  "Le port {p} est aussi occupé", "ポート {p} も使用中です", "A porta {p} também está ocupada",
+                                  p=use_port))
         env = dict(os.environ)
         env["PYTHONUNBUFFERED"] = "1"
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", info["name"]).strip("-").lower()
@@ -1252,7 +1361,7 @@ class Launcher:
             port = self.sd_port(info, procs)
             up = bool(running) and port_open(port)
             api = self.sd_api(info, procs) if up else None
-            sd.append({"path": info["path"], "label": info["label"], "name": info["name"], "kind": info["kind"],
+            sd.append({"path": info["path"], "label": display_label(info["label"]), "name": info["name"], "kind": info["kind"],
                        "training": any(r.get("training") for r in running),
                        "running": bool(running), "up": up, "port": port,
                        "url": "http://127.0.0.1:%d" % port, "api": api,
@@ -1297,7 +1406,7 @@ def log_sources(launcher):
         srcs.append({"id": str(f), "label": "Launcher · " + f.stem})
     for d in pu.ollama_log_dirs():
         for f in sorted(Path(d).glob("*.log")) if Path(d).is_dir() else []:
-            srcs.append({"id": str(f), "label": "App de Ollama · " + f.name})
+            srcs.append({"id": str(f), "label": tr("App de Ollama · {n}", "Ollama app · {n}", "Ollama-App · {n}", "App Ollama · {n}", "Ollama アプリ · {n}", "App do Ollama · {n}", n=f.name)})
     return srcs
 
 
@@ -1448,6 +1557,12 @@ def make_handler(launcher, on_show_window=None):
                         CONFIG[k] = bool(b[k])
                 if "login_item" in b:
                     pu.set_login_item(bool(b["login_item"]))
+                if "lang" in b:
+                    lg = b["lang"]
+                    if lg == "" or lg is None:
+                        CONFIG["lang"] = ""
+                    elif lg in LANGS:
+                        CONFIG["lang"] = lg
                 if "install_parent" in b:
                     ip = (b["install_parent"] or "").strip() if isinstance(b["install_parent"], str) else ""
                     CONFIG["install_parent"] = os.path.expanduser(ip) if ip else ""
@@ -1467,11 +1582,22 @@ def make_handler(launcher, on_show_window=None):
                 L.detect(deep=bool(b.get("deep")))
                 return L.state()
             if path == "/api/add_install":
-                p = b.get("path") or pu.choose_path("folder", "Elegí la carpeta de A1111, Forge, ComfyUI o Kohya_ss")
+                p = b.get("path") or pu.choose_path("folder", tr(
+                    "Elegí la carpeta de A1111, Forge, ComfyUI o Kohya_ss",
+                    "Choose the A1111, Forge, ComfyUI or Kohya_ss folder",
+                    "Wähle den Ordner von A1111, Forge, ComfyUI oder Kohya_ss",
+                    "Choisissez le dossier d'A1111, Forge, ComfyUI ou Kohya_ss",
+                    "A1111、Forge、ComfyUI、Kohya_ss のフォルダーを選択してください",
+                    "Escolha a pasta do A1111, Forge, ComfyUI ou Kohya_ss"))
                 if not p:
                     return {"ok": False}
                 if not classify_sd(p):
-                    raise RuntimeError("Esa carpeta no parece una instalación de A1111, Forge, ComfyUI o Kohya_ss")
+                    raise RuntimeError(tr("Esa carpeta no parece una instalación de A1111, Forge, ComfyUI o Kohya_ss",
+                                      "That folder does not look like an A1111, Forge, ComfyUI or Kohya_ss installation",
+                                      "Dieser Ordner sieht nicht nach einer Installation von A1111, Forge, ComfyUI oder Kohya_ss aus",
+                                      "Ce dossier ne ressemble pas à une installation d'A1111, Forge, ComfyUI ou Kohya_ss",
+                                      "このフォルダーは A1111、Forge、ComfyUI、Kohya_ss のインストールではないようです",
+                                      "Essa pasta não parece ser uma instalação do A1111, Forge, ComfyUI ou Kohya_ss"))
                 CONFIG["sd"].setdefault("manual", []).append(p)
                 CONFIG["sd"]["selected"] = os.path.realpath(p)
                 L.detect()
@@ -1509,15 +1635,29 @@ def make_handler(launcher, on_show_window=None):
                 procs = scan_processes(L.installs, max_age=0)
                 allowed = {r["pid"] for r in procs} | {c["pid"] for r in procs for c in r["children"]}
                 if pid not in allowed:
-                    raise RuntimeError("Ese proceso no es de Ollama ni de Stable Diffusion")
+                    raise RuntimeError(tr("Ese proceso no es de Ollama ni de Stable Diffusion",
+                                      "That process does not belong to Ollama or Stable Diffusion",
+                                      "Dieser Prozess gehört weder zu Ollama noch zu Stable Diffusion",
+                                      "Ce processus n'appartient ni à Ollama ni à Stable Diffusion",
+                                      "このプロセスは Ollama でも Stable Diffusion でもありません",
+                                      "Esse processo não é do Ollama nem do Stable Diffusion"))
                 kill_tree(pid, force=bool(b.get("force")))
                 return {"ok": True}
             if path == "/api/open":
                 target = b.get("url") or b.get("path")
                 if target:
                     if not isinstance(target, str) or not open_allowed(L, target, bool(b.get("url"))):
-                        raise RuntimeError("No se puede abrir eso: sólo URLs locales, páginas oficiales "
-                                           "o carpetas del launcher y de las apps instaladas.")
+                        raise RuntimeError(tr("No se puede abrir eso: sólo URLs locales, páginas oficiales "
+                                              "o carpetas del launcher y de las apps instaladas.",
+                                              "That cannot be opened: only local URLs, official pages "
+                                              "or folders of the launcher and the installed apps.",
+                                              "Das kann nicht geöffnet werden: nur lokale URLs, offizielle Seiten "
+                                              "oder Ordner des Launchers und der installierten Apps.",
+                                              "Impossible d'ouvrir cela : uniquement des URL locales, des pages officielles "
+                                              "ou des dossiers du launcher et des apps installées.",
+                                              "開けません。ローカル URL、公式ページ、ランチャーおよびインストール済みアプリのフォルダーのみ開けます。",
+                                              "Não é possível abrir isso: apenas URLs locais, páginas oficiais "
+                                              "ou pastas do launcher e dos apps instalados."))
                     if b.get("reveal") and not b.get("url"):
                         pu.reveal(target)
                     else:
@@ -1533,7 +1673,8 @@ def make_handler(launcher, on_show_window=None):
                 if on_show_window:
                     on_show_window()
                 return {"ok": True}
-            raise RuntimeError("Ruta desconocida: " + path)
+            raise RuntimeError(tr("Ruta desconocida: {p}", "Unknown route: {p}", "Unbekannte Route: {p}", "Route inconnue : {p}",
+                                  "不明なルート: {p}", "Rota desconhecida: {p}", p=path))
 
     return Handler
 
