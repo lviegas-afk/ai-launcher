@@ -164,7 +164,9 @@ def _ollama_info(binary, app, source):
     models_dir = CONFIG["ollama"]["env"].get("OLLAMA_MODELS") or os.environ.get("OLLAMA_MODELS") \
         or str(HOME / ".ollama" / "models")
     return {"binary": binary, "app": app, "version": version, "models_dir": models_dir,
-            "found": bool(binary or app), "source": source}
+            "found": bool(binary or app), "source": source,
+            "arch": pu.preferred_arch_for_binary(binary),
+            "arch_native": (pu.preferred_arch_for_binary(binary) == pu.native_arch()) if pu.IS_MAC and binary else None}
 
 
 # Lista de respaldo por si `ollama serve --help` no se puede leer.
@@ -343,6 +345,8 @@ def _sd_infos(paths):
         if info:
             seen.add(rp)
             info["has_venv"] = bool(pu.venv_python(info["path"]))
+            info["arch"] = pu.preferred_arch_for(info["path"])
+            info["arch_native"] = info["arch"] == pu.native_arch() if info["arch"] else None
             info["checkpoints"] = sd_checkpoints(info)
             installs.append(info)
     return installs
@@ -1016,7 +1020,7 @@ class Launcher:
             return {"ok": True, "message": "Abriendo la app de Ollama"}
         if not self.ollama["binary"]:
             raise RuntimeError("No encontré el ejecutable de Ollama")
-        pid = spawn("ollama", "Servidor Ollama", [self.ollama["binary"], "serve"], str(HOME),
+        pid = spawn("ollama", "Servidor Ollama", pu.arch_prefix(pu.preferred_arch_for_binary(self.ollama["binary"])) + [self.ollama["binary"], "serve"], str(HOME),
                     self.ollama_env(), "ollama.log", key="ollama")
         return {"ok": True, "pid": pid}
 
@@ -1123,7 +1127,8 @@ class Launcher:
         args = build_sd_args(info, values, extra)
         script = launch_script(info)
         if script is None:
-            return [sd_python(info), "main.py"] + args
+            # ComfyUI corre directo con su Python: si es universal, evita heredar Rosetta
+            return pu.arch_prefix(pu.preferred_arch_for(info["path"])) + [sd_python(info), "main.py"] + args
         return pu.shell_script_command(script, args)
 
     def sd_command_preview(self, info):
@@ -1131,7 +1136,7 @@ class Launcher:
         cmd = self.sd_command(info)
         script = launch_script(info)
         if script is None:
-            cmd = ["python"] + cmd[1:]
+            cmd = ["python"] + cmd[len(pu.arch_prefix(pu.preferred_arch_for(info["path"]))) + 1:]
         else:
             idx = next(i for i, c in enumerate(cmd) if c.endswith(script.name))
             cmd = [script.name if IS_WIN else "./" + script.name] + cmd[idx + 1:]

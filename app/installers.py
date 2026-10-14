@@ -683,14 +683,15 @@ def _step_webui_firstrun(job, st, app, dest, parent):
 def _step_comfy_venv(job, st, dest):
     py = _python_for("comfyui")
     st["detail"] = "Python " + py["version"]
-    _run(job, [py["exe"], "-m", "venv", os.path.join(dest, "venv")], cwd=dest)
+    # instalación nueva: sin venv todavía, se usa la arquitectura nativa de la máquina
+    _run(job, pu.arch_prefix(pu.native_arch()) + [py["exe"], "-m", "venv", os.path.join(dest, "venv")], cwd=dest)
 
 
 def _step_comfy_pip(job, st, dest, args):
     vpy = pu.venv_python(dest)
     if not vpy:
         raise InstallError("No se encontró el entorno de Python (venv) de ComfyUI.")
-    _run(job, [vpy, "-m", "pip"] + args, cwd=dest)
+    _run(job, pu.arch_prefix(pu.preferred_arch_for(dest)) + [vpy, "-m", "pip"] + args, cwd=dest)
 
 
 def _step_kohya_setup(job, st, dest):

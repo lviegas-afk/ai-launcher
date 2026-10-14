@@ -770,7 +770,7 @@ function renderSD() {
       ${purposeLine(i.kind)}
       <div class="kv small" style="margin-top:12px">
         <div>Carpeta</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:'${esc(i.path)}'})">abrir</button></div>
-        <div>Entorno Python</div><div>${i.has_venv ? "venv listo" : `<span class="chip warn">sin venv: la primera vez se instalan dependencias (tarda)</span>`}</div>
+        <div>Entorno Python</div><div>${i.has_venv ? "venv listo" + (i.arch ? ` <span class="chip">${esc(i.arch)} (${i.arch_native ? "nativo" : "Rosetta"})</span>` : "") : `<span class="chip warn">sin venv: la primera vez se instalan dependencias (tarda)</span>`}</div>
         ${i.kind === "kohya" ? "" : `<div>Checkpoints</div><div>${i.checkpoints.length ? i.checkpoints.map(c => `<div class="ckpt"><span class="chip">${esc(c.name)} · ${bytes(c.size)}</span>${H?.checkpoint ? `<div class="small muted" style="margin-top:2px">${H.checkpoint(c.name, c.size)}</div>` : ""}</div>`).join("") : "ninguno"}</div>`}
         <div>Ubicación</div><div>${i.source === "cache" ? `<span class="chip ok">verificada desde la caché</span>` : `<span class="chip">${esc(i.source || "detectada")}</span>`}</div>
       </div>

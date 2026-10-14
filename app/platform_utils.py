@@ -185,27 +185,105 @@ def detached_kwargs():
     return {"start_new_session": True}
 
 
-_HAS_ARM64 = None  # cache: el Mac tiene chip Apple Silicon (arm64)
+_MACHO_CPU = {0x0100000C: "arm64", 0x01000007: "x86_64"}
 
 
-def _mac_has_arm64():
-    global _HAS_ARM64
-    if _HAS_ARM64 is None:
-        _HAS_ARM64 = run(["sysctl", "-n", "hw.optional.arm64"], 3).strip() == "1"
-    return _HAS_ARM64
+def macho_archs(path):
+    """Arquitecturas de un ejecutable Mach-O ({"arm64", "x86_64"}), leyendo su cabecera.
+
+    Sigue symlinks. Devuelve un set vacío si no es Mach-O o no se puede leer.
+    """
+    import struct
+    try:
+        with open(os.path.realpath(str(path)), "rb") as f:
+            head = f.read(8)
+            if len(head) < 8:
+                return set()
+            magic = head[:4]
+            if magic in (b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf"):  # Mach-O de 64 bits (delgado)
+                order = "<" if magic == b"\xcf\xfa\xed\xfe" else ">"
+                return {a for a in [_MACHO_CPU.get(struct.unpack(order + "I", head[4:8])[0])] if a}
+            if magic in (b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"):  # universal (fat), cabecera big-endian
+                n = struct.unpack(">I", head[4:8])[0]
+                if n > 32:  # un .class de Java comparte la firma 0xcafebabe
+                    return set()
+                size = 32 if magic[3] == 0xbf else 20
+                out = set()
+                for _ in range(n):
+                    ent = f.read(size)
+                    if len(ent) < size:
+                        break
+                    arch = _MACHO_CPU.get(struct.unpack(">I", ent[:4])[0])
+                    if arch:
+                        out.add(arch)
+                return out
+    except (OSError, ValueError):
+        pass
+    return set()
 
 
-def shell_script_command(script_path, args):
-    """Cómo ejecutar el script de arranque de A1111/Forge en este sistema."""
+_NATIVE_ARCH = None
+
+
+def native_arch():
+    """Arquitectura real de la máquina (aunque estemos corriendo bajo Rosetta)."""
+    global _NATIVE_ARCH
+    if _NATIVE_ARCH is None:
+        if IS_MAC and run(["sysctl", "-n", "hw.optional.arm64"], 3).strip() == "1":
+            _NATIVE_ARCH = "arm64"
+        else:
+            import platform
+            m = platform.machine().lower()
+            _NATIVE_ARCH = {"amd64": "x86_64", "x64": "x86_64", "aarch64": "arm64"}.get(m, m)
+    return _NATIVE_ARCH
+
+
+def _pick_arch(archs):
+    if archs == {"x86_64"}:
+        return "x86_64"
+    if archs == {"arm64"}:
+        return "arm64"
+    return native_arch()
+
+
+def preferred_arch_for(folder):
+    """macOS: arquitectura con la que hay que correr la instalación de `folder`.
+
+    Se mira el Python de su venv: si es sólo x86_64 o sólo arm64 se respeta; si es universal,
+    desconocido o todavía no hay venv (instalación nueva), la nativa de la máquina.
+    """
+    if not IS_MAC:
+        return None
+    py = venv_python(folder)
+    return _pick_arch(macho_archs(py)) if py else native_arch()
+
+
+def preferred_arch_for_binary(path):
+    """macOS: arquitectura para ejecutar un binario suelto (p. ej. Ollama)."""
+    if not IS_MAC or not path:
+        return None
+    return _pick_arch(macho_archs(path))
+
+
+def arch_prefix(arch):
+    """['/usr/bin/arch', '-arm64'] para anteponer a un comando en macOS (o [] si no aplica)."""
+    if IS_MAC and arch and os.path.exists("/usr/bin/arch"):
+        return ["/usr/bin/arch", "-" + arch]
+    return []
+
+
+def shell_script_command(script_path, args, arch=None):
+    """Cómo ejecutar el script de arranque de A1111/Forge/Kohya en este sistema."""
     if IS_WIN:
         return [os.environ.get("COMSPEC", "cmd.exe"), "/c", str(script_path)] + list(args)
     bash = shutil.which("bash") or "/bin/sh"
-    # En Apple Silicon, si la app se lanzó con preferencia Rosetta (x86_64), esa preferencia se
-    # hereda a los procesos que spawnea y `uname -m` devuelve x86_64: el script (kohya) elige
-    # dependencias de Intel. Forzamos arm64 para que el script y lo que lanza sean nativos.
-    if IS_MAC and _mac_has_arm64():
-        return ["/usr/bin/arch", "-arm64", bash, str(script_path)] + list(args)
-    return [bash, str(script_path)] + list(args)
+    # En Apple Silicon la app puede haberse lanzado con preferencia Rosetta (x86_64) y esa
+    # preferencia la heredan los procesos que spawnea: `uname -m` daría x86_64 y los scripts
+    # (kohya) elegirían dependencias de Intel. Por eso no se deja a la herencia: se corre bajo
+    # `arch` con la arquitectura del Python propio de la instalación (o la nativa si es nueva).
+    if IS_MAC:
+        arch = arch or preferred_arch_for(Path(script_path).parent)
+    return arch_prefix(arch) + [bash, str(script_path)] + list(args)
 
 
 def webui_script_name():
