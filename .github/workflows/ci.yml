@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: pyflakes
+        run: |
+          pip install pyflakes
+          python -m pyflakes app/*.py packaging/build.py tools/make_icon.py
+      - name: Sintaxis de JavaScript
+        run: |
+          node --check app/help.js
+          python - <<'PY'
+          import re
+          html = open("app/ui.html", encoding="utf-8").read()
+          scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.S)
+          assert scripts, "ui.html sin <script> inline"
+          open("ui_inline.js", "w", encoding="utf-8").write("\n;\n".join(scripts))
+          PY
+          node --check ui_inline.js

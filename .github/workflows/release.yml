@@ -1,0 +1,77 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple Silicon (arm64)
+          - os: macos-15-intel # Intel (x86_64); macos-13 fue retirado por GitHub
+          - os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            app/requirements.txt
+            packaging/requirements-build.txt
+      - name: Versión
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0-dev"; fi
+          echo "APP_VERSION=$V" >> "$GITHUB_ENV"
+      - name: Instalar dependencias
+        run: python -m pip install -r packaging/requirements-build.txt
+      - name: Compilar
+        run: python packaging/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AI-Launcher-${{ matrix.os }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Notas de la versión
+        run: |
+          cat > notes.md <<'NOTES'
+          ## Cómo instalar
+
+          **macOS** (elegí el `.dmg` según tu Mac: `arm64` = Apple Silicon M1/M2/M3/M4, `x86_64` = Intel)
+          1. Abrí el `.dmg` y arrastrá **AI Launcher** a la carpeta Aplicaciones.
+          2. La primera vez, hacé **clic derecho sobre la app → Abrir → Abrir** (la app no está firmada con un certificado de Apple, así que macOS pide confirmación). Si aun así la bloquea: Ajustes del Sistema → Privacidad y seguridad → "Abrir igualmente".
+
+          **Windows** (`Windows-x64.zip`)
+          1. Descomprimí el `.zip` en una carpeta cualquiera y ejecutá `AI Launcher.exe`.
+          2. Si aparece la pantalla azul de SmartScreen ("Windows protegió su PC"): **Más información → Ejecutar de todas formas** (la app no está firmada digitalmente).
+          3. En Windows 10 puede hacer falta el runtime WebView2 (en Windows 11 ya viene).
+
+          No necesitás tener Python instalado. Todo corre en tu equipo, sin telemetría.
+          NOTES
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: notes.md
+          generate_release_notes: true
+          files: |
+            artifacts/*.dmg
+            artifacts/*.zip

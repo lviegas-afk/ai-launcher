@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Launcher</title>
+<style>
+:root {
+  --bg: #f5f5f7; --panel: #ffffff; --panel2: #fafafa; --text: #1d1d1f; --muted: #6e6e73;
+  --line: #e3e3e8; --accent: #5b5bd6; --accent-text: #fff; --ok: #1f9d55; --warn: #c27c0e;
+  --bad: #d43f3a; --chip: #ececf1; --code: #f0f0f4; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618; --panel: #1f1f22; --panel2: #232327; --text: #ececf0; --muted: #9a9aa3;
+    --line: #313137; --accent: #7c7cf0; --accent-text: #fff; --ok: #3ccf7c; --warn: #f0b04a;
+    --bad: #ff6b63; --chip: #2c2c31; --code: #19191c; --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  display: flex; overflow: hidden; -webkit-user-select: none; user-select: none; }
+input, textarea, .selectable, pre, code { -webkit-user-select: text; user-select: text; }
+nav { width: 190px; flex: none; padding: 18px 10px; border-right: 1px solid var(--line); background: var(--panel2);
+  display: flex; flex-direction: column; gap: 2px; }
+nav h1 { font-size: 15px; margin: 0 8px 14px; letter-spacing: -.01em; }
+nav button { all: unset; cursor: default; padding: 7px 10px; border-radius: 7px; display: flex; align-items: center; gap: 8px; color: var(--text); }
+nav button:hover { background: var(--chip); }
+nav button.active { background: var(--accent); color: var(--accent-text); }
+nav .spacer { flex: 1; }
+nav .mem { margin: 8px; font-size: 11px; color: var(--muted); }
+.bar { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; margin-top: 4px; }
+.bar > div { height: 100%; background: var(--accent); transition: width .4s; }
+.bar.hi > div { background: var(--warn); } .bar.crit > div { background: var(--bad); }
+main { flex: 1; overflow: auto; padding: 22px 26px 60px; }
+h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -.02em; }
+h3 { font-size: 14px; margin: 22px 0 8px; }
+.sub { color: var(--muted); margin-bottom: 16px; }
+.card { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; flex: none; }
+.dot.on { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.dot.mid { background: var(--warn); }
+.dot.bad { background: var(--bad); }
+.err-box { background: color-mix(in srgb, var(--bad) 10%, transparent); border: 1px solid var(--bad); border-radius: 9px; padding: 10px 12px; margin: 10px 0 4px; flex-basis: 100%; }
+.err-box details { margin: 8px 0; } .err-box summary { cursor: default; color: var(--muted); }
+.err-box pre { max-height: 220px; overflow: auto; white-space: pre-wrap; margin: 6px 0 0; font-size: 11.5px; }
+.title { font-weight: 600; font-size: 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 11.5px; }
+.mono { font-family: "SF Mono", ui-monospace, Menlo, Consolas, "Cascadia Mono", monospace; font-size: 11.5px; }
+.chip { background: var(--chip); border-radius: 5px; padding: 1px 6px; font-size: 11px; white-space: nowrap; }
+.chip.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.chip.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+button.b { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 5px 11px; border-radius: 7px; cursor: default; }
+button.b:hover { background: var(--chip); }
+button.b:disabled { opacity: .45; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button.danger { color: var(--bad); }
+button.danger.solid { background: var(--bad); border-color: var(--bad); color: #fff; }
+button.link { all: unset; color: var(--accent); cursor: pointer; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.child td { color: var(--muted); font-size: 12px; padding-top: 4px; padding-bottom: 4px; }
+tr.child td:first-child { padding-left: 26px; }
+input[type=text], input[type=number], select, textarea {
+  font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 100%; }
+input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); border-color: var(--accent); }
+.opt { display: grid; grid-template-columns: 250px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.opt:last-child { border-bottom: 0; }
+.opt .name { font-family: "SF Mono", ui-monospace, Menlo, Consolas, "Cascadia Mono", monospace; font-size: 12px; word-break: break-all; }
+.opt .help { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.opt.set .name { color: var(--accent); font-weight: 600; }
+.opt .ctl { display: flex; gap: 6px; align-items: center; }
+.toggle { appearance: none; -webkit-appearance: none; width: 32px; height: 19px; border-radius: 10px; background: var(--chip); position: relative; flex: none; margin: 0; border: 1px solid var(--line); }
+.toggle::after { content: ""; position: absolute; top: 1px; left: 1px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.toggle:checked { background: var(--accent); border-color: var(--accent); }
+.toggle:checked::after { transform: translateX(13px); }
+details.cat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow); }
+details.cat > summary { padding: 11px 16px; font-weight: 600; cursor: default; list-style: none; display: flex; gap: 4px; }
+details.cat > summary > span:last-child { margin-left: auto; font-weight: 400; }
+details.cat > summary::-webkit-details-marker { display: none; }
+details.cat > summary::before { content: "›"; display: inline-block; width: 14px; transition: transform .15s; color: var(--muted); }
+details.cat[open] > summary::before { transform: rotate(90deg); }
+details.cat > div { padding: 0 16px 6px; }
+.cmd { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: pre-wrap; word-break: break-all; }
+.sticky { position: sticky; top: -22px; z-index: 5; background: var(--bg); padding: 12px 0 10px; margin-top: -12px; }
+pre.log { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, "Cascadia Mono", monospace;
+  font-size: 11.5px; height: calc(100vh - 170px); overflow: auto; white-space: pre-wrap; word-break: break-all; margin: 0; }
+.empty { color: var(--muted); padding: 14px 0; text-align: center; }
+.progress { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; width: 160px; }
+.progress > div { height: 100%; background: var(--accent); }
+.toast-wrap { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+.toast { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 10px 14px; max-width: 380px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.toast.err { border-left-color: var(--bad); }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 60; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.modal p { margin: 6px 0 16px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; }
+.kv > div:nth-child(odd) { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { all: unset; padding: 5px 12px; cursor: default; }
+.seg button.on { background: var(--accent); color: var(--accent-text); }
+.hidden { display: none !important; }
+.tip { color: var(--muted); font-size: 11.5px; margin-top: 3px; padding-left: 2px; }
+.opt .help.orig { font-size: 10.5px; opacity: .75; margin-top: 4px; }
+.help code, .tip code, .guide code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 11px; }
+.guide { background: color-mix(in srgb, var(--accent) 8%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 12px; margin-bottom: 14px; }
+.guide > summary { padding: 9px 14px; font-weight: 600; cursor: default; list-style: none; }
+.guide > summary::-webkit-details-marker { display: none; }
+.guide > summary::before { content: "›"; display: inline-block; width: 14px; transition: transform .15s; color: var(--muted); }
+.guide[open] > summary::before { transform: rotate(90deg); }
+.guide > div { padding: 0 14px 12px 28px; line-height: 1.6; }
+.warn-box { background: color-mix(in srgb, var(--warn) 14%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 9px; padding: 9px 12px; margin: 8px 0; color: var(--text); }
+.warn-box.bad { background: color-mix(in srgb, var(--bad) 13%, transparent); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.badge { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); border-radius: 5px; padding: 0 6px; font-size: 10.5px; font-family: -apple-system, system-ui, sans-serif; font-weight: 500; margin-left: 6px; white-space: nowrap; }
+.modal-body p { margin: 6px 0 16px; color: var(--muted); }
+.modal-body ul { margin: 4px 0 8px; padding-left: 18px; }
+.chip.btn { border: 0; font: inherit; font-size: 11px; color: var(--text); cursor: pointer; }
+.chip.btn:hover { background: var(--accent); color: var(--accent-text); }
+.ckpt { margin-bottom: 6px; }
+.ckpt:last-child { margin-bottom: 0; }
+.purpose { color: var(--muted); font-size: 12.5px; margin: 4px 0 2px; line-height: 1.35; }
+.steps { margin: 8px 0; display: flex; flex-direction: column; gap: 4px; }
+.step { display: flex; gap: 8px; align-items: baseline; }
+.step .ic { width: 18px; text-align: center; flex: none; }
+.step.running .ic { display: inline-block; animation: spin 1.2s linear infinite; }
+.step.done .ic { color: var(--ok); } .step.failed .ic { color: var(--bad); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.guide-step { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.guide-step:last-child { border-bottom: 0; }
+.guide-step .n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); text-align: center; line-height: 22px; font-size: 12px; font-weight: 600; }
+.guide-step .tx code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 11px; }
+.codeblock { display: flex; gap: 8px; align-items: flex-start; background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+.codeblock code { flex: 1; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; white-space: pre-wrap; word-break: break-all; }
+.nav-section { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 10px 10px 2px; }
+.nav-dot { margin-left: auto; }
+.reqs { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0; }
+.prereq { display: flex; gap: 8px; align-items: baseline; margin: 3px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <h1>⚡︎ AI Launcher</h1>
+  <button data-view="monitor" class="active">📊 Monitor</button>
+  <button data-view="ollama">🦙 Ollama</button>
+  <button data-view="sd">🎨 Imagen</button>
+  <button data-view="logs">📜 Logs</button>
+  <button data-view="settings">⚙️ Ajustes</button>
+  <div class="spacer"></div>
+  <button data-view="install">＋ Instalar apps</button>
+  <div class="mem" id="navMem"></div>
+</nav>
+<main id="main"></main>
+<div class="toast-wrap" id="toasts"></div>
+
+<script src="help.js?t=__TOKEN__"></script>
+<script>
+const H = window.HELP || null;
+const TOKEN = "__TOKEN__";
+const OS = { mac: { tray: "la barra de menú", files: "Finder", device: "la Mac" }, windows: { tray: "la bandeja del sistema", files: "el Explorador", device: "la PC" }, linux: { tray: "la bandeja", files: "el gestor de archivos", device: "la PC" } };
+const os_ = () => OS[S.state?.platform] || OS.mac;
+const S = { view: "monitor", state: null, mon: null, logPath: null, logOffset: null, sdFilter: "", expanded: new Set() };
+
+// ---------------------------------------------------------------- helpers
+async function api(path, body) {
+  const opt = { method: body === undefined ? "GET" : "POST", headers: { "X-Token": TOKEN, "Content-Type": "application/json" } };
+  if (body !== undefined) opt.body = JSON.stringify(body);
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function bytes(n) { n = +n || 0; const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return (i < 2 ? n.toFixed(0) : n.toFixed(1)) + " " + u[i]; }
+function toast(msg, err) { const t = document.createElement("div"); t.className = "toast" + (err ? " err" : ""); t.textContent = msg; $("#toasts").appendChild(t); setTimeout(() => t.remove(), err ? 7000 : 3500); }
+async function act(fn, okMsg) { try { const r = await fn(); if (okMsg) toast(okMsg); refreshMonitor(); return r; } catch (e) { toast(e.message, true); } }
+function choiceBox(title, html, buttons, width) {
+  return new Promise(res => {
+    const bg = document.createElement("div"); bg.className = "modal-bg";
+    const col = buttons.length > 2;
+    bg.innerHTML = `<div class="modal" ${width ? `style="width:${width}px;max-width:92vw"` : ""}><div class="title">${esc(title)}</div><div class="modal-body">${html}</div>
+      <div class="row" style="${col ? "flex-direction:column;align-items:stretch" : "justify-content:flex-end"}">${buttons.map(b => `<button class="b ${esc(b.cls || "")}" data-a="${esc(b.id)}">${esc(b.label)}</button>`).join("")}</div></div>`;
+    const done = v => { document.removeEventListener("keydown", onKey, true); bg.remove(); res(v); };
+    const onKey = e => { if (e.key === "Escape") done(null); };
+    document.addEventListener("keydown", onKey, true);
+    bg.addEventListener("click", e => { const el = e.target.closest("[data-a]"); if (el) done(el.dataset.a); else if (e.target === bg) done(null); });
+    document.body.appendChild(bg);
+    (bg.querySelector(".primary, .solid") || bg.querySelector("button"))?.focus();
+  });
+}
+async function confirmBox(title, text, okLabel = "Confirmar", danger = true) {
+  const r = await choiceBox(title, `<p>${esc(text)}</p>`, [{ id: "0", label: "Cancelar" }, { id: "1", label: okLabel, cls: danger ? "danger solid" : "primary" }]);
+  return r === "1";
+}
+function promptBox(title, placeholder) {
+  return new Promise(res => {
+    const bg = document.createElement("div"); bg.className = "modal-bg";
+    bg.innerHTML = `<div class="modal"><div class="title">${esc(title)}</div><p><input type="text" placeholder="${esc(placeholder || "")}"></p>
+      <div class="row" style="justify-content:flex-end"><button class="b" data-a="0">Cancelar</button><button class="b primary" data-a="1">Guardar</button></div></div>`;
+    const inp = bg.querySelector("input");
+    const done = ok => { bg.remove(); res(ok ? inp.value.trim() : null); };
+    bg.addEventListener("click", e => { const a = e.target.dataset.a; if (a !== undefined) done(a === "1"); else if (e.target === bg) done(false); });
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); });
+    document.body.appendChild(bg); inp.focus();
+  });
+}
+function openUrl(url) { api("/api/open", { url }); }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+// ---------------------------------------------------------------- navegación
+document.querySelectorAll("nav button[data-view]").forEach(b => b.onclick = () => go(b.dataset.view));
+function go(view) {
+  if (view === "install" && S.view !== "install") S.inst.data = null;
+  S.view = view;
+  document.querySelectorAll("nav button[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  render();
+}
+let _lastView = null;
+function view_changed(v) { const c = v !== _lastView; _lastView = v; if (v !== "monitor") $("#main").dataset.view = v; return c; }
+function render() {
+  const m = $("#main");
+  const keepScroll = m.scrollTop;
+  if (view_changed(S.view)) lastMonitorHtml = "";
+  ({ monitor: renderMonitor, ollama: renderOllama, sd: renderSD, logs: renderLogs, settings: renderSettings, install: renderInstall })[S.view]();
+  if (S.view !== "logs") m.scrollTop = keepScroll;
+}
+
+// ---------------------------------------------------------------- datos
+async function loadState() { S.state = await api("/api/state"); }
+let monBusy = false;
+async function refreshMonitor() {
+  if (monBusy) return; monBusy = true;
+  try {
+    S.mon = await api("/api/monitor");
+    renderNavMem();
+    if (S.view === "monitor") renderMonitor();
+    else updateLive();
+  } catch (e) { /* servidor reiniciándose */ }
+  monBusy = false;
+}
+function renderNavMem() {
+  const m = S.mon.memory, pct = m.total ? m.used / m.total * 100 : 0;
+  $("#navMem").innerHTML = `Memoria ${bytes(m.used)} / ${bytes(m.total)}
+    <div class="bar ${pct > 90 ? "crit" : pct > 75 ? "hi" : ""}"><div style="width:${pct.toFixed(0)}%"></div></div>`;
+}
+// actualiza las partes "en vivo" de otras vistas sin re-renderizar los formularios
+function updateLive() {
+  document.querySelectorAll("[data-live]").forEach(el => {
+    const fn = LIVE[el.dataset.live]; if (!fn || pointerDown) return;
+    const h = fn(el.dataset); if (el._h !== h) { el.innerHTML = h; el._h = h; }
+  });
+}
+
+// ---------------------------------------------------------------- monitor
+function ollamaStatus() {
+  const o = S.mon?.ollama; if (!o) return ["", "…"];
+  if (o.up) return ["on", "Corriendo · " + o.url.replace("http://", "")];
+  if (o.running) return ["mid", "Iniciando…"];
+  if (o.failure) return ["bad", "No pudo iniciar"];
+  return ["", "Detenido"];
+}
+const kindIcon = k => k === "kohya" ? "🏋️" : k === "comfyui" ? "🧩" : "🎨";
+function sdStatus(s) {
+  if (s.running && s.training) return ["mid", "Entrenando un LoRA…"];
+  if (s.up) return ["on", "Corriendo · " + s.url.replace("http://", "")];
+  if (s.running) return ["mid", "Iniciando… (puede tardar un minuto)"];
+  if (s.failure) return ["bad", "No pudo iniciar"];
+  return ["", "Detenido"];
+}
+function errBox(f, key) {
+  if (!f) return "";
+  return `<div class="err-box"><b>${esc(f.hint)}</b>
+    <details><summary>Ver detalle</summary><pre class="mono selectable">${esc(f.tail || "(el log está vacío)")}</pre></details>
+    <div class="row"><button class="b" onclick="S.logPath=${esc(JSON.stringify(f.log))};go('logs')">Ver log completo</button>
+      <button class="b" onclick="clearFailure(${esc(JSON.stringify(key))})">Descartar</button></div></div>`;
+}
+async function clearFailure(key) {
+  try { await api("/api/failures/clear", { key }); } catch (e) {}
+  lastMonitorHtml = ""; await refreshMonitor();
+}
+const sdFailBox = path => { const s = S.mon?.sd.find(x => x.path === path); return s && !s.running ? errBox(s.failure, s.path) : ""; };
+const ollamaFailBox = () => { const o = S.mon?.ollama; return o && !o.running && !o.up ? errBox(o.failure, "ollama") : ""; };
+const LIVE = {
+  ollamaFail: () => ollamaFailBox(),
+  sdFail: d => sdFailBox(d.path),
+  ollamaStatus: () => { const [c, t] = ollamaStatus(); return `<span class="dot ${c}"></span> ${esc(t)}`; },
+  ollamaButtons: () => ollamaButtons(),
+  sdStatus: d => { const s = S.mon?.sd.find(x => x.path === d.path); if (!s) return ""; const [c, t] = sdStatus(s); return `<span class="dot ${c}"></span> ${esc(t)}`; },
+  sdButtons: d => sdButtons(d.path),
+  ollamaModels: () => ollamaModelsTable(),
+  pulls: () => pullsHtml(),
+  sdApi: d => sdApiHtml(d.path),
+};
+function ollamaButtons() {
+  const o = S.mon?.ollama || {};
+  const running = o.running || o.up;
+  return running
+    ? `<button class="b danger" onclick="stopOllama()">Detener</button>`
+    : `<button class="b primary" onclick="act(()=>api('/api/ollama/start',{}),'Iniciando Ollama…')">Iniciar</button>`;
+}
+function sdButtons(path) {
+  const s = S.mon?.sd.find(x => x.path === path) || {};
+  let h = "";
+  if (s.running) {
+    h += `<button class="b danger" onclick="stopSD('${esc(path)}')">Detener</button>`;
+    if (s.up) h += ` <button class="b" onclick="openUrl('${s.url}')">Abrir en el navegador ↗</button>`;
+  } else {
+    h += `<button class="b primary" onclick="startSD('${esc(path)}')">Iniciar</button>`;
+  }
+  return h;
+}
+async function stopOllama() {
+  const procs = (S.mon?.processes || []).filter(p => p.service === "ollama");
+  if (await confirmBox("Detener Ollama", `Se van a cerrar ${procs.length} proceso(s) de Ollama (${procs.map(p => p.label).join(", ")}). Los modelos cargados se liberan de memoria.`, "Detener"))
+    act(() => api("/api/ollama/stop", {}), "Ollama detenido");
+}
+async function stopSD(path) {
+  const s = S.mon?.sd.find(x => x.path === path) || {};
+  const name = s.label || "la app de imagen";
+  const txt = s.training ? `${name} está entrenando un LoRA. Si la detenés ahora, el entrenamiento se pierde y vas a tener que empezar de nuevo.`
+    : "Se cierra la app y se libera la memoria del modelo. Si estás generando una imagen, se pierde.";
+  if (await confirmBox("Detener " + name, txt, s.training ? "Detener y perder el entrenamiento" : "Detener"))
+    act(() => api("/api/sd/stop", { path }), name + " detenido");
+}
+function sdStarted(r) { toast("Iniciando… se abrirá en " + (r.url || ("http://127.0.0.1:" + r.port)) + " (puede tardar un minuto)"); refreshMonitor(); }
+function conflictBox(r) {
+  const run = r.running || [], m = r.memory || {};
+  const training = run.some(x => x.training);
+  let h = "";
+  if (run.length) {
+    h += `<div class="warn-box"><b>No es recomendable tener los dos abiertos.</b><br>Los dos programas compiten por la misma memoria (en Mac, la memoria RAM y la de video son lo mismo). Todo puede ponerse muy lento, la generación puede fallar o la compu puede trabarse.</div>`;
+    h += `<div class="small" style="margin:6px 0"><b>Memoria en uso ahora:</b> ${bytes(m.used)} de ${bytes(m.total)}</div>
+      <ul class="small">${run.map(x => `<li>${kindIcon(x.kind)} <b>${esc(x.label)}</b> — usa ${bytes(x.rss)}${x.training ? " (entrenando)" : ""}${(x.ports || []).length ? " · puerto " + esc(x.ports.join(", ")) : ""}</li>`).join("")}</ul>`;
+  }
+  if (training) h += `<div class="warn-box bad"><b>Kohya está entrenando un LoRA:</b> si te quedás sin memoria, el entrenamiento puede fallar y perder el progreso.</div>`;
+  if (r.port_taken) h += `<p class="small" style="margin:8px 0 14px">El puerto ${esc(r.port)} ya está en uso, así que se abrirá en el puerto ${esc(r.suggested_port)}.</p>`;
+  else h += `<div style="height:8px"></div>`;
+  const btns = [];
+  if (run.length) btns.push({ id: "stop", label: run.length > 1 ? "Detener las apps abiertas y abrir " + r.label : "Detener " + run[0].label + " y abrir", cls: "primary" });
+  btns.push({ id: "force", label: "Abrir igual en el puerto " + r.suggested_port });
+  btns.push({ id: "cancel", label: "Cancelar" });
+  return choiceBox("Iniciar " + r.label, h, btns, 460);
+}
+async function stopConflicting(r) {
+  const pids = (r.running || []).map(x => x.pid);
+  for (const pid of pids) { try { await api("/api/kill", { pid }); } catch (e) { toast(e.message, true); } }
+  toast("Esperando que se cierre…");
+  const end = Date.now() + 15000;
+  while (Date.now() < end) {
+    await new Promise(res => setTimeout(res, 1000));
+    try {
+      S.mon = await api("/api/monitor");
+      const alive = new Set(S.mon.processes.flatMap(p => [p.pid, ...p.children.map(c => c.pid)]));
+      if (!pids.some(p => alive.has(p))) return true;
+    } catch (e) { }
+  }
+  toast("Tardó más de lo esperado en cerrarse.", true);
+  return false;
+}
+async function startSD(path) {
+  for (let round = 0; round < 5; round++) {
+    let r;
+    try { r = await api("/api/sd/start", { path }); } catch (e) { toast(e.message, true); return; }
+    if (!r.conflict) { sdStarted(r); return; }
+    const choice = await conflictBox(r);
+    if (choice === "stop") { await stopConflicting(r); continue; }
+    if (choice === "force") {
+      try { sdStarted(await api("/api/sd/start", { path, port: r.suggested_port, force: true })); } catch (e) { toast(e.message, true); }
+    }
+    return;
+  }
+}
+async function killProc(pid, label, force) {
+  const pr = (S.mon?.processes || []).find(p => p.pid === pid);
+  const training = pr?.training || (pr?.children || []).some(c => /entrenamiento/i.test(c.label));
+  const ok = await confirmBox(force ? "Forzar cierre" : "Detener proceso",
+    `${label} (PID ${pid})${force ? " se cierra de inmediato (SIGKILL), sin darle tiempo a guardar." : " y sus subprocesos reciben la señal para cerrarse."}` +
+    (training ? " ⚠️ Está entrenando un LoRA: si lo detenés, el entrenamiento se pierde." : ""),
+    force ? "Forzar" : "Detener");
+  if (ok) act(() => api("/api/kill", { pid, force }), "Señal enviada a PID " + pid);
+}
+async function unloadModel(model) { act(() => api("/api/ollama/unload", { model }), model + " descargado de memoria"); }
+
+function ollamaModelsTable() {
+  const o = S.mon?.ollama;
+  if (!o?.up) return `<div class="empty">Ollama no está corriendo.</div>`;
+  if (!o.loaded.length) return `<div class="empty">No hay modelos cargados en memoria. Se cargan solos cuando les hacés un pedido.</div>`;
+  return `<table><tr><th>Modelo</th><th class="num">Tamaño</th><th class="num">En GPU</th><th>Se libera</th><th></th></tr>` +
+    o.loaded.map(m => `<tr><td><b>${esc(m.name)}</b></td><td class="num">${bytes(m.size)}</td>
+      <td class="num">${m.size ? Math.round((m.size_vram || 0) / m.size * 100) : 0}%</td>
+      <td class="small muted">${m.expires_at ? timeLeft(m.expires_at) : ""}</td>
+      <td class="num"><button class="b" onclick="unloadModel('${esc(m.name)}')">Descargar de memoria</button></td></tr>`).join("") + `</table>`;
+}
+function timeLeft(iso) {
+  const d = (new Date(iso) - Date.now()) / 1000;
+  if (!isFinite(d)) return "";
+  if (d > 1e7) return "nunca (keep_alive -1)";
+  if (d < 0) return "ahora";
+  return d > 3600 ? "en " + (d / 3600).toFixed(1) + " h" : d > 60 ? "en " + Math.round(d / 60) + " min" : "en " + Math.round(d) + " s";
+}
+function sdApiHtml(path) {
+  const s = S.mon?.sd.find(x => x.path === path);
+  if (!s?.up) return "";
+  if (!s.api) return "";
+  if (!s.api.api) return `<div class="small muted" style="margin-top:8px">Para ver y descargar el checkpoint desde acá, iniciá con <span class="mono">--api</span>.</div>`;
+  return `<div class="row small" style="margin-top:8px">Checkpoint en memoria: <b>${esc(s.api.checkpoint || "ninguno")}</b>
+    ${s.api.checkpoint ? `<button class="b" onclick="act(()=>api('/api/sd/call',{path:'${esc(path)}',action:'unload'}),'Checkpoint descargado de memoria')">Descargar de memoria</button>`
+      : `<button class="b" onclick="act(()=>api('/api/sd/call',{path:'${esc(path)}',action:'reload'}),'Cargando checkpoint…')">Cargar</button>`}</div>`;
+}
+
+let pointerDown = false;
+document.addEventListener("pointerdown", () => pointerDown = true, true);
+document.addEventListener("pointerup", () => setTimeout(() => pointerDown = false, 150), true);
+let lastMonitorHtml = "";
+function purposeLine(kind) {
+  const t = window.HELP && HELP.purpose && HELP.purpose[kind];
+  return t ? `<div class="purpose">${t}</div>` : "";
+}
+function renderMonitor() {
+  const m = S.mon;
+  if (!m) { $("#main").innerHTML = `<h2>Monitor</h2><div class="sub">Cargando…</div>`; return; }
+  const [oc, ot] = ollamaStatus();
+  const procs = m.processes;
+  const sdCards = m.sd.map(s => {
+    const [c, t] = sdStatus(s);
+    return `<div class="card"><div class="row between"><div class="title">${kindIcon(s.kind)} ${esc(s.label)}</div><span class="chip">${esc(s.name)}</span></div>${purposeLine(s.kind)}
+      <div class="row" style="margin:8px 0 10px"><span class="dot ${c}"></span> ${esc(t)}</div>
+      <div class="row">${sdButtons(s.path)}</div>${sdFailBox(s.path)}${sdApiHtml(s.path)}</div>`;
+  }).join("") || `<div class="card"><div class="title">🎨 Apps de imagen</div><div class="muted" style="margin-top:6px">No encontré ninguna instalación. <button class="link" onclick="go('sd')">Buscar o agregar…</button></div></div>`;
+
+  const rows = procs.map(p => {
+    const open = S.expanded.has(p.pid);
+    const kids = p.children.length;
+    let h = `<tr><td><div class="row" style="gap:6px">${kids ? `<button class="link" onclick="toggleExp(${p.pid})">${open ? "▾" : "▸"}</button>` : `<span style="width:9px"></span>`}
+        <span>${p.service === "ollama" ? "🦙" : kindIcon(p.kind || m.sd.find(x => x.path === p.install)?.kind)}</span><b>${esc(p.label)}</b>
+        ${p.training ? `<span class="chip warn">entrenando</span>` : ""}
+        ${p.started_here ? `<span class="chip">iniciado aquí</span>` : `<span class="chip warn">externo</span>`}</div>
+        <div class="small muted mono" style="margin:2px 0 0 33px" title="${esc(p.cmd)}">${esc(p.cmd.length > 90 ? p.cmd.slice(0, 90) + "…" : p.cmd)}</div></td>
+      <td class="num mono">${p.pid}</td><td class="num">${p.cpu.toFixed(1)}%</td><td class="num">${bytes(p.rss)}</td>
+      <td class="num">${esc(p.etime)}</td>
+      <td>${p.ports.map(x => `<button class="link mono" onclick="openUrl('http://127.0.0.1:${x}')">:${x}</button>`).join(" ")}</td>
+      <td class="num" style="white-space:nowrap"><button class="b danger" onclick="killProc(${p.pid}, '${esc(p.label)}', false)">Detener</button>
+        <button class="b danger" title="SIGKILL" onclick="killProc(${p.pid}, '${esc(p.label)}', true)">Forzar</button></td></tr>`;
+    if (open) h += p.children.map(c => `<tr class="child"><td><span class="mono">${esc(c.label)}</span> <span class="small" title="${esc(c.cmd)}">${esc(c.cmd.slice(0, 70))}</span></td>
+      <td class="num mono">${c.pid}</td><td class="num">${c.cpu.toFixed(1)}%</td><td class="num">${bytes(c.rss)}</td><td></td>
+      <td>${c.ports.map(x => ":" + x).join(" ")}</td>
+      <td class="num"><button class="b danger" onclick="killProc(${c.pid}, '${esc(c.label)}', false)">Detener</button></td></tr>`).join("");
+    return h;
+  }).join("");
+  const totalRss = procs.reduce((a, p) => a + p.rss, 0);
+  const loadedVram = (m.ollama.loaded || []).reduce((a, x) => a + (x.size || 0), 0);
+
+  const html = `
+    <h2>Monitor</h2>
+    ${guideCard("monitor")}
+    <div class="sub">Qué está corriendo ahora mismo, cuánto consume, y botones para cerrar lo que no uses. Se actualiza solo.</div>
+    <div class="grid2">
+      <div class="card"><div class="row between"><div class="title">🦙 Ollama</div>${S.state?.ollama?.version ? `<span class="chip">v${esc(S.state.ollama.version)}</span>` : ""}</div>${purposeLine("ollama")}
+        <div class="row" style="margin:8px 0 10px"><span class="dot ${oc}"></span> ${esc(ot)}
+          ${m.ollama.up ? `<span class="muted">· ${m.ollama.loaded.length} modelo(s) en memoria${loadedVram ? " (" + bytes(loadedVram) + ")" : ""}</span>` : ""}</div>
+        <div class="row">${ollamaButtons()} <button class="b" onclick="go('ollama')">Opciones…</button></div>${ollamaFailBox()}</div>
+      ${sdCards}
+    </div>
+    ${(!S.state?.ollama?.found || !S.state?.installs?.length) ? `<div class="card row between"><div><b>¿Te falta alguna app?</b><div class="small muted">Podés instalar Ollama, Stable Diffusion y otras sin usar la terminal.</div></div><button class="b primary" onclick="go('install')">Instalar apps</button></div>` : ""}
+    <h3>Procesos detectados ${procs.length ? `<span class="muted small" style="font-weight:400">· ${bytes(totalRss)} de memoria en total</span>` : ""}</h3>
+    <div class="card" style="padding:4px 8px">${procs.length ? `<table><tr><th>Proceso</th><th class="num">PID</th><th class="num">CPU</th><th class="num">Memoria</th><th class="num">Hace</th><th>Puertos</th><th></th></tr>${rows}</table>`
+      : `<div class="empty">Nada corriendo: ni Ollama ni apps de imagen.</div>`}</div>
+    ${procs.length ? `<div class="small muted" style="margin:-4px 4px 8px">¿La compu anda lenta? Mirá qué proceso usa más memoria y detené lo que no estés usando.</div>` : ""}
+    <h3>Modelos de Ollama en memoria</h3>
+    <div class="card" style="padding:4px 8px">${ollamaModelsTable()}</div>`;
+  if (html === lastMonitorHtml && $("#main").dataset.view === "monitor") return;
+  if (pointerDown && $("#main").dataset.view === "monitor") return;
+  lastMonitorHtml = html;
+  $("#main").innerHTML = html;
+  $("#main").dataset.view = "monitor";
+}
+function toggleExp(pid) { S.expanded.has(pid) ? S.expanded.delete(pid) : S.expanded.add(pid); renderMonitor(); }
+
+// ---------------------------------------------------------------- ayudas
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+function guideCard(key) {
+  const html = H?.sections?.[key]; if (!html) return "";
+  return `<details class="guide" ${lsGet("guide_" + key, "1") === "1" ? "open" : ""} ontoggle="lsSet('guide_${key}', this.open ? '1' : '0')"><summary>💡 ¿Qué es esto y cómo se usa?</summary><div>${html}</div></details>`;
+}
+const advMode = () => !H || lsGet("opt_mode", "simple") === "advanced";
+function setOptMode(m) { lsSet("opt_mode", m); render(); }
+function modeBar() {
+  if (!H) return "";
+  const adv = advMode();
+  return `<div class="card row between"><div class="row"><span class="title">Opciones</span>
+    <div class="seg"><button class="${adv ? "" : "on"}" onclick="setOptMode('simple')">Simple</button><button class="${adv ? "on" : ""}" onclick="setOptMode('advanced')">Avanzado</button></div></div>
+    <span class="small muted">${adv ? "Todas las opciones, ordenadas por tema." : "Sólo lo más útil. Si no sabés qué tocar, dejá todo como está."}</span></div>`;
+}
+function optRow(o, key, help, isSet, val, fn, search) {
+  const adv = advMode();
+  let h = `<div class="opt ${isSet ? "set" : ""}" id="row_${esc(key)}" ${search ? `data-search="${esc((key + " " + (help?.text || "") + " " + o.help).toLowerCase())}"` : ""}>
+    <div><div class="name">${esc(key)}${help?.tip && /Recomendado/.test(help.tip) ? `<span class="badge">recomendado</span>` : ""}</div></div>
+    <div><div class="ctl">${optControl(o, val, fn)}</div>`;
+  if (help) {
+    h += `<div class="help">${help.text}</div>`;
+    if (help.tip) h += `<div class="tip">💡 ${help.tip}</div>`;
+    if (adv) h += `<div class="help orig">Original: ${esc(o.help)}</div>`;
+  } else h += `<div class="help">${esc(o.help)}</div>`;
+  return h + `</div></div>`;
+}
+function simpleList(opts, shownRows) {
+  return `<div class="card"><div class="title">Opciones principales</div>
+    <div class="small muted" style="margin:2px 0 6px">Mostrando ${shownRows.length} de ${opts} opciones. Cambiá a Avanzado para ver todas.</div>${shownRows.join("") || `<div class="empty">No hay opciones principales para mostrar.</div>`}</div>`;
+}
+
+// ---------------------------------------------------------------- Ollama
+const saveOllamaEnv = debounce(() => api("/api/config", { ollama_env: S.state.config.ollama.env }).catch(e => toast(e.message, true)), 400);
+function optControl(o, val, onChangeName) {
+  const id = "o_" + (o.name || o.flag).replace(/[^a-zA-Z0-9]/g, "_");
+  const key = esc(o.name || o.flag);
+  if (o.kind === "bool")
+    return `<input type="checkbox" class="toggle" id="${id}" ${val === true ? "checked" : ""} onchange="${onChangeName}('${key}', this.checked)">`;
+  if (o.kind === "choice") {
+    const choices = o.choices || [];
+    return `<select id="${id}" onchange="${onChangeName}('${key}', this.value)"><option value="">(por defecto${o.default ? ": " + esc(o.default) : ""})</option>
+      ${choices.map(c => `<option ${String(val) === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`;
+  }
+  if (o.kind === "flagvalue") {
+    const v = val || {};
+    return `<input type="checkbox" class="toggle" ${v.on ? "checked" : ""} onchange="${onChangeName}('${key}', {...(cur('${key}')||{}), on:this.checked})">
+      <input type="text" placeholder="valor opcional" value="${esc(v.value || "")}" oninput="${onChangeName}('${key}', {...(cur('${key}')||{}), value:this.value})">`;
+  }
+  const ph = o.default ? "por defecto: " + o.default : "";
+  let h = `<input type="${o.kind === "number" ? "number" : "text"}" id="${id}" placeholder="${esc(ph)}" value="${esc(val ?? "")}" oninput="${onChangeName}('${key}', this.value)">`;
+  if (o.kind === "path") h += `<button class="b" onclick="pickPath('${key}', '${onChangeName}', '${/file|ckpt|config|\.|keyfile|certfile/i.test(o.name || o.flag) && !/dir/i.test(o.name || o.flag) ? "file" : "folder"}')">Elegir…</button>`;
+  return h;
+}
+async function pickPath(key, fnName, kind) {
+  try { const r = await api("/api/choose", { kind }); if (r.path) { window[fnName](key, r.path); render(); } } catch (e) { toast(e.message, true); }
+}
+function setOllamaEnv(name, val) {
+  const env = S.state.config.ollama.env;
+  if (val === "" || val === false || val == null) delete env[name]; else env[name] = val;
+  saveOllamaEnv();
+  const row = document.getElementById("row_" + name); if (row) row.classList.toggle("set", name in env);
+  $("#ollamaEnvPreview") && ($("#ollamaEnvPreview").textContent = ollamaEnvPreview());
+}
+function ollamaEnvPreview() {
+  const env = S.state.config.ollama.env, mode = S.state.config.ollama.mode;
+  const parts = Object.entries(env).map(([k, v]) => `${k}=${v === true ? 1 : JSON.stringify(String(v)).slice(1, -1).includes(" ") ? JSON.stringify(String(v)) : v}`);
+  const win = S.state.platform === "windows";
+  const q = p => /\s/.test(p) ? `"${p}"` : p;
+  if (mode === "app") {
+    if (win) return (parts.length ? parts.map(p => "set " + p).join("\n") + "\n" : "") + q(S.state.ollama.app || "ollama app.exe");
+    return (parts.length ? parts.map(p => "launchctl setenv " + p.replace("=", " ")).join("\n") + "\n" : "") + `open ${q(S.state.ollama.app || "Ollama.app")}`;
+  }
+  if (win) return (parts.length ? parts.map(p => "set " + p).join("\n") + "\n" : "") + q(S.state.ollama.binary || "ollama") + " serve";
+  return (parts.join(" ") + " " + q(S.state.ollama.binary || "ollama") + " serve").trim();
+}
+async function setOllamaMode(mode) { S.state.config.ollama.mode = mode; await api("/api/config", { ollama_mode: mode }); renderOllama(); }
+
+function renderOllama() {
+  const st = S.state, o = st.ollama, env = st.config.ollama.env, mode = st.config.ollama.mode;
+  if (!o.found) {
+    $("#main").innerHTML = `<h2>Ollama</h2><div class="card">No encontré Ollama en ${os_().device}. Instalalo desde <button class="link" onclick="openUrl('https://ollama.com/download')">ollama.com/download</button> y tocá <b>Buscar de nuevo</b> en Ajustes.</div>`;
+    return;
+  }
+  const cats = {};
+  st.ollama_options.forEach(op => (cats[op.category] ||= []).push(op));
+  const order = ["Red", "Memoria y rendimiento", "Almacenamiento", "Otros"];
+  const presets = Object.keys(st.config.ollama.presets || {});
+  $("#main").innerHTML = `
+    <h2>🦙 Ollama</h2>
+    ${guideCard("ollama")}
+    <div class="sub">Las opciones se leen de <span class="mono">ollama serve --help</span> de tu versión instalada.</div>
+    <div class="card">
+      ${purposeLine("ollama")}
+      <div class="row between"><div class="row" data-live="ollamaStatus">${LIVE.ollamaStatus()}</div><div class="row" data-live="ollamaButtons">${ollamaButtons()}</div></div>
+      <div data-live="ollamaFail">${ollamaFailBox()}</div>
+      <div class="kv small" style="margin-top:12px">
+        <div>Ejecutable</div><div class="mono selectable">${esc(o.binary || "—")}</div>
+        <div>App</div><div class="mono selectable">${esc(o.app || "—")}</div>
+        <div>Versión</div><div>${esc(o.version || "?")}</div>
+        <div>Modelos</div><div class="mono selectable">${esc(o.models_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(o.models_dir)}'})">abrir</button></div>
+        <div>Ubicación</div><div>${o.source === "cache" ? `<span class="chip ok">verificada desde la caché</span>` : `<span class="chip">${esc(o.source)}</span>`}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row between"><div><div class="title">Cómo iniciarlo</div><div class="small muted">Las dos formas usan las opciones de abajo.</div></div>
+      <div class="seg"><button class="${mode === "cli" ? "on" : ""}" onclick="setOllamaMode('cli')">ollama serve</button><button class="${mode === "app" ? "on" : ""}" onclick="setOllamaMode('app')" ${o.app ? "" : "disabled"}>App de Ollama</button></div></div>
+      <div class="small muted" style="margin-top:8px">${mode === "cli" ? "Corre el servidor en segundo plano, con logs en la pestaña Logs. Sin el ícono propio de Ollama." : (S.state.platform === "mac" ? "Abre Ollama.app. Las opciones se pasan con <span class='mono'>launchctl setenv</span> (quedan hasta reiniciar la Mac)." : "Abre la app de Ollama (ícono en " + os_().tray + ") con estas opciones como variables de entorno.")}</div>
+      <div class="cmd" id="ollamaEnvPreview" style="margin-top:10px">${esc(ollamaEnvPreview())}</div>
+    </div>
+
+    ${presetBar("ollama", presets)}
+
+    ${modeBar()}
+    ${advMode() ? order.filter(c => cats[c]).map(c => `<details class="cat" open><summary><span>${c}</span><span class="muted small">${cats[c].filter(x => x.name in env).length}/${cats[c].length} configuradas</span></summary><div>
+      ${cats[c].map(op => optRow(op, op.name, H?.ollama?.[op.name], op.name in env, env[op.name], "setOllamaEnv", false)).join("")}
+    </div></details>`).join("")
+    : simpleList(st.ollama_options.length, st.ollama_options.filter(op => H.ollama[op.name]?.simple || op.name in env).map(op => optRow(op, op.name, H.ollama[op.name], op.name in env, env[op.name], "setOllamaEnv", false)))}
+
+    <h3>Modelos instalados</h3>
+    <div class="card" style="padding:4px 8px" data-live="ollamaInstalled">${ollamaInstalled()}</div>
+    <div class="card">
+      <div class="title" style="margin-bottom:8px">Descargar un modelo</div>
+      <div class="row"><input type="text" id="pullName" placeholder="por ej. llama3.2, qwen3:8b, gemma3:4b" style="max-width:340px" onkeydown="if(event.key==='Enter')pull()">
+        <button class="b primary" onclick="pull()">Descargar</button>
+        <button class="link" onclick="openUrl('https://ollama.com/search')">Ver catálogo ↗</button></div>
+      ${suggestHtml()}
+      <div data-live="pulls">${pullsHtml()}</div>
+    </div>`;
+  LIVE.ollamaInstalled = ollamaInstalled;
+}
+function suggestHtml() {
+  const sg = H?.suggestions ? H.suggestions(S.mon?.memory?.total || 0) : [];
+  if (!sg.length) return "";
+  return `<div class="small" style="margin-top:10px"><b>Sugeridos para tu compu:</b> <span class="muted">(tocá uno para completar el nombre)</span>
+    ${sg.map(([n, d]) => `<div class="row" style="margin-top:4px;gap:8px"><button class="chip btn" title="${esc(d)}" onclick="$('#pullName').value='${esc(n)}'">${esc(n)}</button><span class="muted">${esc(d)}</span></div>`).join("")}</div>`;
+}
+function ollamaInstalled() {
+  const o = S.mon?.ollama;
+  if (!o?.up) return `<div class="empty">Iniciá Ollama para ver y administrar los modelos.</div>`;
+  if (!o.installed.length) return `<div class="empty">No hay modelos instalados.</div>`;
+  const loaded = new Set(o.loaded.map(m => m.name));
+  return `<table><tr><th>Modelo</th><th>Parámetros</th><th class="num">Tamaño</th><th>Modificado</th><th></th></tr>` +
+    o.installed.map(m => `<tr><td><b>${esc(m.name)}</b> ${loaded.has(m.name) ? `<span class="chip ok">en memoria</span>` : ""}
+        ${H?.ollamaModel ? `<div class="small muted" style="margin-top:2px;white-space:normal;max-width:420px">${H.ollamaModel(m, S.mon?.memory?.total || 0)}</div>` : ""}</td>
+      <td class="small muted">${esc([m.details?.parameter_size, m.details?.quantization_level].filter(Boolean).join(" · "))}</td>
+      <td class="num">${bytes(m.size)}</td><td class="small muted">${esc((m.modified_at || "").slice(0, 10))}</td>
+      <td class="num" style="white-space:nowrap">
+        ${loaded.has(m.name) ? `<button class="b" onclick="unloadModel('${esc(m.name)}')">Descargar de memoria</button>`
+          : `<button class="b" onclick="act(()=>api('/api/ollama/load',{model:'${esc(m.name)}'}),'Cargando ${esc(m.name)}…')">Cargar</button>`}
+        <button class="b" onclick="api('/api/ollama/chat',{model:'${esc(m.name)}'})">Chat en terminal</button>
+        <button class="b danger" onclick="delModel('${esc(m.name)}', ${m.size})">Borrar</button></td></tr>`).join("") + `</table>`;
+}
+async function delModel(name, size) {
+  if (await confirmBox("Borrar " + name, `Se elimina del disco y se liberan ${bytes(size)}. Para volver a usarlo hay que descargarlo de nuevo.`, "Borrar"))
+    act(() => api("/api/ollama/delete", { model: name }), name + " borrado");
+}
+async function pull() {
+  const name = $("#pullName").value.trim(); if (!name) return;
+  await act(() => api("/api/ollama/pull", { model: name }));
+  $("#pullName").value = "";
+}
+function pullsHtml() {
+  const p = S.mon?.pulls || {};
+  const ks = Object.keys(p); if (!ks.length) return "";
+  return `<table style="margin-top:10px">` + ks.map(k => {
+    const x = p[k], pct = x.total ? x.completed / x.total * 100 : 0;
+    return `<tr><td><b>${esc(k)}</b></td><td class="small ${x.error ? "" : "muted"}" style="${x.error ? "color:var(--bad)" : ""}">${esc(x.error || x.status)}</td>
+      <td>${x.total && !x.done ? `<div class="progress"><div style="width:${pct.toFixed(1)}%"></div></div>` : ""}</td>
+      <td class="num small">${x.total && !x.done ? bytes(x.completed) + " / " + bytes(x.total) : ""}</td>
+      <td class="num">${x.done ? `<button class="link" onclick="api('/api/ollama/pull_clear',{model:'${esc(k)}'}).then(refreshMonitor)">quitar</button>` : ""}</td></tr>`;
+  }).join("") + `</table>`;
+}
+
+// ---------------------------------------------------------------- presets
+function presetBar(service, names) {
+  return `<div class="card row between"><div class="row"><span class="title" style="margin-right:6px">Perfiles</span>
+    ${names.length ? names.map(n => `<span class="chip" style="padding:3px 4px 3px 8px">${esc(n)}
+      <button class="link" onclick="applyPreset('${service}','${esc(n)}')">usar</button>
+      <button class="link" style="color:var(--muted)" onclick="delPreset('${service}','${esc(n)}')">×</button></span>`).join(" ")
+      : `<span class="muted small">Guardá la configuración actual para reusarla (por ej. “Rápido”, “Red local”).</span>`}</div>
+    <button class="b" onclick="savePreset('${service}')">Guardar como perfil…</button></div>`;
+}
+async function savePreset(service) {
+  const name = await promptBox("Nombre del perfil", "por ej. Rápido, Red local"); if (!name) return;
+  let values;
+  if (service === "ollama") values = { env: S.state.config.ollama.env, mode: S.state.config.ollama.mode };
+  else { const p = curInstall().path; values = { path: p, args: S.state.config.sd.args[p] || {}, extra: S.state.config.sd.extra[p] || "" }; }
+  await api("/api/preset/save", { service, name, values });
+  S.state.config[service].presets[name] = values; render(); toast("Perfil guardado");
+}
+async function applyPreset(service, name) {
+  const v = S.state.config[service].presets[name];
+  if (service === "ollama") {
+    S.state.config.ollama.env = { ...v.env }; S.state.config.ollama.mode = v.mode || "cli";
+    await api("/api/config", { ollama_env: v.env, ollama_mode: S.state.config.ollama.mode });
+  } else {
+    const p = curInstall().path;
+    S.state.config.sd.args[p] = { ...v.args }; S.state.config.sd.extra[p] = v.extra || "";
+    const r = await api("/api/config", { sd_path: p, sd_values: v.args, sd_extra: v.extra || "" });
+    curInstall().preview = r.preview;
+  }
+  render(); toast("Perfil “" + name + "” aplicado");
+}
+async function delPreset(service, name) {
+  if (!await confirmBox("Borrar perfil", "Se borra el perfil “" + name + "”.", "Borrar")) return;
+  await api("/api/preset/delete", { service, name }); delete S.state.config[service].presets[name]; render();
+}
+
+// ---------------------------------------------------------------- Stable Diffusion
+function curInstall() { const sel = S.state.config.sd.selected; return S.state.installs.find(i => i.path === sel) || S.state.installs[0]; }
+function cur(flag) { const i = curInstall(); return (S.state.config.sd.args[i.path] || {})[flag]; }
+const saveSD = debounce(async () => {
+  const i = curInstall();
+  try {
+    const r = await api("/api/config", { sd_path: i.path, sd_values: S.state.config.sd.args[i.path] || {}, sd_extra: S.state.config.sd.extra[i.path] || "" });
+    i.preview = r.preview; const el = $("#sdPreview"); if (el) el.textContent = r.preview;
+  } catch (e) { toast(e.message, true); }
+}, 300);
+function setSD(flag, val) {
+  const i = curInstall();
+  const vals = (S.state.config.sd.args[i.path] ||= {});
+  const empty = val === "" || val === false || val == null || (typeof val === "object" && !val.on && !val.value);
+  if (empty) delete vals[flag]; else vals[flag] = val;
+  const row = document.getElementById("row_" + flag); if (row) row.classList.toggle("set", !empty);
+  saveSD();
+  updateCatCounts();
+}
+function setExtra(v) { S.state.config.sd.extra[curInstall().path] = v; saveSD(); }
+async function selectInstall(path) { S.state.config.sd.selected = path; await api("/api/config", { sd_selected: path }); renderSD(); }
+async function addInstall() { try { const st = await api("/api/add_install", {}); if (st.installs) { S.state = st; renderSD(); toast("Instalación agregada"); } } catch (e) { toast(e.message, true); } }
+async function rescan(deep) {
+  toast(deep ? "Buscando en toda tu carpeta personal…" : "Buscando…");
+  try { S.state = await api("/api/rescan", { deep }); render(); toast("Listo: " + S.state.installs.length + " instalación(es) de SD encontradas"); } catch (e) { toast(e.message, true); }
+}
+function updateCatCounts() {
+  const i = curInstall(), vals = S.state.config.sd.args[i.path] || {};
+  document.querySelectorAll("[data-catcount]").forEach(el => {
+    const flags = el.dataset.catcount.split(" ");
+    el.textContent = flags.filter(f => f in vals).length + "/" + flags.length + " configuradas";
+  });
+}
+function filterSD(q) {
+  S.sdFilter = q.toLowerCase();
+  document.querySelectorAll("#sdOpts .opt").forEach(el => el.classList.toggle("hidden", !!S.sdFilter && !el.dataset.search.includes(S.sdFilter)));
+  document.querySelectorAll("#sdOpts details.cat").forEach(d => {
+    const any = [...d.querySelectorAll(".opt")].some(o => !o.classList.contains("hidden"));
+    d.classList.toggle("hidden", !any); if (S.sdFilter) d.open = true;
+  });
+}
+const CAT_ORDER = ["Más usadas", "Red y API", "Memoria y rendimiento", "Rutas", "Interfaz", "Arranque e instalación", "Otros"];
+const CAT_HINT = {
+  "Más usadas": "Las opciones que más se suelen tocar. El resto está agrupado abajo, o usá el buscador.",
+  "Red y API": "Para acceder desde otros dispositivos (--listen), usar la API (--api) o cambiar el puerto.",
+  "Memoria y rendimiento": "Con poca memoria probá --medvram-sdxl o --lowvram. En Mac con Apple Silicon, --no-half suele hacer falta para modelos SD 1.5.",
+};
+function renderSD() {
+  const st = S.state;
+  if (!st.installs.length) {
+    $("#main").innerHTML = `<h2>🎨 Imagen</h2><div class="card"><p>No encontré ninguna instalación de AUTOMATIC1111, Forge, ComfyUI ni Kohya_ss.</p>
+      <div class="row"><button class="b primary" onclick="rescan(true)">Buscar en todo el disco</button><button class="b" onclick="addInstall()">Elegir carpeta…</button></div></div>`;
+    return;
+  }
+  const i = curInstall(), vals = st.config.sd.args[i.path] || {};
+  const cats = {};
+  i.options.forEach(o => {
+    let o2 = o;
+    if (o.flag === "--ckpt" && i.checkpoints.length) o2 = { ...o, kind: "choice", choices: i.checkpoints.map(c => c.path) };
+    (cats[o.category] ||= []).push(o2);
+  });
+  const presets = Object.keys(st.config.sd.presets || {});
+  const pre = Object.entries(i.preset_args || {});
+  $("#main").innerHTML = `
+    <h2>🎨 Apps de imagen</h2>
+    <div class="sub">Stable Diffusion, ComfyUI y Kohya_ss (entrenamiento). Las ${i.options.length} opciones se leen directo del código de tu instalación (<span class="mono">${esc(i.args_file.replace(i.path + "/", ""))}</span>), así que siempre coinciden con tu versión.</div>
+    ${guideCard(i.kind)}
+    <div class="card">
+      <div class="row between">
+        <div class="row">${st.installs.length > 1 ? `<select style="width:auto" onchange="selectInstall(this.value)">${st.installs.map(x => `<option value="${esc(x.path)}" ${x.path === i.path ? "selected" : ""}>${kindIcon(x.kind)} ${esc(x.label)} — ${esc(x.name)}</option>`).join("")}</select>` : `<span class="title">${kindIcon(i.kind)} ${esc(i.label)}</span>`}</div>
+        <div class="row"><button class="b" onclick="addInstall()">Agregar otra…</button><button class="b" onclick="rescan(false)">Buscar de nuevo</button></div>
+      </div>
+      ${purposeLine(i.kind)}
+      <div class="kv small" style="margin-top:12px">
+        <div>Carpeta</div><div class="mono selectable">${esc(i.path)} <button class="link" onclick="api('/api/open',{path:'${esc(i.path)}'})">abrir</button></div>
+        <div>Entorno Python</div><div>${i.has_venv ? "venv listo" : `<span class="chip warn">sin venv: la primera vez se instalan dependencias (tarda)</span>`}</div>
+        ${i.kind === "kohya" ? "" : `<div>Checkpoints</div><div>${i.checkpoints.length ? i.checkpoints.map(c => `<div class="ckpt"><span class="chip">${esc(c.name)} · ${bytes(c.size)}</span>${H?.checkpoint ? `<div class="small muted" style="margin-top:2px">${H.checkpoint(c.name, c.size)}</div>` : ""}</div>`).join("") : "ninguno"}</div>`}
+        <div>Ubicación</div><div>${i.source === "cache" ? `<span class="chip ok">verificada desde la caché</span>` : `<span class="chip">${esc(i.source || "detectada")}</span>`}</div>
+      </div>
+      <div class="row between" style="margin-top:14px"><div class="row" data-live="sdStatus" data-path="${esc(i.path)}">${LIVE.sdStatus({ path: i.path })}</div>
+        <div class="row" data-live="sdButtons" data-path="${esc(i.path)}">${sdButtons(i.path)}</div></div>
+      <div data-live="sdFail" data-path="${esc(i.path)}">${sdFailBox(i.path)}</div>
+      <div data-live="sdApi" data-path="${esc(i.path)}">${sdApiHtml(i.path)}</div>
+    </div>
+
+    <div class="card">
+      <div class="title" style="margin-bottom:6px">Comando que se va a ejecutar</div>
+      <div class="cmd" id="sdPreview">${esc(i.preview)}</div>
+      ${pre.length ? `<div class="small muted" style="margin-top:8px">${pre.map(([f, a]) => `Además, <span class="mono">${esc(f)}</span> ya agrega: <span class="mono">${esc(a)}</span>`).join("<br>")}</div>` : ""}
+      <div style="margin-top:10px"><div class="small muted" style="margin-bottom:4px">Argumentos extra (para extensiones u opciones que no estén en la lista)</div>
+        <input type="text" class="mono" value="${esc(st.config.sd.extra[i.path] || "")}" placeholder="--mi-opcion valor" oninput="setExtra(this.value)"></div>
+    </div>
+
+    ${presetBar("sd", presets)}
+
+    ${modeBar()}
+    ${advMode() ? `<div class="sticky"><input type="text" placeholder="🔍  Buscar opción (por ej. vram, port, api, theme)…" value="${esc(S.sdFilter)}" oninput="filterSD(this.value)"></div>
+    <div id="sdOpts">
+    ${CAT_ORDER.filter(c => cats[c]).map(c => `<details class="cat" ${c === "Más usadas" ? "open" : ""}>
+      <summary><span>${c}</span><span class="muted small" data-catcount="${cats[c].map(o => o.flag).join(" ")}">${cats[c].filter(o => o.flag in vals).length}/${cats[c].length} configuradas</span></summary><div>
+      ${CAT_HINT[c] ? `<div class="small muted" style="padding:2px 0 6px">${CAT_HINT[c]}</div>` : ""}
+      ${cats[c].map(o => optRow(o, o.flag, H?.sd?.[o.flag], o.flag in vals, vals[o.flag], "setSD", true)).join("")}
+    </div></details>`).join("")}
+    </div>`
+    : `<div id="sdOpts">${simpleList(i.options.length, CAT_ORDER.filter(c => cats[c]).flatMap(c => cats[c]).filter(o => H.sd[o.flag]?.simple || o.flag in vals).map(o => optRow(o, o.flag, H.sd[o.flag], o.flag in vals, vals[o.flag], "setSD", true)))}</div>`}`;
+  if (S.sdFilter && advMode()) filterSD(S.sdFilter);
+}
+
+// ---------------------------------------------------------------- logs
+let logTimer = null;
+async function renderLogs() {
+  const { sources } = await api("/api/logs");
+  if (!S.logPath || !sources.find(s => s.id === S.logPath)) S.logPath = sources[0]?.id || null;
+  $("#main").innerHTML = `<h2>📜 Logs</h2>
+    <div class="row" style="margin:10px 0"><select style="width:auto" onchange="S.logPath=this.value;S.logOffset=null;renderLogs()">
+      ${sources.map(s => `<option value="${esc(s.id)}" ${s.id === S.logPath ? "selected" : ""}>${esc(s.label)}</option>`).join("")}</select>
+      ${S.logPath ? `<button class="b" onclick="api('/api/open',{path:S.logPath,reveal:true})">Mostrar en ${os_().files}</button>` : ""}
+      <label class="row small muted"><input type="checkbox" id="logFollow" checked> seguir el final</label></div>
+    ${S.logPath ? `<pre class="log selectable" id="logBox"></pre>` : `<div class="card empty">Todavía no hay logs. Aparecen cuando inicies algo desde acá.</div>`}`;
+  S.logOffset = null;
+  pollLog();
+}
+async function pollLog() {
+  clearTimeout(logTimer);
+  if (S.view !== "logs" || !S.logPath) return;
+  try {
+    const r = await api(`/api/log?path=${encodeURIComponent(S.logPath)}${S.logOffset != null ? "&offset=" + S.logOffset : ""}`);
+    const box = $("#logBox");
+    if (box && r.text) {
+      box.textContent += r.text;
+      if (box.textContent.length > 400000) box.textContent = box.textContent.slice(-300000);
+      if ($("#logFollow")?.checked) box.scrollTop = box.scrollHeight;
+    }
+    S.logOffset = r.offset;
+  } catch (e) { }
+  logTimer = setTimeout(pollLog, 1000);
+}
+
+// ---------------------------------------------------------------- ajustes
+function renderSettings() {
+  const st = S.state, c = st.config, rep = st.detect_report || {};
+  $("#main").innerHTML = `<h2>⚙️ Ajustes</h2><div class="sub">AI Launcher vive en ${os_().tray}. Cerrar esta ventana no detiene nada.</div>
+    <div class="card">
+      <div class="opt"><div><b>Abrir al iniciar sesión</b><div class="help">Arranca en ${os_().tray} cuando iniciás sesión.</div></div>
+        <div class="ctl"><input type="checkbox" class="toggle" ${st.login_item ? "checked" : ""} onchange="setSetting('login_item', this.checked)"></div></div>
+      <div class="opt"><div><b>Abrir esta ventana al lanzar la app</b><div class="help">Si está apagado, sólo aparece el ícono en ${os_().tray}.</div></div>
+        <div class="ctl"><input type="checkbox" class="toggle" ${c.open_window_on_launch ? "checked" : ""} onchange="setSetting('open_window_on_launch', this.checked)"></div></div>
+      <div class="opt"><div><b>Al salir de AI Launcher, detener lo que inició</b><div class="help">Si está apagado, Ollama y SD siguen corriendo aunque cierres el launcher.</div></div>
+        <div class="ctl"><input type="checkbox" class="toggle" ${c.stop_on_quit ? "checked" : ""} onchange="setSetting('stop_on_quit', this.checked)"></div></div>
+    </div>
+    <h3>Ubicaciones (caché)</h3>
+    <div class="card">
+      <div class="small muted" style="margin-bottom:10px">En cada arranque se verifica que las rutas guardadas sigan existiendo. Si algo se movió o se borró, se vuelve a buscar (procesos en ejecución, ${S.state.platform === "mac" ? "Spotlight" : "registro de Windows"} y, si hace falta, recorriendo el disco). Además se buscan instalaciones nuevas en segundo plano.</div>
+      <div class="kv small">
+        <div>Última verificación</div><div>${esc(c.cache?.verified_at || "—")}</div>
+        <div>Ollama</div><div><span class="mono selectable">${esc(c.cache?.ollama?.binary || "no encontrado")}</span> <span class="chip ${rep.ollama === "cache" ? "ok" : ""}">${esc(rep.ollama || "")}</span></div>
+        <div>Apps de imagen</div><div>${(c.cache?.sd || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || "ninguna"} <span class="chip ${rep.sd === "cache" ? "ok" : ""}">${esc(rep.sd || "")}</span></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="b" onclick="rescan(false)">Buscar de nuevo</button><button class="b" onclick="rescan(true)">Búsqueda profunda</button></div>
+    </div>
+    ${H?.glossary ? `<h3>📖 Glosario</h3><div class="card">${Object.entries(H.glossary).map(([t, d]) => `<div style="margin-bottom:8px"><b>${esc(t)}</b><div class="muted">${esc(d)}</div></div>`).join("")}</div>` : ""}
+    <h3>Archivos</h3>
+    <div class="card kv small">
+      <div>Configuración</div><div class="mono selectable">${esc(st.config_file)} <button class="link" onclick="api('/api/open',{path:'${esc(st.config_file)}',reveal:true})">mostrar</button></div>
+      <div>Logs</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(st.log_dir)}'})">abrir</button></div>
+    </div>`;
+}
+async function setSetting(k, v) { try { await api("/api/config", { [k]: v }); S.state.config[k] = v; if (k === "login_item") S.state.login_item = v; toast("Guardado"); } catch (e) { toast(e.message, true); render(); } }
+
+
+// ---------------------------------------------------------------- instalar apps
+S.inst = { data: null, err: null, jobs: {}, parent: {}, pre: {}, more: {}, guide: {}, logOff: {}, loading: false };
+const APP_ICON = { ollama: "🦙", a1111: "🎨", forge: "🎨", comfyui: "🧩", kohya: "🏋️" };
+const APP_ORDER = ["ollama", "a1111", "forge", "comfyui", "kohya"];
+const APP_DIR = { a1111: "stable-diffusion-webui", forge: "stable-diffusion-webui-forge", comfyui: "ComfyUI", kohya: "kohya_ss" };
+const APP_KIND_LABEL = { ollama: "Chatear con inteligencia artificial", a1111: "Crear imágenes a partir de texto", forge: "Crear imágenes (versión más liviana)", comfyui: "Crear imágenes con bloques conectados", kohya: "Entrenar tus propios estilos (LoRA)" };
+async function loadInstallers() {
+  S.inst.loading = true;
+  try {
+    const d = await api("/api/installers");
+    S.inst.data = d; S.inst.err = null;
+    Object.entries(d.jobs || {}).forEach(([k, j]) => { if (!S.inst.jobs[k] || S.inst.jobs[k].state !== "running" || j.state !== "running") S.inst.jobs[k] = j; });
+  } catch (e) { S.inst.err = e.message; S.inst.data = null; }
+  S.inst.loading = false;
+}
+function instApps() { return (S.inst.data?.apps || []).slice().sort((a, b) => APP_ORDER.indexOf(a.id) - APP_ORDER.indexOf(b.id)); }
+function instSep() { return S.state?.platform === "windows" ? "\\" : "/"; }
+function instParent(a) { return S.inst.parent[a.id] || S.inst.data.default_parent || ""; }
+function instFinalPath(a) { const p = instParent(a); return p + (p.endsWith("/") || p.endsWith("\\") ? "" : instSep()) + (APP_DIR[a.id] || a.id); }
+function instMissingManual(a) { return (a.prereqs || []).filter(p => !p.ok && !p.auto); }
+function instHasAutoPrereq(a) { return (a.prereqs || []).some(p => p.auto && !p.ok); }
+async function renderInstall() {
+  const m = $("#main");
+  if (!S.inst.data && !S.inst.err) {
+    m.innerHTML = `<h2>＋ Instalar apps</h2><div class="sub">Cargando…</div>`;
+    if (!S.inst.loading) await loadInstallers();
+    if (S.view !== "install") return;
+  }
+  if (S.inst.err) {
+    m.innerHTML = `<h2>＋ Instalar apps</h2><div class="card"><div class="title">No se pudo cargar</div>
+      <div class="muted" style="margin:6px 0 10px">No pudimos obtener la lista de apps para instalar. (${esc(S.inst.err)})</div>
+      <button class="b primary" onclick="S.inst.err=null;S.inst.data=null;renderInstall()">Reintentar</button></div>`;
+    return;
+  }
+  const d = S.inst.data, win = d.platform === "windows" || S.state?.platform === "windows";
+  const osName = win ? "Windows" : "Mac";
+  m.innerHTML = `<h2>＋ Instalar apps</h2>
+    <div class="sub">Instalá las apps de inteligencia artificial sin tocar la terminal.</div>
+    <div class="card"><div class="title">¿Qué puedo instalar?</div>
+      <ul class="small" style="margin:6px 0 8px;padding-left:18px">
+        <li>🦙 <b>Ollama</b>: para chatear con una IA que corre en tu compu, sin internet.</li>
+        <li>🎨 <b>Stable Diffusion, Forge y ComfyUI</b>: para crear imágenes a partir de lo que escribas. Elegí una; Stable Diffusion es la más conocida.</li>
+        <li>🏋️ <b>Kohya_ss</b>: para entrenar tus propios estilos o personajes (es para usuarios más avanzados).</li>
+      </ul>
+      <div class="small muted">Instalar descarga varios GB desde las páginas oficiales de cada programa y puede tardar un buen rato. Si preferís hacerlo a mano, cada app tiene su guía paso a paso.</div></div>
+    ${instApps().map(a => instCard(a, osName)).join("")}`;
+  Object.keys(S.inst.logOff).forEach(k => S.inst.logOff[k] = null);
+  instApps().forEach(a => tailInstLog(a.id));
+  pollInstall();
+}
+function instCard(a, osName) {
+  const id = a.id, jobs = S.inst.jobs, j = jobs[id], running = j?.state === "running";
+  const r = a.requirements || {}, memTotal = S.mon?.memory?.total || 0;
+  const lowMem = r.ram_gb && memTotal && memTotal < r.ram_gb * 2 ** 30;
+  const showInstall = !a.installed || S.inst.more[id];
+  const missingManual = instMissingManual(a);
+  const hasAuto = instHasAutoPrereq(a);
+  const canAuto = a.auto_supported && !missingManual.length;
+  const why = !a.auto_supported ? (a.auto_note || "La instalación automática no está disponible en tu sistema.") : missingManual.length ? "Primero hay que resolver: " + missingManual.map(p => p.name).join(", ") + "." : "";
+  let h = `<div class="card" id="inst_${esc(id)}"><div class="row between"><div class="title">${APP_ICON[id] || "📦"} ${esc(a.name)}</div>
+      ${a.installed ? `<span class="chip ok">Instalado ✓</span>` : ""}</div>
+    <div class="purpose">${esc(a.purpose || APP_KIND_LABEL[id] || "")}</div>`;
+  if (a.installed) {
+    h += `<div class="small muted" style="margin-top:6px">${(a.installed_paths || []).map(p => `<div class="mono selectable">${esc(p)}</div>`).join("") || "Ya la tenés instalada."}</div>
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="goToApp('${esc(id)}')">Ir a la app</button>
+      ${running ? "" : `<button class="b" onclick="S.inst.more['${esc(id)}']=!S.inst.more['${esc(id)}'];renderInstall()">${S.inst.more[id] ? "Ocultar" : "Instalar otra copia…"}</button>`}</div>`;
+  }
+  if (showInstall || running || j) {
+    h += `<div style="${a.installed ? "margin-top:12px;border-top:1px solid var(--line);padding-top:10px" : "margin-top:6px"}">`;
+    if (showInstall && !running) {
+      h += `<div class="reqs small">
+        <span>💾 Espacio en disco: <b>${esc(r.disk_gb)} GB</b></span>
+        <span class="${lowMem ? "" : ""}" style="${lowMem ? "color:var(--warn)" : ""}">🧠 Memoria recomendada: <b>${esc(r.ram_gb)} GB</b></span>
+        <span>⬇️ Descarga: <b>${esc(r.download_gb)} GB</b></span>
+        <span>⏱️ Tiempo estimado: <b>${esc(r.est_minutes)} min</b></span></div>
+        ${lowMem ? `<div class="warn-box small">Tu compu tiene ${bytes(memTotal)} de memoria, menos de lo recomendado (${esc(r.ram_gb)} GB). Puede funcionar lento o fallar.</div>` : ""}`;
+      if ((a.prereqs || []).length) {
+        h += `<div class="small"><b>Requisitos previos</b>` + a.prereqs.map(p => `<div class="prereq"><span style="color:var(--${p.ok ? "ok" : "bad"})">${p.ok ? "✓" : "✗"}</span><div><b>${esc(p.name)}</b> <span class="muted">${esc(p.detail || "")}</span>
+          ${!p.ok && p.how ? `<div class="muted">${esc(p.how)}</div>` : ""}
+          ${!p.ok && !p.auto && p.terminal_cmd ? `<div class="codeblock"><code class="selectable">${esc(p.terminal_cmd)}</code><button class="b" onclick="copyCmd(this)">Copiar</button></div>
+            <div style="margin-top:6px"><button class="b" onclick="instOpenTerminal('${esc(id)}','${esc(p.id)}')">Abrir Terminal con el comando</button></div>` : ""}
+          </div></div>`).join("") + `</div>`;
+      }
+      if (id !== "ollama") {
+        h += `<div class="small" style="margin-top:10px"><b>Dónde se instala</b><div class="row" style="margin-top:3px"><span class="mono selectable">${esc(instFinalPath(a))}</span>
+          <button class="b" onclick="instChoose('${esc(id)}')">Cambiar…</button></div></div>`;
+      }
+      if (hasAuto) {
+        const chk = S.inst.pre[id] !== false;
+        h += `<label class="row small" style="margin-top:10px"><input type="checkbox" ${chk ? "checked" : ""} onchange="S.inst.pre['${esc(id)}']=this.checked"> Instalar también lo que falte (${win_() ? "winget" : "Homebrew"})</label>`;
+      }
+    }
+    if (!running) {
+      h += `<div class="row" style="margin-top:12px">
+        ${showInstall ? `<button class="b primary" ${canAuto ? "" : "disabled"} onclick="startInstall('${esc(id)}')">Instalar automáticamente</button>` : ""}
+        <button class="b" onclick="S.inst.guide['${esc(id)}']=!S.inst.guide['${esc(id)}'];renderInstall()">${S.inst.guide[id] ? "Ocultar guía" : "Ver guía paso a paso"}</button>
+        <button class="link" onclick="openUrl(${esc(JSON.stringify(a.official_url || ""))})">Página oficial ↗</button></div>
+        ${showInstall && why ? `<div class="small muted" style="margin-top:6px">${esc(why)}</div>` : ""}
+        ${showInstall && canAuto && a.auto_note ? `<div class="small muted" style="margin-top:6px">${esc(a.auto_note)}</div>` : ""}`;
+    }
+    h += `<div data-live="instJob" data-app="${esc(id)}">${jobHtml(id)}</div>`;
+    if (j) h += `<pre class="log selectable" id="ilog_${esc(id)}" style="height:200px;margin-top:8px"></pre>`;
+    h += `</div>`;
+  }
+  if (S.inst.guide[id] && !running) {
+    h += `<div style="margin-top:12px"><div class="title">Instalación manual en ${osName}</div>` + (a.guide || []).map((g, n) => `<div class="guide-step"><div class="n">${n + 1}</div><div class="tx"><b>${esc(g.title)}</b><div>${g.text || ""}</div>
+      ${g.cmd ? `<div class="codeblock"><code class="selectable">${esc(g.cmd)}</code><button class="b" onclick="copyCmd(this)">Copiar</button></div>` : ""}</div></div>`).join("") + `</div>`;
+  }
+  return h + `</div>`;
+}
+const win_ = () => S.state?.platform === "windows";
+function jobHtml(id) {
+  const j = S.inst.jobs[id]; if (!j) return "";
+  const a = (S.inst.data?.apps || []).find(x => x.id === id) || { name: id };
+  const pct = Math.round((j.progress || 0) * 100);
+  const icon = { running: "◌", done: "✓", failed: "✗", skipped: "–", pending: "·" };
+  let h = "";
+  if (j.state === "running") h += `<div class="row between" style="margin-top:12px"><b>Instalando ${esc(a.name)}…</b><span class="small muted">${pct}%</span></div><div class="bar"><div style="width:${pct}%"></div></div>`;
+  h += `<div class="steps small">` + (j.steps || []).map(s => `<div class="step ${esc(s.state)}"><span class="ic">${icon[s.state] || "·"}</span><div>${esc(s.title)}${s.detail ? ` <span class="muted">${esc(s.detail)}</span>` : ""}</div></div>`).join("") + `</div>`;
+  if (j.state === "running") h += `<button class="b danger" onclick="cancelInstall('${esc(id)}')">Cancelar</button>`;
+  if (j.state === "done") h += `<div class="warn-box" style="background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:var(--ok)"><b>¡Listo! Ya podés usarla.</b>
+      <div class="row" style="margin-top:8px"><button class="b primary" onclick="openInstalled('${esc(id)}')">Abrir ${esc(a.name)}</button></div></div>`;
+  if (j.state === "failed") h += `<div class="err-box"><b>${esc(j.hint || "La instalación no se pudo completar.")}</b>
+      ${j.error ? `<div class="small muted" style="margin:6px 0">${esc(j.error)}</div>` : ""}
+      <div class="row">${j.log ? `<button class="b" onclick="S.logPath=${esc(JSON.stringify(j.log))};go('logs')">Ver log completo</button>` : ""}
+      <button class="b primary" onclick="startInstall('${esc(id)}')">Reintentar</button></div></div>`;
+  if (j.state === "cancelled") h += `<div class="warn-box">Instalación cancelada. <button class="link" onclick="startInstall('${esc(id)}')">Reintentar</button></div>`;
+  return h;
+}
+LIVE.instJob = d => jobHtml(d.app);
+async function instChoose(id) {
+  try { const r = await api("/api/choose", { kind: "folder" }); if (r.path) { S.inst.parent[id] = r.path; renderInstall(); } } catch (e) { toast(e.message, true); }
+}
+async function instOpenTerminal(app, prereq) { try { await api("/api/install/open_terminal", { app, prereq }); toast("Se abrió la Terminal. Cuando termine, tocá “Buscar de nuevo” en Ajustes o volvé a esta pantalla."); } catch (e) { toast(e.message, true); } }
+function copyCmd(btn) {
+  const el = btn.closest(".codeblock").querySelector("code"), t = el.textContent;
+  const done = () => { btn.textContent = "¡Copiado!"; setTimeout(() => btn.textContent = "Copiar", 1500); };
+  const fb = () => {
+    const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    try { document.execCommand("copy") ? done() : toast("Copiá el texto seleccionado con Ctrl/Cmd+C", true); } catch (e) { toast("Copiá el texto seleccionado con Ctrl/Cmd+C", true); }
+  };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+}
+async function startInstall(id) {
+  const a = (S.inst.data?.apps || []).find(x => x.id === id); if (!a) return;
+  const r = a.requirements || {};
+  const dest = id === "ollama" ? "" : `<li><b>Dónde:</b> <span class="mono">${esc(instFinalPath(a))}</span></li>`;
+  const withPre = instHasAutoPrereq(a) && S.inst.pre[id] !== false;
+  const c = await choiceBox("Instalar " + a.name, `<p>Se va a descargar e instalar <b>${esc(a.name)}</b> desde las fuentes oficiales.</p>
+    <ul class="small"><li><b>Descarga:</b> unos ${esc(r.download_gb)} GB</li>${dest}<li><b>Espacio en disco:</b> ${esc(r.disk_gb)} GB</li><li><b>Tiempo estimado:</b> ${esc(r.est_minutes)} minutos</li>
+    ${withPre ? `<li>También se instalará lo que falte (${win_() ? "winget" : "Homebrew"}).</li>` : ""}</ul>
+    <p class="small">Podés seguir usando la compu mientras tanto. Si la cerrás, la instalación se interrumpe.</p>`,
+    [{ id: "0", label: "Cancelar" }, { id: "1", label: "Instalar", cls: "primary" }], 440);
+  if (c !== "1") return;
+  try {
+    const res = await api("/api/install/start", { app: id, parent: instParent(a), install_prereqs: withPre });
+    S.inst.jobs[id] = { app: id, state: "running", steps: [], progress: 0, log: null };
+    S.inst.logOff[id] = null;
+    renderInstall();
+  } catch (e) { toast(e.message, true); }
+}
+async function cancelInstall(id) {
+  if (!await confirmBox("Cancelar la instalación", "Se frena la instalación. Lo que ya se descargó puede quedar a medias.", "Cancelar instalación")) return;
+  try { await api("/api/install/cancel", { app: id }); toast("Cancelando…"); } catch (e) { toast(e.message, true); }
+}
+async function reloadAfterInstall() {
+  try { await loadState(); } catch (e) { }
+  await loadInstallers();
+  lastMonitorHtml = "";
+}
+async function goToApp(id) {
+  if (id === "ollama") return go("ollama");
+  const p = (S.inst.data?.apps || []).find(x => x.id === id)?.installed_paths?.[0];
+  if (p && S.state.installs.some(i => i.path === p)) { S.state.config.sd.selected = p; api("/api/config", { sd_selected: p }).catch(() => { }); }
+  go("sd");
+}
+async function openInstalled(id) {
+  await reloadAfterInstall();
+  const j = S.inst.jobs[id], p = j?.result_path;
+  if (id !== "ollama" && p) {
+    const i = S.state.installs.find(x => x.path === p || x.path.startsWith(p));
+    if (i) { S.state.config.sd.selected = i.path; api("/api/config", { sd_selected: i.path }).catch(() => { }); }
+  }
+  go(id === "ollama" ? "ollama" : "sd");
+}
+async function tailInstLog(id) {
+  const j = S.inst.jobs[id], box = document.getElementById("ilog_" + id);
+  if (!j?.log || !box) return;
+  try {
+    const off = S.inst.logOff[id];
+    const r = await api(`/api/log?path=${encodeURIComponent(j.log)}${off != null ? "&offset=" + off : ""}`);
+    if (r.text) { box.textContent += r.text; box.scrollTop = box.scrollHeight; }
+    S.inst.logOff[id] = r.offset;
+  } catch (e) { }
+}
+let instTimer = null;
+async function pollInstall() {
+  clearTimeout(instTimer);
+  if (S.view !== "install" || !S.inst.data) return;
+  let rerender = false;
+  const mj = S.mon?.install_jobs || {};
+  for (const id of Object.keys(mj)) if (!S.inst.jobs[id]) { S.inst.jobs[id] = mj[id]; rerender = true; }
+  for (const id of Object.keys(S.inst.jobs)) {
+    const old = S.inst.jobs[id];
+    if (old.state !== "running") continue;
+    try {
+      const nj = await api("/api/install/status?app=" + id);
+      S.inst.jobs[id] = nj;
+      if (nj.state !== "running") { if (nj.state === "done") await reloadAfterInstall(); rerender = true; }
+      else if (!old.log && nj.log) { rerender = true; }
+    } catch (e) { }
+  }
+  if (S.view !== "install") return;
+  if (rerender) { await renderInstall(); return; }
+  updateLive();
+  Object.keys(S.inst.jobs).forEach(id => S.inst.jobs[id].state === "running" && tailInstLog(id));
+  if (Object.values(S.inst.jobs).some(j => j.state === "running")) instTimer = setTimeout(pollInstall, 1500);
+}
+
+// ---------------------------------------------------------------- inicio
+(async () => {
+  await loadState();
+  const v = location.hash.slice(1); if (v) go(v); else render();
+  await refreshMonitor();
+  setInterval(refreshMonitor, 2500);
+})();
+</script>
+</body>
+</html>
