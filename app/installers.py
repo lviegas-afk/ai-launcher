@@ -464,7 +464,10 @@ def guide_for(app, parent):
 # ----------------------------------------------------------------------------
 
 def default_parent(launcher):
-    """Carpeta donde se instalan los programas nuevos: la que ya comparten tus instalaciones, o ~/AI."""
+    """Carpeta donde se instalan los programas nuevos: la configurada, la que ya comparten tus instalaciones, o ~/AI."""
+    cfg = _be().CONFIG.get("install_parent")
+    if isinstance(cfg, str) and cfg.strip():
+        return os.path.expanduser(cfg.strip())
     parents = [os.path.dirname(i["path"]) for i in launcher.installs]
     if parents:
         try:
@@ -918,7 +921,8 @@ def start(launcher, b):
                 raise InstallError("Ya hay una instalación en curso (%s). Esperá a que termine o cancelala."
                                    % APPS[j.app]["name"])
 
-    parent = os.path.expanduser(b.get("parent") or default_parent(launcher))
+    explicit = b.get("parent")
+    parent = os.path.expanduser(explicit or default_parent(launcher))
     dest = str(Path(parent) / a["folder"]) if a.get("folder") else None
     if dest and os.path.exists(dest) and (not os.path.isdir(dest) or os.listdir(dest)):
         raise InstallError("La carpeta de destino ya existe y no está vacía: %s. Elegí otra carpeta." % dest)
@@ -957,6 +961,10 @@ def start(launcher, b):
         job.ctx_cleanup = lambda: _ollama_cleanup_ctx(ctx)
     if dest:
         Path(parent).mkdir(parents=True, exist_ok=True)
+        if explicit:  # recordar la elección para la próxima instalación
+            be = _be()
+            be.CONFIG["install_parent"] = parent
+            be.save_config()
     with _jobs_lock:
         JOBS[app] = job
     job.thread = threading.Thread(target=_run_job, args=(job, plan), daemon=True)

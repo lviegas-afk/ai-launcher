@@ -421,6 +421,11 @@ window.I18N = (() => {
 "set.openWinHelp":[`Si está apagado, sólo aparece el ícono {tray}.`,`If off, only the icon appears {tray}.`,`Wenn deaktiviert, erscheint nur das Symbol {tray}.`,`Si désactivé, seule l'icône apparaît {tray}.`,`オフの場合、{tray}にアイコンだけが表示されます。`,`Se estiver desligado, só o ícone aparece {tray}.`],
 "set.stopQuit":[`Al salir de AI Launcher, detener lo que inició`,`When quitting AI Launcher, stop what it started`,`Beim Beenden von AI Launcher gestartete Programme stoppen`,`À la fermeture d'AI Launcher, arrêter ce qu'il a démarré`,`AI Launcher の終了時に、起動したものを停止する`,`Ao sair do AI Launcher, parar o que ele iniciou`],
 "set.stopQuitHelp":[`Si está apagado, Ollama y SD siguen corriendo aunque cierres el launcher.`,`If off, Ollama and SD keep running even if you close the launcher.`,`Wenn deaktiviert, laufen Ollama und SD weiter, auch wenn du den Launcher schließt.`,`Si désactivé, Ollama et SD continuent de tourner même si vous fermez le launcher.`,`オフの場合、ランチャーを閉じても Ollama と SD は動き続けます。`,`Se estiver desligado, o Ollama e o SD continuam em execução mesmo que você feche o launcher.`],
+"set.installDir":[`Carpeta donde instalar apps nuevas`,`Folder for installing new apps`,`Ordner für die Installation neuer Apps`,`Dossier d'installation des nouvelles apps`,`新しいアプリのインストール先フォルダ`,`Pasta para instalar novos apps`],
+"set.installDirHelp":[`Se recuerda para la próxima vez. En “Auto” se usa la carpeta que ya comparten tus instalaciones.`,`It is remembered for next time. With “Auto”, the folder your existing installs already share is used.`,`Wird für das nächste Mal gespeichert. Bei „Auto“ wird der Ordner verwendet, den deine vorhandenen Installationen bereits gemeinsam nutzen.`,`Il est mémorisé pour la prochaine fois. En mode « Auto », on utilise le dossier que vos installations existantes partagent déjà.`,`次回のために記憶されます。「自動」では、既存のインストールが共有しているフォルダが使われます。`,`Fica guardada para a próxima vez. Em “Auto”, usa-se a pasta que as suas instalações existentes já compartilham.`],
+"set.installDirAuto":[`Auto`,`Auto`,`Auto`,`Auto`,`自動`,`Auto`],
+"set.installDirChange":[`Cambiar…`,`Change…`,`Ändern…`,`Modifier…`,`変更…`,`Alterar…`],
+"set.installDirReset":[`Restablecer`,`Reset`,`Zurücksetzen`,`Réinitialiser`,`リセット`,`Redefinir`],
 "set.locations":[`Ubicaciones (caché)`,`Locations (cache)`,`Speicherorte (Cache)`,`Emplacements (cache)`,`場所(キャッシュ)`,`Locais (cache)`],
 "set.locDesc":[`En cada arranque se verifica que las rutas guardadas sigan existiendo. Si algo se movió o se borró, se vuelve a buscar (procesos en ejecución, {scan} y, si hace falta, recorriendo el disco). Además se buscan instalaciones nuevas en segundo plano.`,`On every launch, the saved paths are checked to make sure they still exist. If something was moved or deleted, it is searched for again (running processes, {scan} and, if needed, scanning the disk). New installations are also searched for in the background.`,`Bei jedem Start wird geprüft, ob die gespeicherten Pfade noch existieren. Wurde etwas verschoben oder gelöscht, wird erneut gesucht (laufende Prozesse, {scan} und bei Bedarf die Festplatte). Außerdem wird im Hintergrund nach neuen Installationen gesucht.`,`À chaque démarrage, on vérifie que les chemins enregistrés existent toujours. Si quelque chose a été déplacé ou supprimé, on le recherche à nouveau (processus en cours, {scan} et, si nécessaire, parcours du disque). De nouvelles installations sont aussi recherchées en arrière-plan.`,`起動のたびに、保存されたパスがまだ存在するかを確認します。移動または削除されている場合は、再検索します(実行中のプロセス、{scan}、必要に応じてディスクの走査)。新しいインストールもバックグラウンドで検索されます。`,`A cada inicialização, verifica-se se os caminhos salvos ainda existem. Se algo foi movido ou apagado, a busca é refeita (processos em execução, {scan} e, se necessário, varredura do disco). Novas instalações também são procuradas em segundo plano.`],
 "set.scan.mac":[`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`,`Spotlight`],
@@ -589,6 +594,7 @@ function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTi
 document.querySelectorAll("nav button[data-view]").forEach(b => b.onclick = () => go(b.dataset.view));
 function go(view) {
   if (view === "install" && S.view !== "install") S.inst.data = null;
+  if (view === "settings" && S.view !== "settings") S.setParent = null;
   S.view = view;
   document.querySelectorAll("nav button[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
   render();
@@ -1201,6 +1207,11 @@ async function pollLog() {
 
 // ---------------------------------------------------------------- ajustes
 function renderSettings() {
+  if (S.setParent == null && !S.setParentLoading) {
+    S.setParentLoading = true;
+    api("/api/installers").then(d => { S.setParent = d.default_parent; }).catch(() => { S.setParent = ""; })
+      .finally(() => { S.setParentLoading = false; if (S.view === "settings") renderSettings(); });
+  }
   const st = S.state, c = st.config, rep = st.detect_report || {};
   const tray = os_().tray;
   $("#main").innerHTML = `<h2>${esc(t("set.title"))}</h2><div class="sub">${esc(t("set.sub", { tray }))}</div>
@@ -1213,6 +1224,9 @@ function renderSettings() {
         <div class="ctl"><input type="checkbox" class="toggle" ${c.open_window_on_launch ? "checked" : ""} onchange="setSetting('open_window_on_launch', this.checked)"></div></div>
       <div class="opt"><div><b>${esc(t("set.stopQuit"))}</b><div class="help">${esc(t("set.stopQuitHelp"))}</div></div>
         <div class="ctl"><input type="checkbox" class="toggle" ${c.stop_on_quit ? "checked" : ""} onchange="setSetting('stop_on_quit', this.checked)"></div></div>
+      <div class="opt"><div><b>${esc(t("set.installDir"))}</b><div class="help">${esc(t("set.installDirHelp"))}</div>
+        <div class="mono selectable small" style="margin-top:4px">${esc(S.setParent == null ? "…" : S.setParent)} ${c.install_parent ? "" : `<span class="chip">${esc(t("set.installDirAuto"))}</span>`}</div></div>
+        <div class="ctl"><button class="b" onclick="changeInstallParent()">${esc(t("set.installDirChange"))}</button>${c.install_parent ? ` <button class="b" onclick="resetInstallParent()">${esc(t("set.installDirReset"))}</button>` : ""}</div></div>
     </div>
     <h3>${esc(t("set.locations"))}</h3>
     <div class="card">
@@ -1231,6 +1245,15 @@ function renderSettings() {
       <div>${esc(t("kv.logs"))}</div><div class="mono selectable">${esc(st.log_dir)} <button class="link" onclick="api('/api/open',{path:'${esc(st.log_dir)}'})">${esc(t("btn.open"))}</button></div>
     </div>`;
 }
+async function setInstallParent(v) {
+  try { const r = await api("/api/config", { install_parent: v }); S.state.config.install_parent = v; S.setParent = r.install_parent; S.inst.data = null; toast(t("toast.saved")); }
+  catch (e) { toast(e.message, true); }
+  renderSettings();
+}
+async function changeInstallParent() {
+  try { const r = await api("/api/choose", { kind: "folder" }); if (r.path) await setInstallParent(r.path); } catch (e) { toast(e.message, true); }
+}
+function resetInstallParent() { return setInstallParent(""); }
 async function setSetting(k, v) { try { await api("/api/config", { [k]: v }); S.state.config[k] = v; if (k === "login_item") S.state.login_item = v; toast(t("toast.saved")); } catch (e) { toast(e.message, true); render(); } }
 
 

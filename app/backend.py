@@ -87,6 +87,7 @@ DEFAULT_CONFIG = {
     "sd": {"selected": None, "manual": [], "args": {}, "extra": {}, "presets": {}},
     "stop_on_quit": False,
     "open_window_on_launch": True,
+    "install_parent": "",  # carpeta donde instalar apps nuevas ("" = automática)
     "cache": {},  # ubicaciones detectadas: {"ollama": {...}, "sd": [...], "verified_at": ...}
 }
 
@@ -1447,9 +1448,13 @@ def make_handler(launcher, on_show_window=None):
                         CONFIG[k] = bool(b[k])
                 if "login_item" in b:
                     pu.set_login_item(bool(b["login_item"]))
+                if "install_parent" in b:
+                    ip = (b["install_parent"] or "").strip() if isinstance(b["install_parent"], str) else ""
+                    CONFIG["install_parent"] = os.path.expanduser(ip) if ip else ""
                 save_config()
                 info = L.install(b.get("sd_path"))
-                return {"ok": True, "preview": L.sd_command_preview(info) if info else ""}
+                return {"ok": True, "preview": L.sd_command_preview(info) if info else "",
+                        "install_parent": installers.default_parent(L)}
             if path == "/api/preset/save":
                 CONFIG[b["service"]]["presets"][b["name"]] = b["values"]
                 save_config()
