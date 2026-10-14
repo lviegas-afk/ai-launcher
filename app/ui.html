@@ -757,7 +757,7 @@ async function startSD(path) {
 }
 async function killProc(pid, label, force) {
   const pr = (S.mon?.processes || []).find(p => p.pid === pid);
-  const training = pr?.training || (pr?.children || []).some(c => /entrenamiento/i.test(c.label));
+  const training = pr?.training || (pr?.children || []).some(c => c.training);
   const ok = await confirmBox(force ? t("dlg.kill.titleForce") : t("dlg.kill.title"),
     t(force ? "kill.force" : "kill.soft", { label, pid }) + (training ? t("kill.training") : ""),
     force ? t("btn.force") : t("btn.stop"));
@@ -1481,6 +1481,8 @@ async function pollInstall() {
 applyStatic();
 I18N.onChange = () => { applyStatic(); lastMonitorHtml = ""; if (S.mon) renderNavMem(); if (S.state) render(); };
 (async () => {
+  // avisarle al servidor el idioma elegido (por si fue elegido antes de que existiera este aviso)
+  try { if (lsGet("ai_launcher_lang")) api("/api/config", { lang: I18N.lang }).catch(() => {}); } catch (e) {}
   await loadState();
   const v = location.hash.slice(1); if (v) go(v); else render();
   await refreshMonitor();
