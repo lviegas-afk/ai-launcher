@@ -4,6 +4,7 @@ Cada instalación corre en un hilo, paso a paso; la salida de cada comando va a 
 (LOG_DIR/install-<app>.log). Todo lo que depende del sistema operativo sale de platform_utils.
 Este módulo no importa `backend` al cargarse (backend lo importa a él): se usa de forma perezosa.
 """
+import hashlib
 import os
 import re
 import shlex
@@ -12,6 +13,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -572,12 +574,24 @@ def _run(job, cmd, cwd=None, env=None):
         raise InstallError("El comando terminó con error (código %s)." % code)
 
 
-def _download(job, st, url, dest):
-    """Descarga con progreso (st['frac'] y st['detail'])."""
+def _host_ok(url, allowed):
+    """https y host exactamente igual (o subdominio) a alguno de los dominios oficiales permitidos."""
+    u = urllib.parse.urlparse(url)
+    host = (u.hostname or "").lower()
+    return u.scheme == "https" and any(host == d or host.endswith("." + d) for d in allowed)
+
+
+def _download(job, st, url, dest, allowed_hosts=("ollama.com",)):
+    """Descarga con progreso (st['frac'] y st['detail']). Sólo https desde los dominios oficiales dados."""
     _log(job, "Descargando %s" % url)
+    if not _host_ok(url, allowed_hosts):
+        raise InstallError("Descarga rechazada: la dirección no es https de un dominio oficial (%s)."
+                           % ", ".join(allowed_hosts))
     req = urllib.request.Request(url, headers={"User-Agent": "AI-Launcher"})
     part = dest + ".part"
     with urllib.request.urlopen(req, timeout=30) as r, open(part, "wb") as f:
+        if not _host_ok(r.geturl(), allowed_hosts):  # una redirección no puede sacarnos del dominio oficial
+            raise InstallError("Descarga rechazada: redirección a un sitio no oficial (%s)." % r.geturl())
         total = int(r.headers.get("Content-Length") or 0)
         done, last = 0, 0
         while True:
@@ -594,8 +608,48 @@ def _download(job, st, url, dest):
                 st["detail"] = "%s de %s" % (_be().human_bytes(done), _be().human_bytes(total)) if total \
                     else _be().human_bytes(done)
     os.replace(part, dest)
+    h = hashlib.sha256()
+    with open(dest, "rb") as f:
+        for blk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(blk)
+    _log(job, "SHA-256 de la descarga: %s" % h.hexdigest())
     st["frac"] = 1.0
     st["detail"] = _be().human_bytes(os.path.getsize(dest))
+
+
+SIG_ERROR = ("La descarga de Ollama no pasó la verificación de firma de %s; por seguridad no se instaló. "
+             "Probá de nuevo o instalá Ollama desde ollama.com.")
+
+
+def _verify_mac_signature(job, app_path):
+    """Verifica la firma de Apple de una .app (codesign + spctl). Falla cerrado si algo no está disponible."""
+    _log(job, "Verificando firma de %s" % app_path)
+    for cmd in (["/usr/bin/codesign", "--verify", "--deep", "--strict", app_path],
+                ["/usr/sbin/spctl", "--assess", "--type", "execute", "-v", app_path]):
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        except (OSError, subprocess.SubprocessError) as e:
+            _log(job, "No se pudo ejecutar %s: %s" % (cmd[0], e))
+            return False
+        _log(job, "$ %s -> %s %s" % (" ".join(cmd[:2]), r.returncode, (r.stdout + r.stderr).strip()))
+        if r.returncode != 0:
+            return False
+    return True
+
+
+def _verify_win_signature(job, exe_path):
+    """Verifica Authenticode con PowerShell (Status = Valid). Falla cerrado si no se puede."""
+    _log(job, "Verificando firma de %s" % exe_path)
+    ps = "(Get-AuthenticodeSignature -LiteralPath $args[0]).Status"
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                            "& { " + ps + " }", exe_path],
+                           capture_output=True, text=True, timeout=120, **pu.detached_kwargs())
+    except (OSError, subprocess.SubprocessError) as e:
+        _log(job, "No se pudo ejecutar PowerShell: %s" % e)
+        return False
+    _log(job, "Estado de la firma: %s" % (r.stdout + r.stderr).strip())
+    return r.returncode == 0 and r.stdout.strip() == "Valid"
 
 
 def _rmtree(path):
@@ -936,6 +990,14 @@ def _ollama_steps_ctx(ctx):
             _run(j, ["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", ctx["mnt"],
                      os.path.join(tmp, "Ollama.dmg")])
 
+        def verify(j, st):
+            src = os.path.join(ctx["mnt"], "Ollama.app")
+            if not os.path.isdir(src):
+                raise InstallError("El instalador descargado no trae Ollama.app.")
+            if not _verify_mac_signature(j, src):
+                raise InstallError(SIG_ERROR % "Apple")
+            st["detail"] = "Firma válida"
+
         def copy(j, st):
             src = os.path.join(ctx["mnt"], "Ollama.app")
             if not os.path.isdir(src):
@@ -957,17 +1019,23 @@ def _ollama_steps_ctx(ctx):
             _ollama_cleanup_ctx(ctx)
 
         return [("Descargar Ollama", download), ("Montar el instalador", mount),
+                ("Verificando firma…", verify),
                 ("Copiar Ollama a Aplicaciones", copy), ("Cerrar el instalador", detach)]
 
     def download(j, st):
         _download(j, st, "https://ollama.com/download/OllamaSetup.exe", os.path.join(tmp, "OllamaSetup.exe"))
+
+    def verify(j, st):
+        if not _verify_win_signature(j, os.path.join(tmp, "OllamaSetup.exe")):
+            raise InstallError(SIG_ERROR % "Windows (Authenticode)")
+        st["detail"] = "Firma válida"
 
     def run_setup(j, st):
         _run(j, [os.path.join(tmp, "OllamaSetup.exe"), "/VERYSILENT", "/NORESTART"])
         local = os.environ.get("LOCALAPPDATA")
         j.result_path = str(Path(local) / "Programs" / "Ollama") if local else None
 
-    return [("Descargar Ollama", download), ("Instalar Ollama", run_setup)]
+    return [("Descargar Ollama", download), ("Verificando firma…", verify), ("Instalar Ollama", run_setup)]
 
 
 def status(app):

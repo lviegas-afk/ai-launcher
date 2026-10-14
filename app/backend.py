@@ -1307,6 +1307,42 @@ def log_sources(launcher):
 TOKEN = secrets.token_urlsafe(24)
 
 
+# Páginas oficiales que la interfaz ofrece abrir en el navegador (además de las URLs locales).
+OPEN_HTTPS_HOSTS = ("ollama.com", "github.com")
+
+
+def open_allowed(launcher, target, is_url):
+    """/api/open: sólo URLs locales / oficiales o rutas dentro de carpetas conocidas del launcher."""
+    if is_url:
+        u = urlparse(target)
+        host = (u.hostname or "").lower()
+        if u.scheme in ("http", "https") and host in ("127.0.0.1", "localhost"):
+            return True
+        return u.scheme == "https" and (host in OPEN_HTTPS_HOSTS or host.endswith(".ollama.com"))
+    try:
+        rp = Path(target).expanduser().resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+    roots = [LOG_DIR, CONFIG_FILE.parent]
+    o = launcher.ollama or {}
+    for k in ("models_dir", "app"):
+        if o.get(k):
+            roots.append(Path(o[k]))
+    if o.get("binary"):
+        roots.append(Path(o["binary"]).parent)
+    roots += pu.ollama_log_dirs()
+    for i in launcher.installs:
+        p = Path(i["path"])
+        roots += [p, p.parent]
+    for r in roots:
+        try:
+            rp.relative_to(Path(r).expanduser().resolve())
+            return True
+        except (ValueError, OSError, RuntimeError):
+            continue
+    return False
+
+
 def make_handler(launcher, on_show_window=None):
     def allowed_logs(p):
         rp = os.path.normcase(str(Path(p).resolve()))
@@ -1325,11 +1361,22 @@ def make_handler(launcher, on_show_window=None):
             self.end_headers()
             self.wfile.write(data)
 
+        def _bad_host(self):
+            """Anti DNS-rebinding: sólo se atiende si el Host es un nombre de loopback."""
+            raw = (self.headers.get("Host") or "").strip()
+            host = raw[1:].split("]")[0] if raw.startswith("[") else raw.split(":")[0]
+            if host.lower() not in ("127.0.0.1", "localhost", "::1", ""):
+                self._send(403, {"error": "bad host"})
+                return True
+            return False
+
         def _authorized(self):
             q = parse_qs(urlparse(self.path).query)
             return self.headers.get("X-Token") == TOKEN or q.get("t", [None])[0] == TOKEN
 
         def do_GET(self):
+            if self._bad_host():
+                return
             url = urlparse(self.path)
             if not self._authorized():
                 return self._send(403, {"error": "forbidden"})
@@ -1365,6 +1412,8 @@ def make_handler(launcher, on_show_window=None):
             self._send(404, {"error": "not found"})
 
         def do_POST(self):
+            if self._bad_host():
+                return
             if self.headers.get("X-Token") != TOKEN:
                 return self._send(403, {"error": "forbidden"})
             n = int(self.headers.get("Content-Length") or 0)
@@ -1461,7 +1510,10 @@ def make_handler(launcher, on_show_window=None):
             if path == "/api/open":
                 target = b.get("url") or b.get("path")
                 if target:
-                    if b.get("reveal"):
+                    if not isinstance(target, str) or not open_allowed(L, target, bool(b.get("url"))):
+                        raise RuntimeError("No se puede abrir eso: sólo URLs locales, páginas oficiales "
+                                           "o carpetas del launcher y de las apps instaladas.")
+                    if b.get("reveal") and not b.get("url"):
                         pu.reveal(target)
                     else:
                         pu.open_target(target)
